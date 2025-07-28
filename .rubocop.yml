@@ -1,0 +1,12 @@
+require:
+  - rubocop-performance
+  # - rubocop-rspec   # If using RSpe
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Metrics/AbcSize
+  Enabled: false
