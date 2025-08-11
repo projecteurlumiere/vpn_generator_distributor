@@ -1,28 +1,12 @@
 class StartController < ApplicationController
   def call
-    if message.text == "Всё понятно, спасибо" || message.text == "Не хочу ничего удалять, спасибо"
-      reply_with_buttons(
-        "Не за что!",
-        [
-          ["Новый ключ", "Управление ключами"],
-          ["Инструкции"]
-        ]
-      )
+
+    if message.text.match?(/Спасибо/i)
+      reply_with_start_menu("Не за что!")
     elsif current_user
-      reply_with_buttons(
-        "Добро пожаловать снова",
-        [
-          ["Новый ключ", "Управление ключами"],
-          ["Инструкции"]
-        ]
-      )
+      reply_with_start_menu("Добро пожаловать снова!")
     else
-      reply_with_buttons(
-        "Добро пожаловать!",
-        [
-          ["Новый ключ", "Инструкции"]
-        ]
-      )
+      reply_with_start_menu("Добро пожаловать!")
     end
   end
 end

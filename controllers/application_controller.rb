@@ -70,4 +70,20 @@ class ApplicationController
   def current_user
     @current_user ||= User.find(tg_id: user_id)
   end
+
+  def reply_with_start_menu(message)
+    buttons = if current_user.keys.any?
+                [
+                  ["Новый ключ", "Управление ключами"],
+                  ["Инструкции"]
+                ]
+              else
+                [
+                  ["Новый ключ", "Инструкции"]
+                ]
+              end
+
+
+    reply_with_buttons(message, buttons)
+  end
 end

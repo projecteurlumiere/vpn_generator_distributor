@@ -13,32 +13,15 @@ class KeysController < ApplicationController
   def index
 
     if current_user && (keys = current_user.keys) && keys.any?
-      reply_with_inline_buttons(
-        "Выберите ключ для удаления:",
-        keys.each_with_object({}) do |key, h|
-          h[key.personal_note || key.id.to_s] = "key_delete_#{key.id}"
-        end
-      )
-
-      reply_with_buttons(
-        "Или выберите другое действие:",
-        [
-          ["Не хочу ничего удалять, спасибо"]
-        ]
-      )
+      reply_with_keys_to_delete(keys, "Здесь можно удалить уже выданный ключ. Выберите ключ для удаления:")
     else
-      reply("У вас ещё нет ключей")
+      reply_with_start_menu("У вас сейчас нет ключей")
     end
   end
 
   def new
     if current_user&.too_many_keys?
-      reply_with_buttons(
-        "Слишком много ключей",
-        [
-          ["Новый ключ", "Инструкции"]
-        ]
-      )
+      reply_with_start_menu("У вас слишком много ключей. Если ключ утерян, вы можете удалить существующий и выдать себе новый.")
       return
     elsif (keydesk = Keydesk.where { n_keys < 250 }.first)
       User.create(tg_id: user_id) if current_user.nil?
@@ -49,18 +32,12 @@ class KeysController < ApplicationController
           ["Инструкция для Outline", "Всё понятно, спасибо"]
         ])
     else
-      reply_with_buttons(
-        "Извините, сейчас нет мест",
-        [
-          ["Новый ключ", "Инструкции"]
-        ]
-      )
+      reply_with_start_menu("Извините, сейчас свободных мест нет.")
     end
   end
 
   def create
     reply("Эта команда не должна вызываться")
-    # User.create(id: user_id) if current_user.nil?
   end
 
   def delete(id)
@@ -68,29 +45,31 @@ class KeysController < ApplicationController
       key.keydesk.delete_user(username: key.keydesk_username)
       key.destroy
       if (keys = current_user.keys) && keys.any?
-        reply_with_inline_buttons(
-          "Ключ #{key.personal_note} удалён успешно.\nВыберите ключ для удаления:",
-          keys.each_with_object({}) do |key, h|
-            h[key.personal_note || key.id.to_s] = "key_delete_#{key.id}"
-          end
-        )
-
-        reply_with_buttons(
-          "Или выберите другое действие:",
-          [
-            ["Не хочу ничего удалять, спасибо"]
-          ]
-        )
+        reply_with_keys_to_delete(keys, "Ключ #{key.personal_note} удалён успешно.\nВыберите ключ для удаления:")
       else
-        reply_with_buttons(
-          "Все ключи удалены",
-          [
-            ["Новый ключ", "Инструкции"]
-          ]
-        )
+        current_user.destroy
+        reply_with_start_menu("Все ключи удалены")
       end
     else
-      reply("Не получилось удалить ключ")
+      reply_with_keys_to_delete(current_users.keys, "Не получилось удалить ключ. Выберите ключ для удаления:")
     end
+  end
+
+  private
+
+  def reply_with_keys_to_delete(keys, message)
+    reply_with_inline_buttons(
+      message,
+      keys.each_with_object({}) do |key, h|
+        h[key.personal_note] = "key_delete_#{key.id}"
+      end
+    )
+
+    reply_with_buttons(
+      "Или выберите другое действие:",
+      [
+        ["Не хочу ничего удалять, спасибо"]
+      ]
+    )
   end
 end
