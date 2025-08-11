@@ -4,6 +4,8 @@ require "uri"
 class Keydesk < Sequel::Model(:keydesks)
   one_to_many :keys
 
+  MAX_USERS = 250
+
   def users
     vw.users
   end
@@ -21,15 +23,14 @@ class Keydesk < Sequel::Model(:keydesks)
     vw.user_id(username)
   end
 
-  def create_config(user:, personal_note:)
+  def create_config(user:)
     config = vw.create_conf_file
-    add_key(
+    key = add_key(
       user_id: user.id,
-      personal_note:,
       keydesk_username: config["username"]
     )
-
-    config
+    key.config = config
+    key
   end
 
   def vw

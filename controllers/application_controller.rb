@@ -72,7 +72,7 @@ class ApplicationController
   end
 
   def reply_with_start_menu(message)
-    buttons = if current_user.keys.any?
+    buttons = if current_user && current_user.keys.any?
                 [
                   ["Новый ключ", "Управление ключами"],
                   ["Инструкции"]
