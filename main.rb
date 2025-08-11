@@ -42,7 +42,13 @@ end
 
 Telegram::Bot::Client.run(TOKEN) do |bot|
   bot.listen do |message|
-    dispatch_controller(bot, message)
+    Thread.new do 
+      dispatch_controller(bot, message)
+    rescue StandardError => e
+      ApplicationController.new(bot, message).send(:reply, "Что-то пошло не так.\nЕсли вы потерялись, вернуться можно нажав на /start")
+      LOGGER.error "Unhandled error when processing request: #{e}\n#{e.full_message}"
+      raise e
+    end
   end
 end
 

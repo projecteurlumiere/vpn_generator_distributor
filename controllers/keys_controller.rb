@@ -4,14 +4,13 @@ class KeysController < ApplicationController
     in "Управление ключами"
       index
     in "Новый ключ"
-      new
+      create
     in "Удалить ключ"
       delete
     end
   end
 
   def index
-
     if current_user && (keys = current_user.keys) && keys.any?
       reply_with_keys_to_delete(keys, "Здесь можно удалить уже выданный ключ. Выберите ключ для удаления:")
     else
@@ -19,7 +18,7 @@ class KeysController < ApplicationController
     end
   end
 
-  def new
+  def create
     if current_user&.too_many_keys?
       reply_with_start_menu("У вас слишком много ключей. Если ключ утерян, вы можете удалить существующий и выдать себе новый.")
     else
@@ -50,10 +49,6 @@ class KeysController < ApplicationController
     end
   end
 
-  def create
-    reply("Эта команда (пока) не должна вызываться")
-  end
-
   def delete(id)
     if current_user && (key = current_user.keys_dataset.where(id:).first)
       reply("Удаляем ключ #{key.personal_note}")
@@ -67,7 +62,7 @@ class KeysController < ApplicationController
     elsif current_user
       reply_with_keys_to_delete(current_users.keys, "Не получилось удалить ключ. Выберите ключ для удаления:")
     else
-      reply_with_start_menu("У вас нет ключей, которые можно было бы удалить.")
+      reply_with_start_menu("Этот ключ нельзя удалить.")
     end
   end
 
