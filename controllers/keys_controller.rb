@@ -21,8 +21,10 @@ class KeysController < ApplicationController
   def create
     if current_user&.too_many_keys?
       reply_with_start_menu("У вас слишком много ключей. Если ключ утерян, вы можете удалить существующий и выдать себе новый.")
+    elsif current_user&.awaiting_config?
+      reply("Мы уже выдаём вам ключ. Пожалуйста, подождите.\nЕсли вы потерялись, нажмите /start")
     else
-      reply("Добавляем вас в нашу сеть и создаём файлы.\nПожалуйста, подождите.")
+      reply("Добавляем вас в нашу сеть и создаём файлы.\nПожалуйста, подождите. Если вы уверены, что что-то пошло не так, нажмите /start")
       User.create(tg_id: user_id) if current_user.nil?
       res = Key.issue(to: current_user) 
       case res
@@ -51,8 +53,14 @@ class KeysController < ApplicationController
 
   def delete(id)
     if current_user && (key = current_user.keys_dataset.where(id:).first)
-      reply("Удаляем ключ #{key.personal_note}")
-      key.destroy
+      if key.awaiting_destroy?
+        reply_with_keys_to_delete(current_user.keys, "Ключ #{key.personal_note} находится в процессе удаления")
+        return
+      else
+        reply("Удаляем ключ #{key.personal_note}.\nНадо подождать. Если что-то пошло не так, нажмите /start")
+        key.destroy
+      end
+      
       if (keys = current_user.keys) && keys.any?
         reply_with_keys_to_delete(keys, "Ключ #{key.personal_note} удалён успешно.\nВыберите ключ для удаления:")
       else
@@ -60,7 +68,7 @@ class KeysController < ApplicationController
         reply_with_start_menu("Все ключи удалены")
       end
     elsif current_user
-      reply_with_keys_to_delete(current_users.keys, "Не получилось удалить ключ. Выберите ключ для удаления:")
+      reply_with_keys_to_delete(current_user.keys, "Не получилось удалить ключ. Выберите ключ для удаления:")
     else
       reply_with_start_menu("Этот ключ нельзя удалить.")
     end
