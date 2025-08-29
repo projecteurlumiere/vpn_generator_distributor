@@ -1,4 +1,8 @@
 class KeysController < ApplicationController
+  def self.routes
+    []
+  end
+
   def call
     case message.text
     in "Управление ключами"

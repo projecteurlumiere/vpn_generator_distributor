@@ -1,7 +1,11 @@
 # base class for controllers
 # offers controller-wide wrappers for tg api
 class ApplicationController
-  attr_reader :bot, :message, :chat_id, :user_id
+  attr_reader :bot, :message, :chat_id, :tg_id
+
+  def self.routes
+    raise "#{__method__} method must be defined in the child class!"
+  end
 
   def initialize(bot, message)
     @bot = bot
@@ -9,10 +13,10 @@ class ApplicationController
 
     if message.is_a?(Telegram::Bot::Types::CallbackQuery)
       @chat_id = message.message.chat.id
-      @user_id = message.from.id
+      @tg_id = message.from.id
     else
       @chat_id = message.chat.id
-      @user_id = message.from.id
+      @tg_id = message.from.id
     end
   end
 
@@ -68,7 +72,7 @@ class ApplicationController
   end
 
   def current_user
-    @current_user ||= User.find(tg_id: user_id)
+    @current_user ||= User.find(tg_id:) || User.create(tg_id:)
   end
 
   def reply_with_start_menu(message)

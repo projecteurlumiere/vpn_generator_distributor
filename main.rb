@@ -10,34 +10,28 @@ require "telegram/bot"
 
 TOKEN = ENV["TELEGRAM_TOKEN"].freeze
 
-ROUTES = {
-  command: {
-    "/start" => StartController,
-    "Всё понятно, спасибо" => StartController,
-    "Не хочу ничего удалять, спасибо" => StartController,
-    "/stop" => StopController,
-    "Новый ключ" => KeysController,
-    "Управление ключами" => KeysController,
-    "Удалить ключ" => KeysController
-  },
-  callback: {
-    "key" => KeysController
-  }
-}.freeze
+Routes.instance.build!
 
 def dispatch_controller(bot, message)
-  if message.is_a?(Telegram::Bot::Types::CallbackQuery)
-    type = :callback
-    message.data.split("_") => [key, method, *args]
-  elsif message.text
+  case message
+  in Telegram::Bot::Types::Message
     type = :command
     method = :call
-    key = message.text
-    args = []
+
+    if message.text.start_with?("/")
+      message.text.split(" ") => [key, *args] 
+    else
+      key = message.text
+      args = []
+    end
+  # in Telegram::Bot::Types::CallbackQuery
+  #   raise "Handling CallbackQuery type of messages is not implemented!"
+  #   type = :callback
+  #   message.data.split("_") => [key, method, *args]
   end
 
-  klass = ROUTES[type][key]
-  klass&.new(bot, message)&.send(method, *args)
+  klass = Routes.instance[type][key]
+  klass.new(bot, message).send(method, *args)
 end
 
 Telegram::Bot::Client.run(TOKEN) do |bot|
@@ -51,21 +45,3 @@ Telegram::Bot::Client.run(TOKEN) do |bot|
     end
   end
 end
-
-
-# /start
-# # If no keys:
-# # Welcome!
-# # Получить ключ || Инструкции
-
-# # If there are keys
-# # Новый ключ || Управление ключами || Инструкции
-
-# Получить ключ
-# # Если мест недостаточно:
-# # # Сейчас свободных мест нет (возвращаем назад)
-# # Если больше 5 ключей на юзере
-# # # У вас слишком много ключей: вы можете попробовать удалить и создать новый
-# # Если норм, хотите ввести персональное имя для ключа? (персональная заметка: "ВПН для ноутбука" или "для бабушки")
-# # Выдать ключ
-# # Инструкции

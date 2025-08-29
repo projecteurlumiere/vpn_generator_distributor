@@ -1,2 +1,3 @@
 require_relative "loader"
-require_relative "launch_keydesk_proxies"
+LOGGER.warn "Skipping launching proxies for now"
+# require_relative "launch_keydesk_proxies"

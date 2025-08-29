@@ -1,0 +1,28 @@
+title: Android
+steps:
+  # 1
+  - message: |-
+      Включите ваше устройство Android
+    actions:
+      - Я включил Android
+  # 2
+  - message: |-
+      Скачайте и установите VPN с Google Play
+    actions:
+      - Я установил VPN
+  # 3
+  - message: |-
+      Вот ваш ключ для подключения
+    issue_key: shadowsocks
+    actions:
+      - Я получил ключ
+  # 4
+  - message: |-
+      Введите полученный ключ в приложение VPN
+    actions:
+      - Я ввёл ключ
+  # 5
+  - message: |-
+      Поздравляем! Вы успешно подключились через Android.
+    actions:
+      - Инструкции
