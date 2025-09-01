@@ -1,11 +1,13 @@
 class StartController < ApplicationController
   def self.routes
-    ["/start", "Ознакомиться с правилами", "Правила подтверждаю"]
+    ["/start", "Ознакомиться с правилами", "Правила подтверждаю", "Инструкции"]
   end
 
   def call
     case message.text
     in "/start" if current_user.rules_read
+      reply_instructions
+    in "Инструкции"
       reply_instructions
     in "/start"
       reply_welcome

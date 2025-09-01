@@ -8,40 +8,16 @@ require_relative "initializers/all"
 
 require "telegram/bot"
 
-TOKEN = ENV["TELEGRAM_TOKEN"].freeze
+$token = ENV["TELEGRAM_TOKEN"].freeze
 
 Routes.instance.build!
 
-def dispatch_controller(bot, message)
-  case message
-  in Telegram::Bot::Types::Message
-    type = :command
-    method = :call
-
-    if message.text.start_with?("/")
-      msg = message.text.split(" ")
-      msg => [key, *]
-      msg in [_, method, *args] 
-    else
-      key = message.text
-      args = []
-    end
-  # in Telegram::Bot::Types::CallbackQuery
-  #   raise "Handling CallbackQuery type of messages is not implemented!"
-  #   type = :callback
-  #   message.data.split("_") => [key, method, *args]
-  end
-
-  klass = Routes.instance[type][key]
-  klass.new(bot, message).send(method, *args)
-end
-
-Telegram::Bot::Client.run(TOKEN) do |bot|
+Telegram::Bot::Client.run($token) do |bot|
   bot.listen do |message|
     Thread.new do 
-      dispatch_controller(bot, message)
+      Routes.instance.dispatch_controller(bot, message)
     rescue StandardError => e
-      ApplicationController.new(bot, message).send(:reply, "Что-то пошло не так.\nЕсли вы потерялись, вернуться можно нажав на /start")
+      ApplicationController.new(bot, message).send(:reply, "Что-то пошло не так.\nЕсли вы потерялись, вернуться можно нажав на /start", reply_markup: nil)
       LOGGER.error "Unhandled error when processing request: #{e}\n#{e.full_message}"
       raise e
     end

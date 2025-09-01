@@ -3,14 +3,13 @@ class InstructionsController < ApplicationController
     Instructions.instance.all.map do |_file_name, content|
       [
         content[:title], # instruction titles
-        content[:steps].filter_map { |step| step[:actions] }
       ]
-    end.flatten.uniq
+    end.flatten
   end
 
   def call
     if instruction_name = Instructions.instance.instruction_name_by_title(message.text)
-      current_user.update(state: "instruction:#{instruction_name}:0")
+      current_user.update(state: "#{self.class.name}|#{instruction_name}|0")
     end
 
     if current_user.state.nil?
@@ -21,9 +20,12 @@ class InstructionsController < ApplicationController
       return
     end
 
-    current_user.state.split(":") => [controller, instruction_name, step]
+    current_user.state.split("|") => [controller, instruction_name, step]
     current_instruction = Instructions.instance[instruction_name]
     step = step.to_i
+
+    raise RoutingError if step - 1 >= 0 &&
+                          Instructions.instance[instruction_name][:steps][step - 1][:actions].none?(message.text)
 
     if step >= current_instruction[:steps].size
       current_user.update(state: nil)
@@ -34,13 +36,14 @@ class InstructionsController < ApplicationController
     reply_instruction_step(current_instruction, step)
 
     step += 1 
-    current_user.update(state: [controller, instruction_name, step.to_i].join(":"))
+    current_user.update(state: [controller, instruction_name, step.to_i].join("|"))
   end
 
   private
 
   def reply_instruction_step(current_instruction, step)
     step = current_instruction[:steps][step]
+
 
     reply_with_buttons(
       step[:message],

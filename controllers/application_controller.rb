@@ -1,6 +1,8 @@
 # base class for controllers
 # offers controller-wide wrappers for tg api
 class ApplicationController
+  class RoutingError < StandardError; end
+
   attr_reader :bot, :message, :chat_id, :tg_id
 
   def self.routes
@@ -89,5 +91,18 @@ class ApplicationController
 
 
     reply_with_buttons(message, buttons)
+  end
+
+  def download_attachment(file_id, dest_path)
+    file = bot.api.get_file(file_id:)
+    file_path = file.file_path
+    file_url = "https://api.telegram.org/file/bot#{$token}/#{file_path}"
+
+    FileUtils.mkdir_p(File.dirname(dest_path))
+    File.open(dest_path, "wb") do |f|
+      f.write(Net::HTTP.get(URI(file_url)))
+    end
+
+    dest_path
   end
 end
