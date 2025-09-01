@@ -10,30 +10,37 @@ class InstructionsController < ApplicationController
 
   def call
     if instruction_name = Instructions.instance.instruction_name_by_title(message.text)
-      current_user.update(instruction: instruction_name, instruction_step: 0)
+      current_user.update(state: "instruction:#{instruction_name}:0")
     end
 
-    if current_user.instruction.nil?
-      reply_with_start_menu(
+    if current_user.state.nil?
+      reply_with_buttons(
         "Похоже, вы потеряли инструкции. Вот они:",
         Instructions.instance.titles.map { |title| [title] }
       )
+      return
     end
 
-    if last_instruction_step?
-      current_user.update(instruction: nil, instruction_step: nil)
+    current_user.state.split(":") => [controller, instruction_name, step]
+    current_instruction = Instructions.instance[instruction_name]
+    step = step.to_i
+
+    if step >= current_instruction[:steps].size
+      current_user.update(state: nil)
       reply_success
       return
     end
 
-    reply_instruction_step
-    current_user.update(instruction_step: current_user.instruction_step + 1)
+    reply_instruction_step(current_instruction, step)
+
+    step += 1 
+    current_user.update(state: [controller, instruction_name, step.to_i].join(":"))
   end
 
   private
 
-  def reply_instruction_step
-    step = current_instruction[:steps][current_user.instruction_step]
+  def reply_instruction_step(current_instruction, step)
+    step = current_instruction[:steps][step]
 
     reply_with_buttons(
       step[:message],
@@ -46,13 +53,5 @@ class InstructionsController < ApplicationController
       "Вы успешно прошли инструкцию! Можете пройти ещё одну:",
       Instructions.instance.titles.map { |title| [title] }
     )
-  end
-
-  def last_instruction_step?
-    current_user.instruction_step >= current_instruction[:steps].size
-  end
-
-  def current_instruction
-    Instructions.instance[current_user.instruction]
   end
 end

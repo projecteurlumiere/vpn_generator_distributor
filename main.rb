@@ -19,7 +19,9 @@ def dispatch_controller(bot, message)
     method = :call
 
     if message.text.start_with?("/")
-      message.text.split(" ") => [key, *args] 
+      msg = message.text.split(" ")
+      msg => [key, *]
+      msg in [_, method, *args] 
     else
       key = message.text
       args = []

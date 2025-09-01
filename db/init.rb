@@ -9,8 +9,7 @@ DB.create_table? :users do
   Integer :n_keys, default: 0, null: false
   DateTime :pending_config_until
   TrueClass :rules_read, default: false, null: false
-  String :instruction
-  Integer :instruction_step
+  String :state
 end
 
 DB.create_table? :keydesks do
