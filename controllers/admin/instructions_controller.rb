@@ -22,78 +22,149 @@ class Admin::InstructionsController < ApplicationController
     [
       "/admin instructions",
       "/admin upload_instruction",
-      "Следующий шаг",
-      "Предыдущий шаг"
+      "/admin pending_instructions",
+      /\/admin review_instruction/,
+      "/admin upload_instruction"
     ]
   end
 
   def call
-    current_user.state&.split("|") in [state_controller, state_substate, *]
-    current_user.state&.split("|") in [_, _, file_path, step]
-    step = step.to_i
+    state = current_user.state_array
+    @state_controller, @substate, * = state
+    _, _, @instruction_path, @step  = state
 
-    if message.document && state_controller == self.class.name
-      case state_substate
-      in "instruction_upload"
-        unless message.document.file_name =~ /\.(ya?ml)\z/i
-          reply("Пожалуйста, загрузите файл с расширением .yml или .yaml")
-          return
-        end
+    @step = @step.to_i
 
-        binding.irb
-
-        upload_instruction(state_controller, state_substate)
-
-        return
-      in "instruction_review" if file_path && step
-
-        # ...
-      end
-    end
-
-    # Handle text commands
-    case message.text
-    in "/admin instructions"
-      instructions
-    in "/admin upload_instruction"
-      current_user.update(state: "#{self.class.name}|instruction_upload")
-      reply("Пожалуйста, прикрепите YAML файл с инструкцией.")
-    in * if file_path && step
-      next_instruction_step(step + 1)
-      current_user.update(state: [state_controller, state_substate, file_path, step + 1].join("|"))
+    if @state_controller == self.class.name && (message.document || message.photo)
+      handle_upload
+    elsif @substate == "instruction_review"
+      handle_review
+    else
+      handle_text_command
     end
   end
-
-  def instructions
-    reply(<<~TXT
-      Загружены следующие инструкции:
-      #{Instructions.instance.titles.join("\n")}
-    TXT
-    )
-  end
-
 
   private
 
-  def upload_instruction(state_controller, state_substate)
-    dest_path = File.join("./tmp", message.document.file_name)
-    path = download_attachment(message.document.file_id, dest_path)
-    instruction = YAML.load_file(path, symbolize_names: true)
-    new_title = instruction[:title].downcase
-    new_path = File.join(File.dirname(path), "#{new_title}.yml")
-    FileUtils.mv(path, new_path)
-
-    current_user.update(state: "#{self.class.name}|instructions_review|#{new_path}|0")
-    next_instruction_step(new_path, 0)
+  def handle_upload
+    case @substate
+    in "instruction_upload" if not message.document.file_name.match?(/\.(ya?ml)\z/i)
+      reply("Пожалуйста, загрузите файл с расширением .yml или .yaml")
+    in "instruction_upload"        
+      upload_instruction
+    in "instruction_review" if message.document
+      reply("Изображения, отправленные в качестве файлов (документов) не подходят.\nОтправляйте их как обычные картинки.")
+    in "instruction_review"
+      memorize_image
+    end
   end
 
-  def next_instruction_step(path, step)
-    YAML.load_file(path, symbolize_names: true)
+  def handle_review
+    $mutex.sync do
+      current_instruction = YAML.load_file(@instruction_path, symbolize_names: true)
+      actions = current_instruction[:steps].map { |step| step[:actions] }.flatten
+
+      case message.text
+      in "/admin clear_images"
+        current_instruction[:steps][@step].delete(:images)
+        File.write(@instruction_path, current_instruction.to_yaml)
+        instruction_step
+      in "/admin reject_instruction" | "Отклонить инструкцию"
+        FileUtils.rm(@instruction_path)
+        current_user.update(state: nil)
+        reply("Инструкция снята с ревью.\n/start - чтобы вернуться к боту\n/admin - чтобы посмотреть доступные команды для администрации")
+      in "Принять инструкцию"
+      in String if actions.any?(message.text)
+        @step += 1
+        if @step > current_instruction[:steps].size > @step
+          instruction_step
+          state = [@state_controller, @substate, @instruction_path, @step].join("|")
+          current_user.update(state:)
+        else
+          reply_with_buttons("Инструкция #{current_instruction[:title]} - принять или отклонить?\nОтклонённая инструкция будет удалена; Принятая инструкция будет выложена в общий доступ.",
+            [
+              ["Принять инструкцию", "Сохранить как черновик", "Отклонить инструкцию"]
+            ]
+          )
+        end
+      else
+        reply("Нажмите любую кнопку для продолжения или загрузите изображения для")
+      end
+    end
+  end
+
+  def handle_text_command
+    case message.text
+    in "/admin instructions"
+      reply(<<~TXT
+        Загружены следующие инструкции:
+        #{Instructions.instance.titles.join("\n")}
+      TXT
+      )
+    in "/admin pending_instructions"
+      instruction_files = Dir.glob("./tmp/*.yml").map { |f| File.basename(f, ".yml") }
+
+      if instruction_files.any?
+        reply("Доступные инструкции для ревью:\n" + instruction_files.join("\n"))
+      else
+        reply("Нет загруженных инструкций в папке tmp.")
+      end
+    in /\/admin review_instruction/
+      instruction_name = message.text.split.last
+      path = "./tmp/#{instruction_name}.yml"
+      if File.exist?(path)
+        reply("Начинаем ревью инструкции #{instruction_name}")
+        state = "#{self.class.name}|instructions_review|#{path}|0"
+        current_user.update(state:)
+
+        instruction_step(new_path, 0)
+      else
+        reply("Инструкция #{instruction_name} не найдена.")
+      end
+    in "/admin upload_instruction"
+      current_user.update(state: "#{self.class.name}|instruction_upload")
+      reply("Пожалуйста, прикрепите YAML файл с инструкцией.")
+    end
+  end
+
+  def upload_instruction
+    dest_path = File.join("./tmp", message.document.file_name)
+    path = download_attachment(message.document.file_id, dest_path)
+
+    $mutex.sync do
+      instruction = YAML.load_file(path, symbolize_names: true)
+      new_title = instruction[:title].downcase
+      new_path = File.join(File.dirname(path), "#{new_title}.yml")
+      FileUtils.mv(path, new_path)
+    end
+
+    state = "#{self.class.name}|instructions_review|#{new_path}|0"
+    current_user.update(state:)
+
+    instruction_step(new_path, 0)
+  end
+
+  def instruction_step(path = @instruction_path, step = @step)
+    current_instruction = YAML.load_file(path, symbolize_names: true)
     step = current_instruction[:steps][step]
 
     reply_with_buttons(
       step[:message],
       step[:actions].map { |a| [a] }
     )
+  end
+
+  def memorize_image
+    image_id = message.photo.last.file_id
+
+    $mutex.sync do
+      current_instruction = YAML.load_file(@instruction_path, symbolize_names: true)
+      current_instruction[:steps][@step][:images] ||= []
+      current_instruction[:steps][@step][:images] << image_id
+
+      File.write(@instruction_path, current_instruction.to_yaml)
+    end
+
+    instruction_step
   end
 end

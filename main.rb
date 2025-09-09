@@ -9,6 +9,10 @@ require_relative "initializers/all"
 require "telegram/bot"
 
 $token = ENV["TELEGRAM_TOKEN"].freeze
+$mutex = Mutex.new
+def $mutex.sync
+  $mutex.synchronize { yield }
+end
 
 Routes.instance.build!
 

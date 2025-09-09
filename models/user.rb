@@ -3,6 +3,10 @@ class User < Sequel::Model(:users)
 
   MAX_KEYS = 5
 
+  def state_array
+    state&.split("|") || []
+  end
+
   def too_many_keys?
     keys.count >= MAX_KEYS
   end
