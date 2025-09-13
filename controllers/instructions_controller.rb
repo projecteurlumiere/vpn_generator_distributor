@@ -43,11 +43,10 @@ class InstructionsController < ApplicationController
 
   def reply_instruction_step(current_instruction, step)
     step = current_instruction[:steps][step]
-
-
     reply_with_buttons(
       step[:message],
-      step[:actions].map { |a| [a] }
+      step[:actions].map { |a| [a] },
+      photos: step[:images]
     )
   end
 

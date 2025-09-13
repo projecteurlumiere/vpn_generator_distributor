@@ -23,7 +23,7 @@ class Admin::InstructionsController < ApplicationController
       "/admin instructions",
       "/admin upload_instruction",
       "/admin pending_instructions",
-      /\/admin review_instruction/,
+      "/admin review_instruction",
       "/admin upload_instruction"
     ]
   end
@@ -73,20 +73,29 @@ class Admin::InstructionsController < ApplicationController
         FileUtils.rm(@instruction_path)
         current_user.update(state: nil)
         reply("Инструкция снята с ревью.\n/start - чтобы вернуться к боту\n/admin - чтобы посмотреть доступные команды для администрации")
+      in "Заново"
+        state = "#{self.class.name}|instruction_review|#{new_path}|0"
+        current_user.update(state:)
+        instruction_step(new_path, 0)
       in "Принять инструкцию"
+        filename = @instruction_path.split("/").last
+        FileUtils.mv(@instruction_path, "./data/instructions/#{filename}")
+        Instructions.instance.load!
+        Routes.instance.build!
+        reply("Инструкция загружена и доступна для использования")
+        current_user.update(state: nil)
       in String if actions.any?(message.text)
         @step += 1
-        if @step > current_instruction[:steps].size > @step
-          instruction_step
-          state = [@state_controller, @substate, @instruction_path, @step].join("|")
-          current_user.update(state:)
-        else
-          reply_with_buttons("Инструкция #{current_instruction[:title]} - принять или отклонить?\nОтклонённая инструкция будет удалена; Принятая инструкция будет выложена в общий доступ.",
-            [
-              ["Принять инструкцию", "Сохранить как черновик", "Отклонить инструкцию"]
-            ]
-          )
-        end
+
+        instruction_step
+        state = [@state_controller, @substate, @instruction_path, @step].join("|")
+        current_user.update(state:)
+      in "Это последний шаг инструкции"
+        reply_with_buttons("Инструкция #{current_instruction[:title]} - принять или отклонить?\nОтклонённая инструкция будет удалена; Принятая инструкция будет выложена в общий доступ.",
+          [
+            ["Принять инструкцию", "Заново", "Отклонить инструкцию"]
+          ]
+        )
       else
         reply("Нажмите любую кнопку для продолжения или загрузите изображения для")
       end
@@ -114,7 +123,7 @@ class Admin::InstructionsController < ApplicationController
       path = "./tmp/#{instruction_name}.yml"
       if File.exist?(path)
         reply("Начинаем ревью инструкции #{instruction_name}")
-        state = "#{self.class.name}|instructions_review|#{path}|0"
+        state = "#{self.class.name}|instruction_review|#{path}|0"
         current_user.update(state:)
 
         instruction_step(new_path, 0)
@@ -136,21 +145,24 @@ class Admin::InstructionsController < ApplicationController
       new_title = instruction[:title].downcase
       new_path = File.join(File.dirname(path), "#{new_title}.yml")
       FileUtils.mv(path, new_path)
+      
+      state = "#{self.class.name}|instruction_review|#{new_path}|0"
+      current_user.update(state:)
+      
+      instruction_step(new_path, 0)
     end
-
-    state = "#{self.class.name}|instructions_review|#{new_path}|0"
-    current_user.update(state:)
-
-    instruction_step(new_path, 0)
   end
 
   def instruction_step(path = @instruction_path, step = @step)
     current_instruction = YAML.load_file(path, symbolize_names: true)
-    step = current_instruction[:steps][step]
+    current_step = current_instruction[:steps][step]
+    photos = current_step[:images]
+    current_step[:actions] = ["Это последний шаг инструкции"] if @step >= current_instruction[:steps].size - 1
 
     reply_with_buttons(
-      step[:message],
-      step[:actions].map { |a| [a] }
+      current_step[:message],
+      current_step[:actions].map { |a| [a] },
+      photos:
     )
   end
 

@@ -28,10 +28,35 @@ class ApplicationController
   # usage:
   # reply("hello world!")
   def reply(text = nil, **opts)
-    bot.api.send_message(chat_id:,
-                         text:,
-                         reply_markup: Telegram::Bot::Types::ReplyKeyboardRemove.new(remove_keyboard: true),
-                         **opts)
+    opts[:reply_markup] ||= Telegram::Bot::Types::ReplyKeyboardRemove.new(remove_keyboard: true)
+
+    if (photos = opts.delete(:photos)) && photos.any?
+      if photos.size == 1
+        bot.api.send_photo(
+          chat_id:,
+          photo: photos.first,
+          caption: text,
+          **opts
+        )
+      else
+        # Send multiple images as media group
+        media = photos.map.with_index do |photo, idx|
+          h = { type: "photo", media: photo }
+          h[:caption] = text if idx.zero? && text
+          h
+        end
+
+        bot.api.send_media_group(
+          chat_id:,
+          media:,
+          **opts
+        )
+      end
+    else
+      bot.api.send_message(chat_id:,
+                           text:,
+                           **opts)
+    end
   end
 
   # replies with buttons, attached to the message (inline buttons)

@@ -42,9 +42,10 @@ class Routes
     
     klasses = Routes.instance[type][key] || []
 
-    if klasses.none? && user.state_array.any?
-      current_user = ApplicationController.new(bot, message).send(:current_user)
-      user.state_array => [controller_name, *]
+    if klasses.none? && 
+       (current_user = ApplicationController.new(bot, message).send(:current_user)) &&
+       current_user.state_array.any?
+      current_user.state_array => [controller_name, *]
       klass = ApplicationController.subclasses.find do |controller|
         controller.name == controller_name
       end
@@ -57,7 +58,7 @@ class Routes
         controller = klass.new(bot, message)
         controller.instance_variable_set(:@current_user, current_user) if defined? current_user
         return controller.send(method)
-      rescue NoMethodError, NoMatchingPatternError, ApplicationController::RoutingError => e
+      rescue NoMatchingPatternError, ApplicationController::RoutingError => e
         next
       end 
     end

@@ -19,7 +19,11 @@
 class Admin::BaseController < ApplicationController
   def self.routes
     [
-      "/admin", # routed to methods
+      "/admin",
+      "/admin instructions",
+      "/admin upload_instruction",
+      "/admin versions",
+      "/admin rollback"
     ]
   end
 

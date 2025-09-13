@@ -4,6 +4,8 @@ class StartController < ApplicationController
   end
 
   def call
+    current_user.update(state: nil)
+
     case message.text
     in "/start" if current_user.rules_read
       reply_instructions
