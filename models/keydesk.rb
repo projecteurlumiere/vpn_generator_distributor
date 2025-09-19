@@ -24,11 +24,19 @@ class Keydesk < Sequel::Model(:keydesks)
   end
 
   def create_config(user:)
-    config = vw.create_conf_file
     key = add_key(
       user_id: user.id,
-      keydesk_username: config["username"]
+      reserved_until: Time.now + 3_600 # 1 hour
     )
+
+    begin
+      config = vw.create_conf_file("./tmp/vpn_configs/#{key.id}")
+    rescue => e
+      key.delete
+      raise e
+    end
+
+    key.update(keydesk_username: config["username"])
     key.config = config
     key
   end

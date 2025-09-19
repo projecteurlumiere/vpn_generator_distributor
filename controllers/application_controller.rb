@@ -136,6 +136,18 @@ class ApplicationController
     dest_path
   end
 
+  def upload_file(path, message = nil)
+    file = File.open(path)
+    upload = Faraday::UploadIO.new(file, "text/plain", File.basename(file))
+    
+    bot.api.send_document(
+      chat_id: chat_id,
+      document: upload,
+      caption: message
+    )
+    file.close
+  end
+
   def callback_name(*args)
     args.unshift(self.class.name) if args[0].instance_of?(String)
 

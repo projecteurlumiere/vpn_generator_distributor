@@ -9,51 +9,143 @@ class InstructionsController < ApplicationController
 
   def call
     if instruction_name = Instructions.instance.instruction_name_by_title(message.text)
-      current_user.update(state: "#{self.class.name}|#{instruction_name}|0")
+      current_user.update(state: "#{self.class.name}|#{instruction_name}|key|false")
     end
 
     if current_user.state.nil?
       reply_with_buttons(
-        "Похоже, вы потеряли инструкции. Вот они:",
+        "Такой команды нет.\nПохоже, вы потеряли инструкции. Вот они:",
         Instructions.instance.titles.map { |title| [title] }
       )
       return
     end
 
-    current_user.state.split("|") => [controller, instruction_name, step]
-    current_instruction = Instructions.instance[instruction_name]
-    step = step.to_i
 
-    raise RoutingError if step - 1 >= 0 &&
-                          Instructions.instance[instruction_name][:steps][step - 1][:actions].none?(message.text)
+    @controller, @instruction_name, @step, @key_reserved = current_user.state.split("|")
 
-    if step >= current_instruction[:steps].size
+    if @step == "key"
+      case message.text
+      in "Мне нужен ключ"
+        issue_key
+        return
+      in "У меня уже есть ключ"
+        @step = 0
+      else
+        msg = <<~TXT
+          Для работы VPN'а вам понадобится ключ, который мы выдаём. 
+          Число таких ключей ограничено, но мы стараемся помочь всем.
+        TXT
+        
+        reply_with_buttons(msg, [
+            ["У меня уже есть ключ", "Мне нужен ключ"]
+          ]
+        )
+        return
+      end
+    end
+
+    @step = @step.to_i
+
+    raise RoutingError if @step - 1 >= 0 &&
+                          Instructions.instance[@instruction_name][:steps][@step - 1][:actions].none?(message.text)
+
+    if @step >= current_instruction[:steps].size
       current_user.update(state: nil)
       reply_success
       return
     end
 
-    reply_instruction_step(current_instruction, step)
-
-    step += 1 
-    current_user.update(state: [controller, instruction_name, step.to_i].join("|"))
+    reply_instruction_step
   end
 
   private
 
-  def reply_instruction_step(current_instruction, step)
-    step = current_instruction[:steps][step]
+  def current_instruction
+    Instructions.instance[@instruction_name]
+  end
+
+  def reply_instruction_step
+    binding.irb if @step == 0
+    current_step = current_instruction[:steps][@step]
+
     reply_with_buttons(
-      step[:message],
-      step[:actions].map { |a| [a] },
-      photos: step[:images]
+      current_step[:message],
+      current_step[:actions].map { |a| [a] },
+      photos: current_step[:images]
     )
+
+    if current_step[:issue_key] && @key_requested 
+      upload_key(set[:issue_key])
+    end
+
+    @step += 1 
+    current_user.update(state: [@controller, @instruction_name, @step.to_i, @key_requested].join("|"))
   end
 
   def reply_success
+    reply_with_instructions("Вы успешно прошли инструкцию! Можете пройти ещё одну:")
+  end
+
+  def reply_with_instructions(msg)
     reply_with_buttons(
-      "Вы успешно прошли инструкцию! Можете пройти ещё одну:",
+      msg,
       Instructions.instance.titles.map { |title| [title] }
     )
+  end
+
+  def issue_key
+    if current_user.too_many_keys?
+      msg = <<~TXT
+        Ошибка!
+        У вас слишком много ключей. Возможно, вы хотели свериться с инструкцией не получая ключ?
+
+        Вот доступные инстркуции
+      TXT
+
+      reply_with_instructions(msg)
+    elsif current_user.awaiting_config?
+      reply("Мы уже резервируем для вас ключ. Пожалуйста, подождите.\nЕсли вы потерялись, нажмите /start")
+    elsif current_user.config_created?
+      reply("Ваш ключ уже зарезервирован для вас!")
+      reply_instruction_step
+    else
+      reply("Резервируем для вас место в нашей VPN сети. Это займёт около минуты. Если вы уверены, что что-то пошло не так, нажмите /start")
+
+      res = Key.issue(to: current_user) 
+      case res
+      in :keydesk_full
+        reply_with_instructions("Извините, сейчас нет свободных мест в нашей сети.")
+      in :keydesk_error
+        reply_with_instructions("Что-то пошло во время создания конфигурации. Попробуйте ещё раз или позже.")
+      in Key
+        config = res.config
+        reply("Ключ успешно зарезервирован. Продолжайте следовать инструкции.")
+        @key_reserved = true
+
+        reply_instruction_step
+      end
+    end
+  end
+
+  def upload_key(key_type)
+    if key = current_user.keys.where { pending_for_request < Time.now }.first
+      dir_path = "./tmp/#{key.id}"
+      file_path = Dir.glob(File.join(dir_path, "#{key_type}*")).first
+
+      case key_type
+      in "amnezia" | "wireguard"
+        upload_file(file_path)
+      in "outline"
+        reply(File.read(file_path))
+      end
+    else
+      msg = <<~TXT
+        Похоже, вы резервировали ключ в начале прохождения инструкции.
+        К сожалению, срок, на который мы зарезервировали вам ключ уже прошёл.
+        Попробуйте пройти инструкцию заново и запросить ключ в начале её прохождения.
+      TXT
+
+      reply(msg)
+    end
   end
 end

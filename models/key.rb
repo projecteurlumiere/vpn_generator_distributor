@@ -4,8 +4,6 @@ class Key < Sequel::Model(:keys)
 
   attr_accessor :config
 
-  SUITS = ["🃏", "♠️", "♥️", "♣️", "♦️"]
-
   def before_create
     taken = user.keys_dataset.exclude(id: self.id).select_map(:personal_note)
     avail = SUITS - taken
@@ -26,16 +24,24 @@ class Key < Sequel::Model(:keys)
   end
 
   def self.issue(to:)
-    return :keydesk_full unless keydesk = Keydesk.where { n_keys < Keydesk::MAX_USERS }.first
-    
     user = to
-    user.update(pending_config_until: Time.now + 120)
 
-    keydesk.create_config(user:) # returns key with config
-  rescue StandardError => e
-    LOGGER.warn "Error #{e} when requesting onfig from #{keydesk.name}"
-    return :keydesk_error
-  ensure
-    user.update(pending_config_until: nil)  
+    if key = Key.where { reserved_until <= Time.now }.first
+      key.update(user_id: user.id, reserved_until: Time.now + 3_600)
+      key
+    else
+      begin
+        keydesk = Keydesk.where { n_keys < Keydesk::MAX_USERS }.first
+        return :keydesk_full if keydesk.nil?
+  
+        user.update(pending_config_until: Time.now + 120)
+        keydesk.create_config(user:) # returns key with config
+      rescue StandardError => e
+        LOGGER.warn "Error #{e} when requesting config from #{keydesk.name}"
+        return :keydesk_error
+      ensure
+        user.update(pending_config_until: nil)  
+      end
+    end
   end
 end

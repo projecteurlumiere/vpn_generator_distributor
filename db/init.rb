@@ -26,4 +26,5 @@ DB.create_table? :keys do
   String :keydesk_username, null: false
   String :personal_note, null: false
   DateTime :pending_destroy_until
+  DateTime :reserved_until
 end

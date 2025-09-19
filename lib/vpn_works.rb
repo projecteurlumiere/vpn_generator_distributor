@@ -35,7 +35,7 @@ class VpnWorks
     (users_dict[name.to_s] || {})["UserID"]
   end
 
-  def create_conf_file
+  def create_conf_file(conf_path)
     data = get_conf_file
     username = data["UserName"]
     results = {
@@ -50,7 +50,9 @@ class VpnWorks
       amnezia_filename = amnezia_config["FileName"]
       amnezia_file_content = amnezia_config["FileContent"]
       if amnezia_filename && amnezia_file_content
-        amnezia_path = File.join("tmp", amnezia_filename)
+        ext = File.extname(amnezia_filename)
+        filename = ["amnezia", ext].join
+        amnezia_path = File.join(conf_path, filename)
         File.write(amnezia_path, amnezia_file_content)
         results["amnezia"] = amnezia_path
       end
@@ -61,7 +63,10 @@ class VpnWorks
       wireguard_filename = wireguard_config["FileName"]
       wireguard_file_content = wireguard_config["FileContent"]
       if wireguard_filename && wireguard_file_content
-        wireguard_path = File.join("tmp", wireguard_filename)
+        ext = File.extname(wireguard_filename)
+        filename = ["wireguard", ext].join
+
+        wireguard_path = File.join(conf_path, filename)
         File.write(wireguard_path, wireguard_file_content)
         results["wireguard"] = wireguard_path
       end
@@ -70,7 +75,11 @@ class VpnWorks
     outline_config = data["OutlineConfig"]
     if outline_config
       outline_key = outline_config["AccessKey"]
-      results["outline"] = outline_key if outline_key
+      if outline_key
+        path = File.join(conf_path, "outline.conf")
+        File.write(path, outline_key)
+        results["outline"] = outline_key
+      end
     end
 
     raise VpnWorksError, "No configurations provided" if results.values.all?(&:empty?)

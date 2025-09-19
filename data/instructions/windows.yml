@@ -13,7 +13,7 @@ steps:
   # 3
   - message: |-
       Вот ваш ключ
-    issue_key: shadowsocks
+    issue_key: amnezia
     actions:
       - Я получил ключ
   # 4
