@@ -48,8 +48,10 @@ class Admin::InstructionsController < ApplicationController
     reply("Пожалуйста, прикрепите YAML файл с инструкцией.")
   end
 
-  def pending_instructions
-    reply("There are some pending instructions")
+  def continue_review(filename)
+    new_path = File.join("./tmp/instructions", filename)
+    current_user.update(state: "#{self.class.name}|instruction_review|#{new_path}|0")
+    instruction_step(new_path, 0)
   end
 
   def instructions
@@ -127,7 +129,7 @@ class Admin::InstructionsController < ApplicationController
       TXT
       )
     in "/admin pending_instructions"
-      instruction_files = Dir.glob("./tmp/*.yml").map { |f| File.basename(f, ".yml") }
+      instruction_files = Dir.glob("./tmp/instructions/*.yml").map { |f| File.basename(f, ".yml") }
 
       if instruction_files.any?
         reply("Доступные инструкции для ревью:\n" + instruction_files.join("\n"))
@@ -136,7 +138,7 @@ class Admin::InstructionsController < ApplicationController
       end
     in /\/admin review_instruction/
       instruction_name = message.text.split.last
-      path = "./tmp/#{instruction_name}.yml"
+      path = "./tmp/instructions/#{instruction_name}.yml"
       if File.exist?(path)
         reply("Начинаем ревью инструкции #{instruction_name}")
         state = "#{self.class.name}|instruction_review|#{path}|0"
@@ -150,7 +152,7 @@ class Admin::InstructionsController < ApplicationController
   end
 
   def download_instruction
-    dest_path = File.join("./tmp", message.document.file_name)
+    dest_path = File.join("./tmp/instructions", message.document.file_name)
     path = download_attachment(message.document.file_id, dest_path)
 
     $mutex.sync do
@@ -170,7 +172,7 @@ class Admin::InstructionsController < ApplicationController
     current_instruction = YAML.load_file(path, symbolize_names: true)
     current_step = current_instruction[:steps][step]
     photos = current_step[:images]
-    current_step[:actions] = ["Это последний шаг инструкции"] if @step >= current_instruction[:steps].size - 1
+    current_step[:actions] = ["Это последний шаг инструкции"] if step >= current_instruction[:steps].size - 1
 
     reply_with_buttons(
       current_step[:message],

@@ -28,6 +28,15 @@ class Admin::BaseController < ApplicationController
     in "/admin"
       current_user.update(state: nil)
 
+      pending = Instructions.instance.pending.map do |path|
+        title = YAML.load_file(path, symbolize_names: true)[:title]
+        filename = File.basename(path)
+
+        { 
+          "Продолжить ревью #{title} (#{filename})" => callback_name(Admin::InstructionsController, "continue_review", filename)
+        }
+      end
+
       reply_with_inline_buttons("Возможные админские действия",
         [
           {
@@ -36,9 +45,7 @@ class Admin::BaseController < ApplicationController
           {
             "Загрузить инструкцию" => callback_name(Admin::InstructionsController, "upload_instruction"),
           },
-          {
-            "Инструкции-черновики" => callback_name(Admin::InstructionsController, "pending_instructions")
-          }
+          *pending
         ]
       )
     end

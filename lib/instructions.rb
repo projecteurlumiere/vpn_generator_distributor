@@ -32,4 +32,8 @@ class Instructions
   def instruction_name_by_title(title)
     @data.find { |key, instruction| instruction[:title] == title }&.first
   end
+
+  def pending
+    Dir.glob("./tmp/instructions/*.yml")
+  end
 end

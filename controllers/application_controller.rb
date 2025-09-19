@@ -139,6 +139,9 @@ class ApplicationController
   def callback_name(*args)
     args.unshift(self.class.name) if args[0].instance_of?(String)
 
-    args.join("|")
+    name = args.join("|")
+    raise "Callback cannot have bytezise more than 64" if name.bytesize > 64
+
+    name
   end
 end
