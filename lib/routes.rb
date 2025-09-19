@@ -28,18 +28,29 @@ class Routes
   def dispatch_controller(bot, message)
     case message
     in Telegram::Bot::Types::Message
-      type = :command
-      method = :call
-
-      key = message.text
-      args = []
-    # in Telegram::Bot::Types::CallbackQuery
-    #   raise "Handling CallbackQuery type of messages is not implemented!"
-    #   type = :callback
-    #   message.data.split("_") => [key, method, *args]
+      handle_message(bot, message)
+    in Telegram::Bot::Types::CallbackQuery
+      handle_callback_query(bot, message)
     end
+  end
 
-    
+  def [](type)
+    @routes[type]
+  end
+
+  def all
+    @routes
+  end
+
+  private
+
+  def handle_message(bot, message)
+    type = :command
+    method = :call
+
+    key = message.text
+    args = []
+
     klasses = Routes.instance[type][key] || []
 
     if klasses.none? && 
@@ -68,11 +79,24 @@ class Routes
     raise ControllerNotFoundError, msg
   end
 
-  def [](type)
-    @routes[type]
-  end
+  def handle_callback_query(bot, message)
+    type = :callback
+    message.data.split("|") => [klass_name, method, *args]
 
-  def all
-    @routes
+    klass = ApplicationController.subclasses.find do |controller|
+      controller.name == klass_name
+    end
+
+    if klass.nil?
+      raise ControllerNotFoundError, "Could not find controller `#{klass_name}` inferred from #{message.data}"
+    end
+
+
+    unless klass.method_defined?(method)
+      raise ControllerNotFoundError, "Could not find method `#{method}` in controller `#{klass_name}` inferred from #{message.data}"
+    end
+
+    klass.new(bot, message)
+         .send(method, *args)
   end
 end

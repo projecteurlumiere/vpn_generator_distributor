@@ -62,17 +62,22 @@ class ApplicationController
   # replies with buttons, attached to the message (inline buttons)
   # usage:
   # reply_with_buttons("Here are your choices", { "Visible option text" => "Callback_info" } )
-  def reply_with_inline_buttons(text, data_hash, **reply_opts)
-    buttons = data_hash.map do |label, callback|
-      Telegram::Bot::Types::InlineKeyboardButton.new(text: label, callback_data: callback)
+  def reply_with_inline_buttons(text, data, **reply_opts)
+    data = [data] unless data.is_a?(Array)
+
+    inline_keyboard = data.map do |row|
+      row.map do |label, callback|
+        Telegram::Bot::Types::InlineKeyboardButton.new(text: label, callback_data: callback)
+      end
     end
 
     reply_markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(
-      inline_keyboard: [buttons] # all buttons in one row; split into arrays for multiple rows
+      inline_keyboard:
     )
 
     reply(text, reply_markup:, **reply_opts)
   end
+
 
   # replies with reply keyboard buttons that replace the user's text keyboard
   # usage:
@@ -129,5 +134,11 @@ class ApplicationController
     end
 
     dest_path
+  end
+
+  def callback_name(*args)
+    args.unshift(self.class.name) if args[0].instance_of?(String)
+
+    args.join("|")
   end
 end

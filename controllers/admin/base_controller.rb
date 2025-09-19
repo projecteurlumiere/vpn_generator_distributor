@@ -19,38 +19,28 @@
 class Admin::BaseController < ApplicationController
   def self.routes
     [
-      "/admin",
-      "/admin instructions",
-      "/admin upload_instruction",
-      "/admin versions",
-      "/admin rollback"
+      "/admin"
     ]
   end
 
   def call
     case message.text
-    in "/admin" | "/admin help"
-      help
+    in "/admin"
+      current_user.update(state: nil)
+
+      reply_with_inline_buttons("Возможные админские действия",
+        [
+          {
+            "Посмотреть инструкции" => callback_name(Admin::InstructionsController, "instructions"),
+          },
+          {
+            "Загрузить инструкцию" => callback_name(Admin::InstructionsController, "upload_instruction"),
+          },
+          {
+            "Инструкции-черновики" => callback_name(Admin::InstructionsController, "pending_instructions")
+          }
+        ]
+      )
     end
-  end
-
-  def help
-    reply(<<~TXT
-      Доступны следующие команды
-      /admin help
-      /admin instructions
-      /admin upload_instruction
-      /admin versions
-      /admin rollback
-    TXT
-    )
-  end
-
-  def instructions
-    reply(<<~TXT
-      Загружены следующие инструкции:
-      #{Instructions.instance.titles.join("\n")}
-    TXT
-    )
   end
 end

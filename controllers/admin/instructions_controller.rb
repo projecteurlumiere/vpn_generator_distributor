@@ -21,7 +21,6 @@ class Admin::InstructionsController < ApplicationController
   def self.routes
     [
       "/admin instructions",
-      "/admin upload_instruction",
       "/admin pending_instructions",
       "/admin review_instruction",
       "/admin upload_instruction"
@@ -44,6 +43,23 @@ class Admin::InstructionsController < ApplicationController
     end
   end
 
+  def upload_instruction
+    current_user.update(state: "#{self.class.name}|instruction_upload")
+    reply("Пожалуйста, прикрепите YAML файл с инструкцией.")
+  end
+
+  def pending_instructions
+    reply("There are some pending instructions")
+  end
+
+  def instructions
+    reply(<<~TXT
+      Загружены следующие инструкции:
+      #{Instructions.instance.titles.join("\n")}
+    TXT
+    )
+  end
+
   private
 
   def handle_upload
@@ -51,7 +67,7 @@ class Admin::InstructionsController < ApplicationController
     in "instruction_upload" if not message.document.file_name.match?(/\.(ya?ml)\z/i)
       reply("Пожалуйста, загрузите файл с расширением .yml или .yaml")
     in "instruction_upload"        
-      upload_instruction
+      download_instruction
     in "instruction_review" if message.document
       reply("Изображения, отправленные в качестве файлов (документов) не подходят.\nОтправляйте их как обычные картинки.")
     in "instruction_review"
@@ -74,7 +90,7 @@ class Admin::InstructionsController < ApplicationController
         current_user.update(state: nil)
         reply("Инструкция снята с ревью.\n/start - чтобы вернуться к боту\n/admin - чтобы посмотреть доступные команды для администрации")
       in "Заново"
-        state = "#{self.class.name}|instruction_review|#{new_path}|0"
+        state = "#{self.class.name}|instruction_review|#{@instruction_path}|0"
         current_user.update(state:)
         instruction_step(new_path, 0)
       in "Принять инструкцию"
@@ -130,13 +146,10 @@ class Admin::InstructionsController < ApplicationController
       else
         reply("Инструкция #{instruction_name} не найдена.")
       end
-    in "/admin upload_instruction"
-      current_user.update(state: "#{self.class.name}|instruction_upload")
-      reply("Пожалуйста, прикрепите YAML файл с инструкцией.")
     end
   end
 
-  def upload_instruction
+  def download_instruction
     dest_path = File.join("./tmp", message.document.file_name)
     path = download_attachment(message.document.file_id, dest_path)
 
