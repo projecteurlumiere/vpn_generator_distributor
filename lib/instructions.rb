@@ -29,6 +29,10 @@ class Instructions
     @data.map { |_file_name, instruction| instruction[:title] }
   end
 
+  def paths
+    Dir.glob("./data/instructions/*.yml")
+  end
+
   def instruction_name_by_title(title)
     @data.find { |key, instruction| instruction[:title] == title }&.first
   end

@@ -18,14 +18,7 @@
 require "fileutils"
 
 class Admin::InstructionsController < ApplicationController
-  def self.routes
-    [
-      "/admin instructions",
-      "/admin pending_instructions",
-      "/admin review_instruction",
-      "/admin upload_instruction"
-    ]
-  end
+  def self.routes; end
 
   def call
     state = current_user.state_array
@@ -39,7 +32,7 @@ class Admin::InstructionsController < ApplicationController
     elsif @substate == "instruction_review"
       handle_review
     else
-      handle_text_command
+      raise ApplicationController::RoutingError
     end
   end
 
@@ -55,10 +48,30 @@ class Admin::InstructionsController < ApplicationController
   end
 
   def instructions
-    reply(<<~TXT
-      Загружены следующие инструкции:
+    msg = <<~TXT
+      Загружены и работают следующие инструкции:
       #{Instructions.instance.titles.join("\n")}
     TXT
+
+    buttons = Instructions.instance.paths.map do |path|
+      filename = File.basename(path)
+      { "Скачать #{filename}" => callback_name("download_yml", filename) }
+    end
+
+    reply_with_inline_buttons(msg, buttons)
+  end
+
+  def download_yml(filename)
+    path = File.join("./data/instructions", filename)
+    unless File.exist?(path)
+      reply("Файл не найден: #{filename}")
+      return
+    end
+
+    bot.api.send_document(
+      chat_id:,
+      document: Faraday::UploadIO.new(path, 'application/x-yaml'),
+      caption: "Инструкция: #{filename}"
     )
   end
 
@@ -116,37 +129,6 @@ class Admin::InstructionsController < ApplicationController
         )
       else
         reply("Нажмите любую кнопку для продолжения или загрузите изображения для")
-      end
-    end
-  end
-
-  def handle_text_command
-    case message.text
-    in "/admin instructions"
-      reply(<<~TXT
-        Загружены следующие инструкции:
-        #{Instructions.instance.titles.join("\n")}
-      TXT
-      )
-    in "/admin pending_instructions"
-      instruction_files = Dir.glob("./tmp/instructions/*.yml").map { |f| File.basename(f, ".yml") }
-
-      if instruction_files.any?
-        reply("Доступные инструкции для ревью:\n" + instruction_files.join("\n"))
-      else
-        reply("Нет загруженных инструкций в папке tmp.")
-      end
-    in /\/admin review_instruction/
-      instruction_name = message.text.split.last
-      path = "./tmp/instructions/#{instruction_name}.yml"
-      if File.exist?(path)
-        reply("Начинаем ревью инструкции #{instruction_name}")
-        state = "#{self.class.name}|instruction_review|#{path}|0"
-        current_user.update(state:)
-
-        instruction_step(new_path, 0)
-      else
-        reply("Инструкция #{instruction_name} не найдена.")
       end
     end
   end

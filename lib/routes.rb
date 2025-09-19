@@ -13,7 +13,7 @@ class Routes
   def build!
     @routes = { command: {}, callback: {} }
     ApplicationController.subclasses.each do |klass|
-      klass.routes.each do |route|
+      klass.routes&.each do |route|
         # if offending_klass = @routes[:command][route]
         #   raise "Route `#{route}` is already handled by #{offending_klass}, cannot assign to #{klass}"
         # else
