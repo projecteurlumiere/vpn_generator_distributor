@@ -27,6 +27,7 @@ class Admin::BaseController < ApplicationController
     case message.text
     in "/admin"
       current_user.update(state: nil)
+      reply("Привет, администратор!")
 
       reply_with_inline_buttons("Возможные админские действия",
         [
@@ -39,7 +40,7 @@ class Admin::BaseController < ApplicationController
           {
             "Загрузить инструкцию" => callback_name(Admin::InstructionsController, "upload_instruction"),
           }
-        ]
+        ],
       )
     else
       raise ApplicationController::RoutingError

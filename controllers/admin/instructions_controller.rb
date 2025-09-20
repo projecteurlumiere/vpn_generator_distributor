@@ -183,6 +183,10 @@ class Admin::InstructionsController < ApplicationController
       current_step[:actions].map { |a| [a] },
       photos:
     )
+
+    if key_name = current_step[:issue_key]
+      reply("Выдаём ключ #{key_name}", reply_markup: nil)
+    end 
   end
 
   def memorize_image

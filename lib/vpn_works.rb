@@ -39,53 +39,34 @@ class VpnWorks
     FileUtils.mkdir_p(conf_path)
 
     data = get_conf_file
-    username = data["UserName"]
     results = {
-      "username" => username,
-      "amnezia" => "",
-      "wireguard" => "",
-      "outline" => ""
+      "amnezia" => data["AmnzOvcConfig"],
+      "wireguard" => data["WireguardConfig"],
+      "outline" => data["OutlineConfig"]
     }
 
-    amnezia_config = data["AmnzOvcConfig"]
-    if amnezia_config
-      amnezia_filename = amnezia_config["FileName"]
-      amnezia_file_content = amnezia_config["FileContent"]
-      if amnezia_filename && amnezia_file_content
-        ext = File.extname(amnezia_filename)
-        filename = ["amnezia", ext].join
-        amnezia_path = File.join(conf_path, filename)
-        File.write(amnezia_path, amnezia_file_content)
-        results["amnezia"] = amnezia_path
-      end
-    end
+    raise VpnWorksError, "No configurations provided for #{data}" if results.values.all?(&:empty?)
 
-    wireguard_config = data["WireguardConfig"]
-    if wireguard_config
-      wireguard_filename = wireguard_config["FileName"]
-      wireguard_file_content = wireguard_config["FileContent"]
-      if wireguard_filename && wireguard_file_content
-        ext = File.extname(wireguard_filename)
-        filename = ["wireguard", ext].join
+    results.each do |key, val|
+      if key == "outline"
+        outline_key = val["AccessKey"]
 
-        wireguard_path = File.join(conf_path, filename)
-        File.write(wireguard_path, wireguard_file_content)
-        results["wireguard"] = wireguard_path
-      end
-    end
-
-    outline_config = data["OutlineConfig"]
-    if outline_config
-      outline_key = outline_config["AccessKey"]
-      if outline_key
-        path = File.join(conf_path, "outline.conf")
+        path = File.join(conf_path, "outline.txt")
         File.write(path, outline_key)
-        results["outline"] = outline_key
+        results[key] = outline_key
+      else
+        filename = val["FileName"]
+        ext = File.extname(filename)
+        file_content = val["FileContent"]
+
+        filename = [key, ext].join
+        path = File.join(conf_path, filename)
+        File.write(path, file_content)
+        results[key] = path
       end
     end
 
-    raise VpnWorksError, "No configurations provided" if results.values.all?(&:empty?)
-
+    results["username"] = data["UserName"]
     results
   end
 
