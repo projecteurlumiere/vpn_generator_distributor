@@ -20,8 +20,7 @@ class InstructionsController < ApplicationController
       return
     end
 
-
-    @controller, @instruction_name, @step, @key_reserved = current_user.state.split("|")
+    @controller, @instruction_name, @step, @key_reserved = current_user.state_array
 
     if @step == "key"
       case message.text
@@ -65,7 +64,6 @@ class InstructionsController < ApplicationController
   end
 
   def reply_instruction_step
-    binding.irb if @step == 0
     current_step = current_instruction[:steps][@step]
 
     reply_with_buttons(
@@ -74,12 +72,12 @@ class InstructionsController < ApplicationController
       photos: current_step[:images]
     )
 
-    if current_step[:issue_key] && @key_requested 
-      upload_key(set[:issue_key])
+    if current_step[:issue_key] && @key_reserved
+      upload_key(current_step[:issue_key])
     end
 
     @step += 1 
-    current_user.update(state: [@controller, @instruction_name, @step.to_i, @key_requested].join("|"))
+    current_user.update(state: [@controller, @instruction_name, @step.to_i, @key_reserved].join("|"))
   end
 
   def reply_success
@@ -99,45 +97,50 @@ class InstructionsController < ApplicationController
         Ошибка!
         У вас слишком много ключей. Возможно, вы хотели свериться с инструкцией не получая ключ?
 
-        Вот доступные инстркуции
+        Вот доступные инструкции
       TXT
 
       reply_with_instructions(msg)
     elsif current_user.awaiting_config?
       reply("Мы уже резервируем для вас ключ. Пожалуйста, подождите.\nЕсли вы потерялись, нажмите /start")
-    elsif current_user.config_created?
+    elsif current_user.config_reserved?
       reply("Ваш ключ уже зарезервирован для вас!")
+
+      @key_reserved = true
+      @step = 0
       reply_instruction_step
     else
       reply("Резервируем для вас место в нашей VPN сети. Это займёт около минуты. Если вы уверены, что что-то пошло не так, нажмите /start")
 
-      res = Key.issue(to: current_user) 
-      case res
+      case Key.issue(to: current_user) 
       in :keydesk_full
         reply_with_instructions("Извините, сейчас нет свободных мест в нашей сети.")
       in :keydesk_error
         reply_with_instructions("Что-то пошло во время создания конфигурации. Попробуйте ещё раз или позже.")
       in Key
-        config = res.config
         reply("Ключ успешно зарезервирован. Продолжайте следовать инструкции.")
+        
         @key_reserved = true
-
+        @step = 0
         reply_instruction_step
       end
     end
   end
 
   def upload_key(key_type)
-    if key = current_user.keys.where { pending_for_request < Time.now }.first
-      dir_path = "./tmp/#{key.id}"
+    if key = current_user.keys_dataset.where { reserved_until >= Time.now }.first
+      dir_path = "./tmp/vpn_configs/per_key/#{key.id}"
       file_path = Dir.glob(File.join(dir_path, "#{key_type}*")).first
 
       case key_type
       in "amnezia" | "wireguard"
         upload_file(file_path)
       in "outline"
-        reply(File.read(file_path))
+        reply(File.read(file_path), reply_markup: nil)
       end
+
+      key.update(reserved_until: nil)
+      FileUtils.rm_rf(dir_path)
     else
       msg = <<~TXT
         Похоже, вы резервировали ключ в начале прохождения инструкции.

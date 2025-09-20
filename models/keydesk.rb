@@ -17,6 +17,9 @@ class Keydesk < Sequel::Model(:keydesks)
   def delete_user(id: nil, username: nil)
     id ||= user_id(username)
     vw.delete_user(id)
+  rescue StandardError => e
+    LOGGER.warn "Error #{e.class}: #{e.message} deleting user with id=#{id.inspect}, username=#{username.inspect}, backtrace=#{e.backtrace.first(4).join('; ')}"
+    raise e
   end
 
   def user_id(username)
@@ -24,20 +27,22 @@ class Keydesk < Sequel::Model(:keydesks)
   end
 
   def create_config(user:)
+    config = vw.create_conf_file("./tmp/vpn_configs/per_user/#{user.id}")
+
     key = add_key(
       user_id: user.id,
+      keydesk_username: config["username"],
       reserved_until: Time.now + 3_600 # 1 hour
     )
 
-    begin
-      config = vw.create_conf_file("./tmp/vpn_configs/#{key.id}")
-    rescue => e
-      key.delete
-      raise e
-    end
-
-    key.update(keydesk_username: config["username"])
     key.config = config
+
+    src = "./tmp/vpn_configs/per_user/#{user.id}"
+    dst = "./tmp/vpn_configs/per_key/#{key.id}"
+
+    FileUtils.mkdir_p(File.dirname(dst))
+    FileUtils.mv(src, dst)
+
     key
   end
 

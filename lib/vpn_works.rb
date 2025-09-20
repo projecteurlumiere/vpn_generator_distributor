@@ -36,6 +36,8 @@ class VpnWorks
   end
 
   def create_conf_file(conf_path)
+    FileUtils.mkdir_p(conf_path)
+
     data = get_conf_file
     username = data["UserName"]
     results = {

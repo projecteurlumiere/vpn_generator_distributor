@@ -4,7 +4,19 @@ class User < Sequel::Model(:users)
   MAX_KEYS = 5
 
   def state_array
-    state&.split("|") || []
+    arr = state&.split("|") || []
+    arr.map! do |s|
+      case s
+      in "true"
+        true
+      in "false"
+        false
+      else
+        s
+      end
+    end
+    
+    arr
   end
 
   def too_many_keys?
@@ -13,5 +25,9 @@ class User < Sequel::Model(:users)
 
   def awaiting_config?
     pending_config_until && pending_config_until > Time.now
+  end
+
+  def config_reserved?
+    keys.any? { |key| key.reserved_until && key.reserved_until > Time.now }
   end
 end

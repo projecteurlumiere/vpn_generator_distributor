@@ -12,7 +12,7 @@
   :actions:
   - Я установил VPN
 - :message: Вот ваш ключ для подключения
-  :issue_key: shadowsocks
+  :issue_key: outline
   :actions:
   - Я получил ключ
 - :message: Введите полученный ключ в приложение VPN

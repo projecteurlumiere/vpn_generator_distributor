@@ -4,13 +4,6 @@ class Key < Sequel::Model(:keys)
 
   attr_accessor :config
 
-  def before_create
-    taken = user.keys_dataset.exclude(id: self.id).select_map(:personal_note)
-    avail = SUITS - taken
-    self.personal_note = avail.sample if avail.any?
-    super
-  end
-
   def destroy
     update(pending_destroy_until: Time.now + 120)
     keydesk.delete_user(username: keydesk_username)
@@ -37,7 +30,7 @@ class Key < Sequel::Model(:keys)
         user.update(pending_config_until: Time.now + 120)
         keydesk.create_config(user:) # returns key with config
       rescue StandardError => e
-        LOGGER.warn "Error #{e} when requesting config from #{keydesk.name}"
+        LOGGER.warn "Error #{e.class}: #{e.message} when requesting config from keydesk=#{keydesk&.name.inspect}, user_id=#{to&.id}, backtrace=#{e.backtrace.join("\n")}"
         return :keydesk_error
       ensure
         user.update(pending_config_until: nil)  

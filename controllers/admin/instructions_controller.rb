@@ -61,6 +61,26 @@ class Admin::InstructionsController < ApplicationController
     reply_with_inline_buttons(msg, buttons)
   end
 
+  def instructions_under_review
+    msg = <<~TXT
+      /admin, чтобы вернуться
+      *
+      *
+      Выберите инструкцию-черновик ниже, чтобы отредактировать её.
+    TXT
+
+    pending = Instructions.instance.pending.map do |path|
+      title = YAML.load_file(path, symbolize_names: true)[:title]
+      filename = File.basename(path)
+
+      { 
+        "Продолжить ревью #{title} (#{filename})" => callback_name(Admin::InstructionsController, "continue_review", filename)
+      }
+    end
+
+    reply_with_inline_buttons(msg, [*pending])
+  end
+
   def download_yml(filename)
     path = File.join("./data/instructions", filename)
     unless File.exist?(path)
@@ -87,6 +107,8 @@ class Admin::InstructionsController < ApplicationController
       reply("Изображения, отправленные в качестве файлов (документов) не подходят.\nОтправляйте их как обычные картинки.")
     in "instruction_review"
       memorize_image
+    else
+      raise ApplicationController::RoutingError
     end
   end
 

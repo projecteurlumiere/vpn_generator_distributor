@@ -28,7 +28,7 @@ class ApplicationController
   # usage:
   # reply("hello world!")
   def reply(text = nil, **opts)
-    opts[:reply_markup] ||= Telegram::Bot::Types::ReplyKeyboardRemove.new(remove_keyboard: true)
+    opts[:reply_markup] = Telegram::Bot::Types::ReplyKeyboardRemove.new(remove_keyboard: true) unless opts.key?(:reply_markup)
 
     if (photos = opts.delete(:photos)) && photos.any?
       if photos.size == 1
@@ -41,9 +41,7 @@ class ApplicationController
       else
         # Send multiple images as media group
         media = photos.map.with_index do |photo, idx|
-          h = { type: "photo", media: photo }
-          h[:caption] = text if idx.zero? && text
-          h
+          { type: "photo", media: photo }
         end
 
         bot.api.send_media_group(
@@ -51,6 +49,10 @@ class ApplicationController
           media:,
           **opts
         )
+
+        bot.api.send_message(chat_id:,
+                     text:,
+                     **opts)
       end
     else
       bot.api.send_message(chat_id:,

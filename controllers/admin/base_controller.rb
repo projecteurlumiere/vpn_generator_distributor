@@ -28,26 +28,21 @@ class Admin::BaseController < ApplicationController
     in "/admin"
       current_user.update(state: nil)
 
-      pending = Instructions.instance.pending.map do |path|
-        title = YAML.load_file(path, symbolize_names: true)[:title]
-        filename = File.basename(path)
-
-        { 
-          "Продолжить ревью #{title} (#{filename})" => callback_name(Admin::InstructionsController, "continue_review", filename)
-        }
-      end
-
       reply_with_inline_buttons("Возможные админские действия",
         [
           {
             "Посмотреть инструкции" => callback_name(Admin::InstructionsController, "instructions"),
           },
           {
-            "Загрузить инструкцию" => callback_name(Admin::InstructionsController, "upload_instruction"),
+            "Инструкции-черновики" => callback_name(Admin::InstructionsController, "instructions_under_review"),
           },
-          *pending
+          {
+            "Загрузить инструкцию" => callback_name(Admin::InstructionsController, "upload_instruction"),
+          }
         ]
       )
+    else
+      raise ApplicationController::RoutingError
     end
   end
 end

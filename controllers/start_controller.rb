@@ -18,6 +18,8 @@ class StartController < ApplicationController
     in "Правила подтверждаю"
       current_user.update(rules_read: true)
       reply_instructions
+    else
+      raise ApplicationController::RoutingError
     end
   end
 
