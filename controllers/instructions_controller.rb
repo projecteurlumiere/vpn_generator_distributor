@@ -1,22 +1,30 @@
 class InstructionsController < ApplicationController
   def self.routes
-    Instructions.instance.all.map do |_file_name, content|
+    instructions = Instructions.instance.all.map do |_file_name, content|
       [
         content[:title], # instruction titles
       ]
-    end.flatten
+    end.flatten 
+
+    instructions + ["Подключить VPN"]
   end
 
   def call
+    if message.text == "Подключить VPN"
+      msg = <<~TXT
+        Вот список доступных инструкций:
+      TXT
+
+      reply_with_instructions(msg)
+      return
+    end
+
     if instruction_name = Instructions.instance.instruction_name_by_title(message.text)
       current_user.update(state: "#{self.class.name}|#{instruction_name}|key|false")
     end
 
     if current_user.state.nil?
-      reply_with_buttons(
-        "Такой команды нет.\nПохоже, вы потеряли инструкции. Вот они:",
-        Instructions.instance.titles.map { |title| [title] }
-      )
+      reply_with_instructions("Такой команды нет.\nПохоже, вы потеряли инструкции. Вот они:")
       return
     end
 
@@ -81,13 +89,25 @@ class InstructionsController < ApplicationController
   end
 
   def reply_success
-    reply_with_instructions("Вы успешно прошли инструкцию! Можете пройти ещё одну:")
+    reply("Ура. У вас получилось! Наслаждайтесь свободным интернетом.")
+    reply_with_buttons(
+      "Надеемся наша работа будет для вас полезной. Мы делаем важное дело!",
+      [
+        ["Вернуться в меню"]
+      ]
+    )
   end
 
   def reply_with_instructions(msg)
     reply_with_buttons(
       msg,
-      Instructions.instance.titles.map { |title| [title] }
+      [
+        ["Вернуться в меню"], 
+        *Instructions.instance
+                     .titles
+                     .each_slice(3)
+                     .to_a
+      ]
     )
   end
 

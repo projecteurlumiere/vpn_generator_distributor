@@ -1,23 +1,28 @@
 class StartController < ApplicationController
   def self.routes
-    ["/start", "Ознакомиться с правилами", "Правила подтверждаю", "Инструкции"]
+    [
+      "/start", "Вернуться в меню",
+      "Ознакомиться с правилами", "Правила", 
+      "Правила подтверждаю",
+      "О проекте"
+    ]
   end
 
   def call
     current_user.update(state: nil)
 
     case message.text
-    in "/start" if current_user.rules_read
-      reply_instructions
-    in "Инструкции"
-      reply_instructions
+    in ("/start" | "Вернуться в меню") if current_user.rules_read
+      reply_menu
     in "/start"
       reply_welcome
-    in "Ознакомиться с правилами"
+    in "Ознакомиться с правилами" | "Правила"
       reply_rules
     in "Правила подтверждаю"
       current_user.update(rules_read: true)
-      reply_instructions
+      reply_menu
+    in "О проекте"
+      reply_about
     else
       raise ApplicationController::RoutingError
     end
@@ -39,10 +44,23 @@ class StartController < ApplicationController
     )
   end
 
-  def reply_instructions
+  def reply_menu
     reply_with_buttons(
-      "Подключим вам ВПН? Вот инструкции",
-      Instructions.instance.titles.map { |title| [title] }
+      "Доступны следующие действия:",
+      [
+        ["Подключить VPN"],
+        ["Правила"],
+        ["О проекте"]
+      ]
+    )
+  end
+
+  def reply_about
+    reply_with_buttons(
+      "Надеемся наша работа будет для вас полезной. Мы делаем важное дело!",
+      [
+        ["Вернуться в меню"]
+      ]
     )
   end
 end

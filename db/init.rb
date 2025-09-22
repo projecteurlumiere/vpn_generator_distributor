@@ -9,6 +9,7 @@ DB.create_table? :users do
   Integer :n_keys, default: 0, null: false
   DateTime :pending_config_until
   TrueClass :rules_read, default: false, null: false
+  TrueClass :admin, default: false, null: false
   String :state
 end
 

@@ -9,7 +9,15 @@ class Key < Sequel::Model(:keys)
     keydesk.delete_user(username: keydesk_username)
     super
   ensure
-    update(pending_destroy_until: nil) if exists?
+    if exists?
+      update(pending_destroy_until: nil) 
+    else
+      per_key_dir  = "./tmp/vpn_configs/per_key/#{id}"
+      per_user_dir = "./tmp/vpn_configs/per_user/#{user_id}"
+  
+      FileUtils.rm_rf(per_key_dir)  if Dir.exist?(per_key_dir)
+      FileUtils.rm_rf(per_user_dir) if Dir.exist?(per_user_dir)
+    end
   end
 
   def awaiting_destroy?
