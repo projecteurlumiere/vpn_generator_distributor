@@ -32,15 +32,18 @@ class Admin::BaseController < ApplicationController
       reply_with_inline_buttons("Возможные админские действия",
         [
           {
-            "Посмотреть инструкции" => callback_name(Admin::InstructionsController, "instructions"),
+            "Посмотреть инструкции" => callback_name(Admin::InstructionsController, "instructions")
           },
           {
-            "Инструкции-черновики" => callback_name(Admin::InstructionsController, "instructions_under_review"),
+            "Инструкции-черновики" => callback_name(Admin::InstructionsController, "instructions_under_review")
           },
           {
-            "Загрузить инструкцию" => callback_name(Admin::InstructionsController, "upload_instruction"),
+            "Загрузить инструкцию" => callback_name(Admin::InstructionsController, "upload_instruction")
+          },
+          {
+            "Управление ключницами" => callback_name(Admin::KeydesksController, "index")
           }
-        ],
+        ]
       )
     else
       raise ApplicationController::RoutingError

@@ -155,7 +155,7 @@ class InstructionsController < ApplicationController
       case key_type
       in "amnezia" | "wireguard"
         upload_file(file_path)
-      in "outline"
+      in "outline" | "vless"
         reply(File.read(file_path), reply_markup: nil)
       end
 

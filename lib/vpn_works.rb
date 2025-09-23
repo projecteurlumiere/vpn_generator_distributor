@@ -42,19 +42,21 @@ class VpnWorks
     results = {
       "amnezia" => data["AmnzOvcConfig"],
       "wireguard" => data["WireguardConfig"],
-      "outline" => data["OutlineConfig"]
+      "outline" => data["OutlineConfig"],
+      "vless" => data["Proto0Config"]
     }
 
     raise VpnWorksError, "No configurations provided for #{data}" if results.values.all?(&:empty?)
 
     results.each do |key, val|
-      if key == "outline"
+      case key
+      in "outline" | "vless"
         outline_key = val["AccessKey"]
 
-        path = File.join(conf_path, "outline.txt")
+        path = File.join(conf_path, "#{key}.txt")
         File.write(path, outline_key)
         results[key] = outline_key
-      else
+      in 'amnezia' | "wireguard"
         filename = val["FileName"]
         ext = File.extname(filename)
         file_content = val["FileContent"]

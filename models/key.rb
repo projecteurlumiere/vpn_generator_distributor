@@ -32,11 +32,13 @@ class Key < Sequel::Model(:keys)
       key
     else
       begin
-        keydesk = Keydesk.where { n_keys < Keydesk::MAX_USERS }.first
+        keydesk = Keydesk.where { n_keys < max_keys }.where(online: true).first
         return :keydesk_full if keydesk.nil?
   
         user.update(pending_config_until: Time.now + 120)
-        keydesk.create_config(user:) # returns key with config
+        key = keydesk.create_config(user:) # returns key with config
+        keydesk.update(n_keys: Sequel[:n_keys] + 1)
+        key
       rescue StandardError => e
         LOGGER.warn "Error #{e.class}: #{e.message} when requesting config from keydesk=#{keydesk&.name.inspect}, user_id=#{to&.id}, backtrace=#{e.backtrace.join("\n")}"
         return :keydesk_error

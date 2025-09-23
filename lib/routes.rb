@@ -69,7 +69,7 @@ class Routes
         controller = klass.new(bot, message)
         controller.instance_variable_set(:@current_user, current_user) if defined? current_user
         return controller.send(method)
-      rescue NoMatchingPatternError, ApplicationController::RoutingError => e
+      rescue ApplicationController::RoutingError => e
         next
       end 
     end

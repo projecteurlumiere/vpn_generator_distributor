@@ -6,6 +6,37 @@ class Keydesk < Sequel::Model(:keydesks)
 
   MAX_USERS = 250
 
+  def self.start_proxies
+    system("scripts/keydesk_proxy_stop.sh")
+
+    Keydesk.dataset.update(online: false)
+
+    threads = []
+
+    Keydesk.all.each do |keydesk|
+      threads << Thread.new do
+        conf = keydesk.decoded_ss_link
+        id = keydesk.id
+        proxy_port = 8888 + id
+
+        system(
+          "scripts/keydesk_proxy_start.sh",
+          id.to_s,
+          conf["server"],
+          conf["server_port"].to_s,
+          conf["password"],
+          conf["method"],
+          proxy_port.to_s
+        )
+
+        sleep 2
+        keydesk.update(n_keys: keydesk.users.size, online: true)
+      end
+    end
+
+    threads.each(&:join)
+  end
+
   def users
     vw.users
   end
@@ -17,6 +48,7 @@ class Keydesk < Sequel::Model(:keydesks)
   def delete_user(id: nil, username: nil)
     id ||= user_id(username)
     vw.delete_user(id)
+    self.update(n_keys: Sequel[:n_keys] - 1)
   rescue StandardError => e
     LOGGER.warn "Error #{e.class}: #{e.message} deleting user with id=#{id.inspect}, username=#{username.inspect}, backtrace=#{e.backtrace.first(4).join('; ')}"
     raise e
