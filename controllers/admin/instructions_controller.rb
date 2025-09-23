@@ -99,7 +99,7 @@ class Admin::InstructionsController < ApplicationController
 
   def handle_upload
     case @substate
-    in "instruction_upload" if not message.document.file_name.match?(/\.(ya?ml)\z/i)
+    in "instruction_upload" if message.document.nil? || !message.document.file_name.match?(/\.(ya?ml)\z/i)
       reply("Пожалуйста, загрузите файл с расширением .yml или .yaml")
     in "instruction_upload"        
       download_instruction
@@ -118,7 +118,7 @@ class Admin::InstructionsController < ApplicationController
       actions = current_instruction[:steps].map { |step| step[:actions] }.flatten
 
       case message.text
-      in "/admin clear_images"
+      in "/admin clear_images" | "Удалить изображения"
         current_instruction[:steps][@step].delete(:images)
         File.write(@instruction_path, current_instruction.to_yaml)
         instruction_step
@@ -150,7 +150,7 @@ class Admin::InstructionsController < ApplicationController
           ]
         )
       else
-        reply("Нажмите любую кнопку для продолжения или загрузите изображения для")
+        reply("Нажмите любую кнопку для продолжения или загрузите изображения для этого шага инструкции", reply_markup: nil)
       end
     end
   end
@@ -176,7 +176,9 @@ class Admin::InstructionsController < ApplicationController
     current_instruction = YAML.load_file(path, symbolize_names: true)
     current_step = current_instruction[:steps][step]
     photos = current_step[:images]
+
     current_step[:actions] = ["Это последний шаг инструкции"] if step >= current_instruction[:steps].size - 1
+    current_step[:actions] << "Удалить изображения" if photos&.any?
 
     reply_with_buttons(
       current_step[:message],
