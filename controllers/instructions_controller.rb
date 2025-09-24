@@ -90,12 +90,8 @@ class InstructionsController < ApplicationController
 
   def reply_success
     reply("Ура. У вас получилось! Наслаждайтесь свободным интернетом.")
-    reply_with_buttons(
-      "Надеемся наша работа будет для вас полезной. Мы делаем важное дело!",
-      [
-        ["Вернуться в меню"]
-      ]
-    )
+    slide = Slides.instance[:about]
+    reply_with_buttons(slide[:text], [slide[:actions]], photos: slide[:images])
   end
 
   def reply_with_instructions(msg)

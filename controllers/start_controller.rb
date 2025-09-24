@@ -56,11 +56,7 @@ class StartController < ApplicationController
   end
 
   def reply_about
-    reply_with_buttons(
-      "Надеемся наша работа будет для вас полезной. Мы делаем важное дело!",
-      [
-        ["Вернуться в меню"]
-      ]
-    )
+    slide = Slides.instance[:about]
+    reply_with_buttons(slide[:text], [slide[:actions]], photos: slide[:images])
   end
 end

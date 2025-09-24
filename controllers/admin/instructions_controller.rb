@@ -47,7 +47,7 @@ class Admin::InstructionsController < ApplicationController
     instruction_step(new_path, 0)
   end
 
-  def admin_menu
+  def menu
     reply_with_inline_buttons("Следующие действия доступны для работы с инструкциями:", [
       admin_menu_inline_button,
       {

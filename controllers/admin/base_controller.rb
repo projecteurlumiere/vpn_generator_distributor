@@ -39,7 +39,10 @@ class Admin::BaseController < ApplicationController
     reply_with_inline_buttons("Возможные админские действия",
       [
         {
-          "Управление инструкциями" => callback_name(Admin::InstructionsController, "admin_menu")
+          "Управление инструкциями" => callback_name(Admin::InstructionsController, "menu")
+        },
+        {
+          "Управление слайдами" =>  callback_name(Admin::SlidesController, "menu")
         },
         {
           "Управление ключницами" => callback_name(Admin::KeydesksController, "index")
