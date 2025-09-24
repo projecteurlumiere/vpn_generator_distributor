@@ -26,27 +26,25 @@ class Admin::BaseController < ApplicationController
   def call
     case message.text
     in "/admin"
-      current_user.update(state: nil)
-      reply("Привет, администратор!")
-
-      reply_with_inline_buttons("Возможные админские действия",
-        [
-          {
-            "Посмотреть инструкции" => callback_name(Admin::InstructionsController, "instructions")
-          },
-          {
-            "Инструкции-черновики" => callback_name(Admin::InstructionsController, "instructions_under_review")
-          },
-          {
-            "Загрузить инструкцию" => callback_name(Admin::InstructionsController, "upload_instruction")
-          },
-          {
-            "Управление ключницами" => callback_name(Admin::KeydesksController, "index")
-          }
-        ]
-      )
+      menu
     else
       raise ApplicationController::RoutingError
     end
+  end
+
+  def menu
+    current_user.update(state: nil)
+    reply("Привет, администратор!")
+
+    reply_with_inline_buttons("Возможные админские действия",
+      [
+        {
+          "Управление инструкциями" => callback_name(Admin::InstructionsController, "admin_menu")
+        },
+        {
+          "Управление ключницами" => callback_name(Admin::KeydesksController, "index")
+        }
+      ]
+    )
   end
 end

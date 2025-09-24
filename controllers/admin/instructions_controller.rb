@@ -36,7 +36,7 @@ class Admin::InstructionsController < ApplicationController
     end
   end
 
-  def upload_instruction
+  def upload
     current_user.update(state: "#{self.class.name}|instruction_upload")
     reply("Пожалуйста, прикрепите YAML файл с инструкцией.")
   end
@@ -47,7 +47,22 @@ class Admin::InstructionsController < ApplicationController
     instruction_step(new_path, 0)
   end
 
-  def instructions
+  def admin_menu
+    reply_with_inline_buttons("Следующие действия доступны для работы с инструкциями:", [
+      admin_menu_inline_button,
+      {
+        "Посмотреть инструкции" => callback_name("list")
+      },
+      {
+        "Инструкции-черновики" => callback_name("under_review")
+      },
+      {
+        "Загрузить инструкцию" => callback_name("upload")
+      }
+    ])
+  end
+
+  def list
     msg = <<~TXT
       Загружены и работают следующие инструкции:
       #{Instructions.instance.titles.join("\n")}
@@ -58,10 +73,12 @@ class Admin::InstructionsController < ApplicationController
       { "Скачать #{filename}" => callback_name("download_yml", filename) }
     end
 
+    buttons.unshift(admin_menu_inline_button)
+
     reply_with_inline_buttons(msg, buttons)
   end
 
-  def instructions_under_review
+  def under_review
     msg = <<~TXT
       /admin, чтобы вернуться
       *
@@ -78,7 +95,7 @@ class Admin::InstructionsController < ApplicationController
       }
     end
 
-    reply_with_inline_buttons(msg, [*pending])
+    reply_with_inline_buttons(msg, [admin_menu_inline_button, *pending])
   end
 
   def download_yml(filename)

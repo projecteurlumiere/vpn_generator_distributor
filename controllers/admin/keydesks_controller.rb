@@ -62,6 +62,9 @@ class Admin::KeydesksController < ApplicationController
 
     reply_with_inline_buttons(msg, [
         {
+        "В меню" => callback_name(Admin::BaseController, "menu")
+        },
+        {
           "Добавить ключницу" => callback_name("new")
         },
         {
