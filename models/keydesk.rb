@@ -59,7 +59,7 @@ class Keydesk < Sequel::Model(:keydesks)
   end
 
   def create_config(user:)
-    config = vw.create_conf_file("./tmp/vpn_configs/per_user/#{user.id}")
+    config = vw.create_conf_file
 
     key = add_key(
       user_id: user.id,
@@ -67,13 +67,7 @@ class Keydesk < Sequel::Model(:keydesks)
       reserved_until: Time.now + 3_600 # 1 hour
     )
 
-    key.config = config
-
-    src = "./tmp/vpn_configs/per_user/#{user.id}"
-    dst = "./tmp/vpn_configs/per_key/#{key.id}"
-
-    FileUtils.mkdir_p(File.dirname(dst))
-    FileUtils.mv(src, dst)
+    key.config = create_conf_files("./tmp/vpn_configs/per_key/#{key.id}", config)
 
     key
   end
@@ -110,5 +104,34 @@ class Keydesk < Sequel::Model(:keydesks)
 
   def proxy_url
     "socks5://127.0.0.1:#{8888 + id}"
+  end
+
+  private
+
+  def create_conf_files(conf_path, data)
+    FileUtils.mkdir_p(conf_path)
+    data.each do |key, val|
+      case key
+      in "outline" | "vless"
+        outline_key = val["AccessKey"]
+
+        path = File.join(conf_path, "#{key}.txt")
+        File.write(path, outline_key)
+        data[key] = outline_key
+      in "amnezia" | "wireguard"
+        filename = val["FileName"]
+        ext = File.extname(filename)
+        file_content = val["FileContent"]
+
+        filename = [key, ext].join
+        path = File.join(conf_path, filename)
+        File.write(path, file_content)
+        data[key] = path
+      in "username"
+        next
+      end
+    end
+
+    data
   end
 end

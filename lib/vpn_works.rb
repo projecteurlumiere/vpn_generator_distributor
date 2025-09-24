@@ -35,41 +35,15 @@ class VpnWorks
     (users_dict[name.to_s] || {})["UserID"]
   end
 
-  def create_conf_file(conf_path)
-    FileUtils.mkdir_p(conf_path)
-
+  def create_conf_file
     data = get_conf_file
-    results = {
+    {
+      "username" => data["UserName"],
       "amnezia" => data["AmnzOvcConfig"],
       "wireguard" => data["WireguardConfig"],
       "outline" => data["OutlineConfig"],
       "vless" => data["Proto0Config"]
     }
-
-    raise VpnWorksError, "No configurations provided for #{data}" if results.values.all?(&:empty?)
-
-    results.each do |key, val|
-      case key
-      in "outline" | "vless"
-        outline_key = val["AccessKey"]
-
-        path = File.join(conf_path, "#{key}.txt")
-        File.write(path, outline_key)
-        results[key] = outline_key
-      in 'amnezia' | "wireguard"
-        filename = val["FileName"]
-        ext = File.extname(filename)
-        file_content = val["FileContent"]
-
-        filename = [key, ext].join
-        path = File.join(conf_path, filename)
-        File.write(path, file_content)
-        results[key] = path
-      end
-    end
-
-    results["username"] = data["UserName"]
-    results
   end
 
   private
