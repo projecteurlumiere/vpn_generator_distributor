@@ -29,4 +29,30 @@ class Slides
   def paths
     Dir.glob("./data/slides/*.yml")
   end
+
+  def errors_for(path)
+    errors = []
+
+    begin
+      slide = YAML.load_file(path, symbolize_names: true)
+    rescue StandardError
+      return [:invalid, { errors: ["Не получилось обработать файл.\nПроверьте синтаксис: все ли отступы и служебные символы на месте?"] }]
+    end
+
+    if slide[:text].nil?
+      errors << "Отсутствует текст сообщения"
+    end
+
+    if slide[:text] && slide[:text].to_s.size > 4096
+      errors << "Размер сообщения не может превышать 4096 символов"
+    end
+
+    if slide[:actions].nil?
+      errors << "Отсутствуют кнопки для следующих действий"
+    end
+
+    result = errors.any? ? :invalid : :valid
+
+    [result, { errors: }]
+  end
 end

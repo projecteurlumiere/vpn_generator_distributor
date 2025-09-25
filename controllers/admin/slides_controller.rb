@@ -108,6 +108,17 @@ class Admin::SlidesController < ApplicationController
       dest_path = File.join("./tmp/slides", message.document.file_name)
       path = download_attachment(message.document.file_id, dest_path)
 
+      if Slides.instance.errors_for(path) in [:invalid, { errors: errors} ]
+        msg = <<~TXT
+          Файл-слайд не действителен. Были обнаружены следущие ошибки:
+
+          #{errors.join("\n")}
+        TXT
+
+        reply(msg)
+        return
+      end
+
       new_path = File.join(File.dirname(path), @filename)
       FileUtils.mv(path, new_path)
       
