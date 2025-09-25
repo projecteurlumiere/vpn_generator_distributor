@@ -17,6 +17,8 @@
 # All changes git-versioned. Only track state during guided sessions.
 
 class Admin::BaseController < ApplicationController
+  include AdminHelpers
+
   def self.routes
     [
       "/admin"

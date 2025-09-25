@@ -17,6 +17,8 @@
 # All changes git-versioned. Only track state during guided sessions.
 
 class Admin::KeydesksController < ApplicationController
+  include AdminHelpers
+
   def self.routes
     []
   end
@@ -61,9 +63,7 @@ class Admin::KeydesksController < ApplicationController
     TXT
 
     reply_with_inline_buttons(msg, [
-        {
-        "В меню" => callback_name(Admin::BaseController, "menu")
-        },
+        admin_menu_inline_button,
         {
           "Добавить ключницу" => callback_name("new")
         },

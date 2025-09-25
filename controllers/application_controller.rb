@@ -101,6 +101,12 @@ class ApplicationController
     reply(text, reply_markup:, **reply_opts)
   end
 
+  # name - Symbol
+  def reply_slide(name)
+    slide = Slides.instance[name]
+    reply_with_buttons(slide[:text], [slide[:actions]], photos: slide[:images], parse_mode: "Markdown")
+  end
+
   def first_name
     message.from.first_name
   end

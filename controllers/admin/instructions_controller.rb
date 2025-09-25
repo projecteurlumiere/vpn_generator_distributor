@@ -18,6 +18,8 @@
 require "fileutils"
 
 class Admin::InstructionsController < ApplicationController
+  include AdminHelpers
+
   def self.routes; end
 
   def call
@@ -200,7 +202,8 @@ class Admin::InstructionsController < ApplicationController
     reply_with_buttons(
       current_step[:message],
       current_step[:actions].map { |a| [a] },
-      photos:
+      photos:,
+      parse_mode: "Markdown"
     )
 
     if key_name = current_step[:issue_key]

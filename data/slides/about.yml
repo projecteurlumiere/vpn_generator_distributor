@@ -1,4 +1,6 @@
-text: |-
-  Мы делаем очень важное дело!
-actions:
-  - Вернуться в меню # don't add anything else here
+---
+:text: Мы делаем *очень* важное дело!
+:actions:
+- Вернуться в меню
+:images:
+- AgACAgIAAxkBAAIOzmjVWaf96ikBCvBE8j-q1V1p0jCMAAKZ9zEbSjKoSjUH-fYt1vUHAQADAgADeQADNgQ

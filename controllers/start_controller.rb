@@ -38,10 +38,7 @@ class StartController < ApplicationController
   end
 
   def reply_rules
-    reply_with_buttons(
-      "Правила: 1. Не нарушайте. 2. Следуйте инструкциям.",
-      [["Правила подтверждаю"]]
-    )
+    reply_slide(:rules)
   end
 
   def reply_menu
@@ -56,7 +53,6 @@ class StartController < ApplicationController
   end
 
   def reply_about
-    slide = Slides.instance[:about]
-    reply_with_buttons(slide[:text], [slide[:actions]], photos: slide[:images])
+    reply_slide(:about)
   end
 end

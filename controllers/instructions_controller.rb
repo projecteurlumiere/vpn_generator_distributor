@@ -77,7 +77,8 @@ class InstructionsController < ApplicationController
     reply_with_buttons(
       current_step[:message],
       current_step[:actions].map { |a| [a] },
-      photos: current_step[:images]
+      photos: current_step[:images],
+      parse_mode: "Markdown"
     )
 
     if current_step[:issue_key] && @key_reserved
@@ -90,8 +91,7 @@ class InstructionsController < ApplicationController
 
   def reply_success
     reply("Ура. У вас получилось! Наслаждайтесь свободным интернетом.")
-    slide = Slides.instance[:about]
-    reply_with_buttons(slide[:text], [slide[:actions]], photos: slide[:images])
+    reply_slide(:about)
   end
 
   def reply_with_instructions(msg)
