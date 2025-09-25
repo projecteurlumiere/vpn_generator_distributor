@@ -54,5 +54,8 @@ class Slides
     result = errors.any? ? :invalid : :valid
 
     [result, { errors: }]
+  rescue StandardError
+    errors.unshift("Произошла непредвиденная ошибка! Вы точно всё заполнили верно?")
+    [:invalid, { errors: }]
   end
 end

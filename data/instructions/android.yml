@@ -1,23 +1,23 @@
 ---
 :title: Android
 :steps:
-- :message: Включите ваше устройство Android
+- :text: Включите ваше устройство Android
   :actions:
   - Я включил Android
   :images:
   - AgACAgIAAxkBAAIGKmjFvKL1OwrUFrnyTnAPr0HFad3bAAJx9jEbnFMxSlwPjVic8wozAQADAgADeQADNgQ
   - AgACAgIAAxkBAAIGKmjFvKL1OwrUFrnyTnAPr0HFad3bAAJx9jEbnFMxSlwPjVic8wozAQADAgADeQADNgQ
   - AgACAgIAAxkBAAIGLGjFvK-0rGh0XbLN_QvL_QUqGYkaAAJy9jEbnFMxSrInWK0-zNV9AQADAgADeAADNgQ
-- :message: Скачайте и установите VPN с Google Play
+- :text: Скачайте и установите VPN с Google Play
   :actions:
   - Я установил VPN
-- :message: Вот ваш ключ для подключения
+- :text: Вот ваш ключ для подключения
   :issue_key: outline
   :actions:
   - Я получил ключ
-- :message: Введите полученный ключ в приложение VPN
+- :text: Введите полученный ключ в приложение VPN
   :actions:
   - Я ввёл ключ
-- :message: Поздравляем! Вы успешно подключились через Android.
+- :text: Поздравляем! Вы успешно подключились через Android.
   :actions:
   - Ура!

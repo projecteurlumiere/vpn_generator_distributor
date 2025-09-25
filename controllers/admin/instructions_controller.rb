@@ -178,6 +178,19 @@ class Admin::InstructionsController < ApplicationController
     dest_path = File.join("./tmp/instructions", message.document.file_name)
     path = download_attachment(message.document.file_id, dest_path)
 
+    if Instruction.instance.errors_for(path) in [:invalid, { errors: errors }]
+      msg = <<~TXT
+        Файл-инструкций недействителен. Обнаружены следующие ошибки:
+
+        #{errors.join("\n")}
+      TXT
+
+      FileUtils.rm_f(path)
+
+      reply(msg)
+      return
+    end
+
     $mutex.sync do
       instruction = YAML.load_file(path, symbolize_names: true)
       new_title = instruction[:title].downcase
@@ -200,7 +213,7 @@ class Admin::InstructionsController < ApplicationController
     current_step[:actions] << "Удалить изображения" if photos&.any?
 
     reply_with_buttons(
-      current_step[:message],
+      current_step[:text],
       current_step[:actions].map { |a| [a] },
       photos:,
       parse_mode: "Markdown"

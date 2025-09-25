@@ -1,28 +1,28 @@
 title: Windows
 steps:
   # 1
-  - message: |-
+  - text: |-
       Запустите Windows
     actions:
       - Я запустил Windows
   # 2
-  - message: |-
+  - text: |-
       Скачайте VPN
     actions:
       - Я скачал VPN
   # 3
-  - message: |-
+  - text: |-
       Вот ваш ключ
     issue_key: amnezia
     actions:
       - Я получил ключ
   # 4
-  - message: |-
+  - text: |-
       Введите имеющийся у вас ключ
     actions:
       - Я ввёл ключ
   # 5
-  - message: |-
+  - text: |-
       Поздравляю! Вы прекрасны
     actions:
       - Инструкции

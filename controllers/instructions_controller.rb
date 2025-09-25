@@ -75,7 +75,7 @@ class InstructionsController < ApplicationController
     current_step = current_instruction[:steps][@step]
 
     reply_with_buttons(
-      current_step[:message],
+      current_step[:text],
       current_step[:actions].map { |a| [a] },
       photos: current_step[:images],
       parse_mode: "Markdown"

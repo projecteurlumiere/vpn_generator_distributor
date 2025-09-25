@@ -115,6 +115,8 @@ class Admin::SlidesController < ApplicationController
           #{errors.join("\n")}
         TXT
 
+        FileUtils.rm_f(path)
+
         reply(msg)
         return
       end
