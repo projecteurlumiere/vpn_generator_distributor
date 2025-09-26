@@ -50,37 +50,35 @@ class Instructions
       return [:invalid, { errors: ["Не получилось обработать файл.\nПроверьте синтаксис: все ли отступы и служебные символы на месте?"] }]
     end
 
-    if slide[:title].nil?
-      errors << "Отсутствует название (title) инструкции"
-    elsif slide[:title].to_s.size > 13
-      errors << "Название инструкции не может превышать 13 символов"
+    if !slide[:title].is_a?(String) || slide[:title].empty?
+      errors << "(title) Отсутствует название инструкции"
+    elsif slide[:title].size > 13
+      errors << "(title) Название инструкции не может превышать 13 символов"
     end
 
-    if slide[:steps].to_a.none?
-      errors << "Отсутсвуют шаги инструкции"
+    if !slide[:steps].is_a?(Array) || slide[:steps].none?
+      errors << "(steps) Отсутствуют шаги инструкции"
     else
-      if slide[:steps].any? { |step| step[:actions].to_a.none? }
-        errors << "На одном из шагов отсутствуют кнопки-действия (actions)"
+      if slide[:steps].any? { |step| !step[:actions].is_a?(Array) || step[:actions].none? }
+        errors << "(steps|actions) На одном из шагов отсутствуют кнопки-действия"
       end
 
-      if slide[:steps].all? { |step| step[:issue_key].to_s.empty? }
-        errors << "Вы забыли выдать ключ на одном из шагово инструкции!"
+      if slide[:steps].all? { |step| !step[:issue_key].is_a?(String) || step[:issue_key].empty? }
+        errors << "(steps|issue_key) Вы забыли выдать ключ для подключения к VPN"
       end
 
       if (slide[:steps].count { |step| step[:issue_key] }) > 1
-        errors << "Вы выдаёте ключ более, чем один раз"
+        errors << "(steps|issue_key) Вы выдаёте ключ более, чем один раз"
       end
 
       valid_configs = %w[amnezia wireguard outline vless].freeze
       if slide[:steps].any? { |step| valid_configs.none?(step[:issue_key]) }
-          errors << "Поле issue_key может иметь только одно из следующих значений: #{valid_configs.join(" ")}"
+          errors << "(steps|issue_key) Поле issue_key может иметь только одно из следующих значений: #{valid_configs.join(" ")}"
       end
 
-      if slide[:steps].any? { step[:text].to_s.empty? }
-        errors << "Отсутствует текст сообщения на одном из шагов"
-      end
-
-      if slide[:steps].any? { step[:text].to_s.size > 4096 }
+      if slide[:steps].any? { |step| !step[:text].is_a?(String) || step[:text].empty? }
+        errors << "(steps|text) Отсутствует текст сообщения на одном из шагов"
+      elsif slide[:steps].any? { step[:text].size > 4096 }
         errors << "Текст сообщения одного из шагов превышает 4096 символов"
       end
     end

@@ -39,16 +39,14 @@ class Slides
       return [:invalid, { errors: ["Не получилось обработать файл.\nПроверьте синтаксис: все ли отступы и служебные символы на месте?"] }]
     end
 
-    if slide[:text].nil?
-      errors << "Отсутствует текст сообщения"
+    if !slide[:text].is_a?(String) || slide[:text].empty?
+      errors << "(text) Отсутствует текст сообщения"
+    elsif slide[:text].size > 4096
+      errors << "(text) Размер сообщения не может превышать 4096 символов"
     end
 
-    if slide[:text] && slide[:text].to_s.size > 4096
-      errors << "Размер сообщения не может превышать 4096 символов"
-    end
-
-    if slide[:actions].nil?
-      errors << "Отсутствуют кнопки для следующих действий"
+    if !slide[:actions].is_a?(Array) || slide[:actions].none?
+      errors << "(actions) Отсутствуют кнопки для следующих действий"
     end
 
     result = errors.any? ? :invalid : :valid
