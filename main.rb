@@ -16,6 +16,8 @@ end
 
 Routes.instance.build!
 
+return unless $PROGRAM_NAME == __FILE__
+
 Telegram::Bot::Client.run($token) do |bot|
   bot.listen do |message|
     Thread.new do 

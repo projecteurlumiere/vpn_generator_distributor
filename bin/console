@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+require "bundler/setup"
+ENV["ENV"] ||= "development"
+
+require_relative "../main"
+
+require "irb"
+IRB.start
