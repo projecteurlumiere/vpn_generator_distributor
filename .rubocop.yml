@@ -8,5 +8,5 @@ Style/StringLiterals:
 Style/FrozenStringLiteralComment:
   Enabled: false
 
-Metrics/AbcSize
+Metrics/AbcSize:
   Enabled: false
