@@ -48,6 +48,9 @@ class Admin::BaseController < ApplicationController
         },
         {
           "Управление ключницами" => callback_name(Admin::KeydesksController, "index")
+        },
+        {
+          "Управление пользователем" => callback_name(Admin::KeysController, "find_user")
         }
       ]
     )

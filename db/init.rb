@@ -27,6 +27,8 @@ DB.create_table? :keys do
   foreign_key :user_id, :users, null: false
   foreign_key :keydesk_id, :keydesks
   String :keydesk_username, null: false
+  String :desc
   DateTime :pending_destroy_until
   DateTime :reserved_until
+  DateTime :created_at, null: false, default: Sequel::CURRENT_TIMESTAMP
 end

@@ -41,8 +41,8 @@ class Keydesk < Sequel::Model(:keydesks)
     vw.users
   end
 
-  def user_stats
-    vw.user_stats
+  def users_stats
+    vw.users_stats
   end
 
   def delete_user(id: nil, username: nil)
