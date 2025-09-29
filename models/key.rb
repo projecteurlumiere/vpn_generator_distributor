@@ -43,7 +43,7 @@ class Key < Sequel::Model(:keys)
         LOGGER.warn "Error #{e.class}: #{e.message} when requesting config from keydesk=#{keydesk&.name.inspect}, user_id=#{to&.id}, backtrace=#{e.backtrace.join("\n")}"
         return :keydesk_error
       ensure
-        user.update(pending_config_until: nil)  
+        user.update(pending_config_until: nil)
       end
     end
   end

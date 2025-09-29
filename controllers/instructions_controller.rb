@@ -155,7 +155,7 @@ class InstructionsController < ApplicationController
         reply(File.read(file_path), reply_markup: nil)
       end
 
-      key.update(reserved_until: nil)
+      key.update(desc: "Выдан для #{@instruction_name}", reserved_until: nil)
       FileUtils.rm_rf(dir_path)
     else
       msg = <<~TXT
