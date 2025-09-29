@@ -1,5 +1,6 @@
 class User < Sequel::Model(:users)
   one_to_many :keys
+  one_to_many :support_requests
 
   MAX_KEYS = 5
 

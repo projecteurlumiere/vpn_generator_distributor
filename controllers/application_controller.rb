@@ -107,10 +107,6 @@ class ApplicationController
     reply_with_buttons(slide[:text], [slide[:actions]], photos: slide[:images], parse_mode: "Markdown")
   end
 
-  def first_name
-    message.from.first_name
-  end
-
   def current_user
     @current_user ||= User.find(tg_id:) || User.create(tg_id:)
   end

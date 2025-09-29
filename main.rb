@@ -9,6 +9,7 @@ require_relative "initializers/all"
 require "telegram/bot"
 
 $token = ENV["TELEGRAM_TOKEN"].freeze
+$admin_chat_id = ENV["ADMIN_CHAT_ID"].to_i.freeze
 $mutex = Mutex.new
 def $mutex.sync
   $mutex.synchronize { yield }
@@ -20,7 +21,9 @@ return unless $PROGRAM_NAME == __FILE__
 
 Telegram::Bot::Client.run($token) do |bot|
   bot.listen do |message|
-    Thread.new do 
+    next if message.respond_to?(:chat) && (message.chat.type != "private" && message.chat.id != $admin_chat_id)
+
+    Thread.new do
       Routes.instance.dispatch_controller(bot, message)
     rescue StandardError => e
       ApplicationController.new(bot, message).send(:reply, "Что-то пошло не так.\nЕсли вы потерялись, вернуться можно нажав на /start", reply_markup: nil)

@@ -76,7 +76,7 @@ class InstructionsController < ApplicationController
 
     reply_with_buttons(
       current_step[:text],
-      current_step[:actions].map { |a| [a] },
+      [*current_step[:actions].map { |a| [a] }, ["Написать в поддержку"]],
       photos: current_step[:images],
       parse_mode: "Markdown"
     )

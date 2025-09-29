@@ -32,3 +32,10 @@ DB.create_table? :keys do
   DateTime :reserved_until
   DateTime :created_at, null: false, default: Sequel::CURRENT_TIMESTAMP
 end
+
+DB.create_table? :support_requests do
+  primary_key :id
+  foreign_key :user_id, :users, null: false
+  Integer :status, null: false, default: 0
+  DateTime :created_at, null: false, default: Sequel::CURRENT_TIMESTAMP
+end

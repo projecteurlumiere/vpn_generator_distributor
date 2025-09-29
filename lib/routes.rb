@@ -27,10 +27,12 @@ class Routes
 
   def dispatch_controller(bot, message)
     case message
-    in Telegram::Bot::Types::Message
+    in Telegram::Bot::Types::Message if message.chat.id != $admin_chat_id
       handle_message(bot, message)
     in Telegram::Bot::Types::CallbackQuery
       handle_callback_query(bot, message)
+    in Telegram::Bot::Types::ChatMemberUpdated
+      ApplicationController.new(bot, message).send(:reply, "Я подключился успешно.")
     end
   end
 
