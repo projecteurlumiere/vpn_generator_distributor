@@ -166,4 +166,8 @@ class ApplicationController
       "В меню" => callback_name(Admin::BaseController, "menu")
     }
   end
+
+  def escape_md_v2(text)
+    text.gsub(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/, '\\\\\1')
+  end
 end
