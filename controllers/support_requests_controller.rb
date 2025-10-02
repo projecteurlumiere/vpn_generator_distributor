@@ -54,7 +54,7 @@ class SupportRequestsController < ApplicationController
         Номер: #{support_request.id}
         Статус обращения: #{support_request.status_ru}
 
-        #{message.text.split("\n").map { |l| ">#{escape_md_v2(l.strip)}" }.join("\n")}
+        #{message.text[0..3072].split("\n").map { |l| ">#{escape_md_v2(l.strip)}" }.join("\n")}
       TXT
 
       if state.any?
