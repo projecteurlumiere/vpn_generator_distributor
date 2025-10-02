@@ -6,11 +6,11 @@ class InstructionsController < ApplicationController
       ]
     end.flatten 
 
-    instructions + ["Подключить VPN"]
+    instructions + ["Подключить VPN", "К инструкциям"]
   end
 
   def call
-    if message.text == "Подключить VPN"
+    if ["Подключить VPN", "К инструкциям"].any?(message.text)
       msg = <<~TXT
         Вот список доступных инструкций:
       TXT
@@ -42,8 +42,8 @@ class InstructionsController < ApplicationController
           Для работы VPN'а вам понадобится ключ, который мы выдаём. 
           Число таких ключей ограничено, но мы стараемся помочь всем.
         TXT
-        
-        reply_with_buttons(msg, [
+        reply_with_buttons(msg,
+          [
             ["У меня уже есть ключ", "Мне нужен ключ"]
           ]
         )
@@ -52,9 +52,23 @@ class InstructionsController < ApplicationController
     end
 
     @step = @step.to_i
-
-    raise RoutingError if @step - 1 >= 0 &&
-                          Instructions.instance[@instruction_name][:steps][@step - 1][:actions].none?(message.text)
+    if message.text == "Назад"
+      if @step - 2 <= 0
+        msg = <<~TXT
+          Вот список доступных инструкций:
+        TXT
+  
+        reply_with_instructions(msg)
+        return
+      elsif @step > current_instruction[:steps].size
+         raise RoutingError
+      else
+        @step -= 2
+      end
+    elsif @step - 1 >= 0 &&
+       current_instruction[:steps][@step - 1][:actions].none?(message.text)
+      raise RoutingError
+    end
 
     if @step >= current_instruction[:steps].size
       current_user.update(state: nil)
@@ -76,7 +90,10 @@ class InstructionsController < ApplicationController
 
     reply_with_buttons(
       current_step[:text],
-      [*current_step[:actions].map { |a| [a] }, ["Написать в поддержку"]],
+      [
+        *current_step[:actions].map { |a| [a] },
+        ["Назад", "К инструкциям", "Написать в поддержку"]
+      ],
       photos: current_step[:images],
       parse_mode: "Markdown"
     )
@@ -85,7 +102,7 @@ class InstructionsController < ApplicationController
       upload_key(current_step[:issue_key])
     end
 
-    @step += 1 
+    @step += 1
     current_user.update(state: [@controller, @instruction_name, @step.to_i, @key_reserved].join("|"))
   end
 

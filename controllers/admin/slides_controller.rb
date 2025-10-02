@@ -122,7 +122,7 @@ class Admin::SlidesController < ApplicationController
       end
 
       new_path = File.join(File.dirname(path), @filename)
-      FileUtils.mv(path, new_path)
+      FileUtils.mv(path, new_path) unless File.expand_path(path) == File.expand_path(new_path)
       
       state = "#{self.class.name}|review|#{@filename}"
       current_user.update(state:)

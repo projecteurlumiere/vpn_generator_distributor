@@ -178,7 +178,7 @@ class Admin::InstructionsController < ApplicationController
     dest_path = File.join("./tmp/instructions", message.document.file_name)
     path = download_attachment(message.document.file_id, dest_path)
 
-    if Instruction.instance.errors_for(path) in [:invalid, { errors: errors }]
+    if Instructions.instance.errors_for(path) in [:invalid, { errors: errors }]
       msg = <<~TXT
         Файл-инструкций недействителен. Обнаружены следующие ошибки:
 
@@ -195,7 +195,7 @@ class Admin::InstructionsController < ApplicationController
       instruction = YAML.load_file(path, symbolize_names: true)
       new_title = instruction[:title].downcase
       new_path = File.join(File.dirname(path), "#{new_title}.yml")
-      FileUtils.mv(path, new_path)
+      FileUtils.mv(path, new_path) unless File.expand_path(path) == File.expand_path(new_path)
       
       state = "#{self.class.name}|instruction_review|#{new_path}|0"
       current_user.update(state:)

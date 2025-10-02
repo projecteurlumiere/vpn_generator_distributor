@@ -72,13 +72,13 @@ class Instructions
       end
 
       valid_configs = %w[amnezia wireguard outline vless].freeze
-      if slide[:steps].any? { |step| valid_configs.none?(step[:issue_key]) }
+      if slide[:steps].any? { |step| step[:issue_key].is_a?(String) && valid_configs.none?(step[:issue_key]) }
           errors << "(steps|issue_key) Поле issue_key может иметь только одно из следующих значений: #{valid_configs.join(" ")}"
       end
 
       if slide[:steps].any? { |step| !step[:text].is_a?(String) || step[:text].empty? }
         errors << "(steps|text) Отсутствует текст сообщения на одном из шагов"
-      elsif slide[:steps].any? { step[:text].size > 4096 }
+      elsif slide[:steps].any? { |step| step[:text].size > 4096 }
         errors << "Текст сообщения одного из шагов превышает 4096 символов"
       end
     end
@@ -87,7 +87,8 @@ class Instructions
     result = errors.any? ? :invalid : :valid
 
     [result, { errors: }]
-  rescue StandardError
+  rescue StandardError => e
+    LOGGER.error "Error when validating instruction yaml: #{e}\n#{e.full_message}"
     errors.unshift("Произошла непредвиденная ошибка! Вы точно всё заполнили верно?")
     [:invalid, { errors: }]
   end

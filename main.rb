@@ -22,7 +22,7 @@ return unless $PROGRAM_NAME == __FILE__
 Telegram::Bot::Client.run($token) do |bot|
   bot.listen do |message|
     if message.respond_to?(:chat) && message.chat.type != "private" && message.chat.id != $admin_chat_id
-      LOGGER.error "Someone added the bot to his group chat and it was not admin chat"
+      LOGGER.error "Someone used the bot in a group chat that is not admin chat"
     else
       Thread.new do
         Routes.instance.dispatch_controller(bot, message)
