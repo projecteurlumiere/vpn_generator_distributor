@@ -2,11 +2,44 @@ require:
   - rubocop-performance
   # - rubocop-rspec   # If using RSpe
 
+AllCops:
+  DisabledByDefault: true
+
+Performance:
+  Enabled: true
+
+Layout/IndentationWidth:
+  Enabled: true
+  Width: 2
+
+Layout/SpaceAroundOperators:
+  Enabled: true
+
+Layout/TrailingWhitespace:
+  Enabled: true
+
+Layout/TrailingEmptyLines:
+  Enabled: true
+
+Layout/EmptyLineAfterGuardClause:
+  Enabled: true
+
+Style/BlockDelimiters:
+  Enabled: true
+
 Style/StringLiterals:
+  Enabled: true
   EnforcedStyle: double_quotes
 
 Style/FrozenStringLiteralComment:
-  Enabled: false
+  Enabled: true
 
-Metrics/AbcSize:
-  Enabled: false
+Style/HashSyntax:
+  Enabled: true
+  EnforcedStyle: ruby19
+
+Style/SymbolArray:
+  Enabled: true
+
+Style/MultilineBlockChain:
+  Enabled: true
