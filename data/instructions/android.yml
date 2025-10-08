@@ -1,23 +1,35 @@
 ---
 :title: Android
 :steps:
-- :text: Включите ваше устройство Android
+#1
+- :text: Скачайте приложение Amnezia VPN в Google Play https://play.google.com/store/apps/details?id=org.amnezia.vpn
   :actions:
-  - Я включил Android
-  :images:
-  - AgACAgIAAxkBAAIGKmjFvKL1OwrUFrnyTnAPr0HFad3bAAJx9jEbnFMxSlwPjVic8wozAQADAgADeQADNgQ
-  - AgACAgIAAxkBAAIGKmjFvKL1OwrUFrnyTnAPr0HFad3bAAJx9jEbnFMxSlwPjVic8wozAQADAgADeQADNgQ
-  - AgACAgIAAxkBAAIGLGjFvK-0rGh0XbLN_QvL_QUqGYkaAAJy9jEbnFMxSrInWK0-zNV9AQADAgADeAADNgQ
-- :text: Скачайте и установите VPN с Google Play
+  - Готово
+#2
+- :text: |-
+    Теперь надо открыть программу и найти сверху строчку со словами «insert key»/«вставьте ключ». 
+    Вставьте туда следующий ключ целиком, нажмите «continue/продолжить»
+  :issue_key: vless
   :actions:
-  - Я установил VPN
-- :text: Вот ваш ключ для подключения
-  :issue_key: outline
+  - Готово
+#3
+- :text: |-
+    Вы можете включать и выключать VPN в любой момент, нажимая на большую круглую кнопку. 
+    Теперь можно зайти на заблокированный сайт и проверить, все ли работает. 
+
+    Если что-то не работает:
+    1. Убедитесь, что ключ введен корректно и VPN включен через круглую кнопку
+    2. Убедитесь, что все другие VPN и прокси на этом устройстве выключены
+    3. Перезагрузите устройство
+    4. Напишите в поддержку по кнопке ниже
   :actions:
-  - Я получил ключ
-- :text: Введите полученный ключ в приложение VPN
+  - VPN работает
+#4
+- :text: |-
+    Ура! Очень рады, что все получилось ❤️
+    По любым ошибкам и вопросам обязательно пишите, будем разбираться.
+
+    Мы раздаем бесплатный VPN, чтобы у всех был доступ в свободный Интернет. 
+    Чтобы мы могли продолжать это делать, поддержите нас на Бусти "https://boosty.to/poluchitsya_mir" или Патреоне "https://patreon.com/poluchitsya_mir"
   :actions:
-  - Я ввёл ключ
-- :text: Поздравляем! Вы успешно подключились через Android.
-  :actions:
-  - Ура!
+  - Подключить еще устройство
