@@ -12,7 +12,7 @@ end
 group :default do
   gem "socksify"
   gem "sequel"
-  gem "sqlite3"
+  gem "pg"
   gem "telegram-bot-ruby", "~> 2.1"
   gem "zeitwerk"
 end

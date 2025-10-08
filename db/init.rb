@@ -1,7 +1,18 @@
 require "sequel"
+require "pg"
 
-DB = Sequel.sqlite("db/db.sqlite3",
-                   logger: LOGGER)
+# before altering the table after launch, implement migrations!
+
+if ENV["ENV"] == "development"
+  DB = Sequel.connect(
+    adapter: "postgres",
+    database: "vpn_distributor_development",
+    user: ENV["USER"],
+    logger: LOGGER
+  )
+else
+  raise "not implemented!"
+end
 
 DB.create_table? :users do
   primary_key :id
