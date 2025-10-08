@@ -29,8 +29,11 @@ DB.create_table? :keydesks do
   String :ss_link, unique: true, null: false
   Integer :n_keys, default: 0, null: false
   Integer :max_keys, null: false
-  TrueClass :online, null: false, default: false 
   String :name, unique: true, null: false
+  # errors & status
+  Integer :status, null: false, default: 0
+  Integer :error_count, null: false, default: 0
+  DateTime :last_error_at
 end
 
 DB.create_table? :keys do

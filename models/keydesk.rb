@@ -2,14 +2,18 @@ require "base64"
 require "uri"
 
 class Keydesk < Sequel::Model(:keydesks)
+  plugin :enum
+  enum :status, offline: 0, unstable: 1, online: 2
+
   one_to_many :keys
 
   MAX_USERS = 250
+  UNSTABLE_TIMEOUT = 24 * 60 * 60 # 24 hours
 
   def self.start_proxies
     system("scripts/keydesk_proxy_stop.sh")
 
-    Keydesk.dataset.update(online: false)
+    Keydesk.dataset.update(status: 0)
 
     threads = []
 
@@ -30,11 +34,24 @@ class Keydesk < Sequel::Model(:keydesks)
         )
 
         sleep 2
-        keydesk.update(n_keys: keydesk.users.size, online: true)
+        keydesk.update(n_keys: keydesk.users.size, error_count: 0, last_error_at: nil, status: :online)
       end
     end
 
     threads.each(&:join)
+  end
+
+  def record_error!
+    now = Time.now
+    update(error_count: error_count.to_i + 1, last_error_at: now)
+  end
+
+  def update_status!
+    if last_error_at && Time.now - last_error_at > UNSTABLE_TIMEOUT
+      update(error_count: 0, status: :online)
+    elsif error_count.to_i > 0 && Time.now - last_error_at <= UNSTABLE_TIMEOUT
+      update(status: :unstable)
+    end
   end
 
   def users

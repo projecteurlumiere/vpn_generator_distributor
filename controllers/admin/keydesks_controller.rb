@@ -40,11 +40,18 @@ class Admin::KeydesksController < ApplicationController
     header = "%-2s %-13s %3s %3s %3s" % ["🌐", "Имя", "БД", "ВЫД", "MAX"]
 
     rows = Keydesk.all.map do |keydesk|
-      online   = keydesk.online ? "🟢" : "🔴"
+      online   = case keydesk.status
+                 in :online 
+                   "🟢"
+                 in :unstable
+                   "🟡"
+                 in :offline
+                   "🔴"
+                 end
       n_in_db  = keydesk.keys_dataset.count
       n_total  = keydesk.n_keys
       soft_max = keydesk.max_keys
-      "%-2s %-13s %3d %3d %3d" % [online, keydesk.name[0..6], n_in_db, n_total, soft_max]
+      "%-2s %-13s %3d %3d %3d" % [online, keydesk.name[0...13], n_in_db, n_total, soft_max]
     end
 
     table = ([header] + rows).join("\n")
@@ -173,7 +180,7 @@ class Admin::KeydesksController < ApplicationController
     in [_, _, "edit_name", *] if (kd = Keydesk.first(name: msg))
       reply("Такое имя уже занято", reply_markup: nil)
     in [_, _, "edit_name", *]
-      Keydesk.first(id: state[3]).update(name: msg, online: false)
+      Keydesk.first(id: state[3]).update(name: msg, status: false)
       reply("Имя обновлено")
 
       new_state = state.dup

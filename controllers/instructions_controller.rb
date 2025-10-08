@@ -146,9 +146,9 @@ class InstructionsController < ApplicationController
       reply("Резервируем для вас место в нашей VPN сети. Это займёт около минуты. Если вы уверены, что что-то пошло не так, нажмите /start")
 
       case Key.issue(to: current_user) 
-      in :keydesk_full
+      in :keydesks_full
         reply_with_instructions("Извините, сейчас нет свободных мест в нашей сети.")
-      in :keydesk_error
+      in :keydesks_error
         reply_with_instructions("Что-то пошло во время создания конфигурации. Попробуйте ещё раз или позже.")
       in Key
         reply("Ключ успешно зарезервирован. Продолжайте следовать инструкции.")

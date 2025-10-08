@@ -32,9 +32,9 @@ class KeysController < ApplicationController
       User.create(tg_id: user_id) if current_user.nil?
       res = Key.issue(to: current_user) 
       case res
-      in :keydesk_full
+      in :keydesks_full
         reply_with_start_menu("Извините, сейчас свободных мест нет.")
-      in :keydesk_error
+      in :keydesks_error
         reply_with_start_menu("Что-то пошло во время создания конфигурации. Попробуйте ещё раз или позже.")
       in Key
         config = res.config

@@ -14,7 +14,7 @@ class StartController < ApplicationController
     case message.text
     in ("/start" | "Вернуться в меню") if current_user.rules_read
       reply_menu
-    in "/start"
+    in "/start" | "Вернуться в меню"
       reply_welcome
     in "Ознакомиться с правилами" | "Правила"
       reply_rules
