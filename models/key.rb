@@ -6,7 +6,16 @@ class Key < Sequel::Model(:keys)
 
   def destroy
     update(pending_destroy_until: Time.now + 120)
-    keydesk.delete_user(username: keydesk_username)
+
+    attempts = 0
+    begin
+      keydesk.delete_user(username: keydesk_username)
+    rescue StandardError => e
+      attempts += 1
+      LOGGER.warn "Error #{e.class}: #{e.message} when destroying key=username=#{keydesk_username.inspect}, keydesk=#{keydesk&.name.inspect}, attempt=#{attempts}, backtrace=#{e.backtrace.join("\n")}"
+      retry if attempts < 3
+    end
+
     super
   ensure
     if exists?
