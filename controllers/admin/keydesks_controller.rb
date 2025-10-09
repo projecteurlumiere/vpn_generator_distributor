@@ -96,7 +96,7 @@ class Admin::KeydesksController < ApplicationController
   end
 
   def restart
-    reply("Перезапускаем доступ к ключницам. Бот будет недоступен во время ожидания")
+    reply("Перезапускаем доступ к ключницам.")
 
     begin
       $mutex.sync { Keydesk.start_proxies }

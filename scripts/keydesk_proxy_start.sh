@@ -1,15 +1,9 @@
 #!/bin/bash
 # starts ss-local as a local SOCKS5 proxy to ss server
 
-set -e
+mkdir -p ./tmp/proxies
 
-# Args
-# $1 = KEYDESK_NAME
-# $2 = SS_SERVER
-# $3 = SS_PORT
-# $4 = SS_PASSWORD
-# $5 = SS_METHOD
-# $6 = LOCAL_PORT
+set -e
 
 KEYDESK_NAME="$1"
 SS_SERVER="$2"
@@ -25,8 +19,8 @@ ss-local \
   -m "$SS_METHOD" \
   -l "$LOCAL_PORT" \
   --fast-open \
-  > "./tmp/ss-local-${KEYDESK_NAME}.log" 2>&1 &
+  > "./tmp/proxies/${LOCAL_PORT}_${KEYDESK_NAME}.log" 2>&1 &
 
 PID=$!
-echo $PID > "./tmp/ss-local-${KEYDESK_NAME}.pid"
-echo "ss-local started on 127.0.0.1:$LOCAL_PORT (SOCKS5 proxy, log: /tmp/ss-local-${KEYDESK_NAME}.log)"
+echo $PID > "./tmp/proxies/ss-local-${KEYDESK_NAME}.pid"
+echo "ss-local started on 127.0.0.1:$LOCAL_PORT (SOCKS5 proxy, log: /tmp/proxies/${LOCAL_PORT}_${KEYDESK_NAME}.log)"

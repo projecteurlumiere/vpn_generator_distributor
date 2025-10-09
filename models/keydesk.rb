@@ -21,11 +21,11 @@ class Keydesk < Sequel::Model(:keydesks)
       threads << Thread.new do
         conf = keydesk.decoded_ss_link
         id = keydesk.id
-        proxy_port = 8888 + id
+        proxy_port = keydesk.proxy_port
 
         system(
           "scripts/keydesk_proxy_start.sh",
-          id.to_s,
+          keydesk.name,
           conf["server"],
           conf["server_port"].to_s,
           conf["password"],
@@ -123,7 +123,12 @@ class Keydesk < Sequel::Model(:keydesks)
   end
 
   def proxy_url
-    "socks5://127.0.0.1:#{8888 + id}"
+    "socks5://127.0.0.1:#{proxy_port}"
+  end
+
+  # ports start at 10000
+  def proxy_port
+    ((9 + InstanceUtils.number) * 1000) + id
   end
 
   private
