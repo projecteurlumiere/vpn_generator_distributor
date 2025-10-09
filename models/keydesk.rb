@@ -43,7 +43,10 @@ class Keydesk < Sequel::Model(:keydesks)
 
   def record_error!
     now = Time.now
-    update(error_count: error_count.to_i + 1, last_error_at: now)
+    DB.transaction do
+      update(error_count: Sequel[:error_count] + 1, last_error_at: now)
+      update_status!
+    end
   end
 
   def update_status!

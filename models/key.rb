@@ -53,10 +53,16 @@ class Key < Sequel::Model(:keys)
 
         user.update(pending_config_until: Time.now + 120)
         key = current_keydesk.create_config(user:)
-        current_keydesk.update(n_keys: Sequel[:n_keys] + 1)
+
+        DB.transaction do
+          current_keydesk.update(n_keys: Sequel[:n_keys] + 1)
+          current_keydesk.update_status!
+        end
 
         return key
       rescue StandardError => e
+        current_keydesk.record_error!
+      
         attempt += 1
 
         if attempt < keydesks.size
