@@ -134,8 +134,6 @@ class InstructionsController < ApplicationController
       TXT
 
       reply_with_instructions(msg)
-    elsif current_user.awaiting_config?
-      reply("Мы уже резервируем для вас ключ. Пожалуйста, подождите.\nЕсли вы потерялись, нажмите /start")
     elsif current_user.config_reserved?
       reply("Ваш ключ уже зарезервирован для вас!")
 
@@ -146,6 +144,8 @@ class InstructionsController < ApplicationController
       reply("Резервируем для вас место в нашей VPN сети. Это займёт около минуты. Если вы уверены, что что-то пошло не так, нажмите /start")
 
       case Key.issue(to: current_user) 
+      in :user_awaits_config
+        reply("Мы уже резервируем для вас место. Пожалуйста, подождите", reply_markup: nil)
       in :keydesks_full
         reply_with_instructions("Извините, сейчас нет свободных мест в нашей сети.")
       in :keydesks_error

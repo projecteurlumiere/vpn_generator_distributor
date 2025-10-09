@@ -5,21 +5,24 @@ class Key < Sequel::Model(:keys)
   attr_accessor :config
 
   def destroy
-    update(pending_destroy_until: Time.now + 120)
+    return :pending_destroy unless acquire_destroy_lock?
 
     attempts = 0
     begin
       keydesk.delete_user(username: keydesk_username)
+      keydesk.update_status!
     rescue StandardError => e
       attempts += 1
+      keydesk.record_error!
       LOGGER.warn "Error #{e.class}: #{e.message} when destroying key=username=#{keydesk_username.inspect}, keydesk=#{keydesk&.name.inspect}, attempt=#{attempts}, backtrace=#{e.backtrace.join("\n")}"
       retry if attempts < 3
+      raise e
     end
 
     super
   ensure
     if exists?
-      update(pending_destroy_until: nil)
+      release_destroy_lock!
     else
       per_key_dir  = "./tmp/vpn_configs/per_key/#{id}"
       per_user_dir = "./tmp/vpn_configs/per_user/#{user_id}"
@@ -29,14 +32,22 @@ class Key < Sequel::Model(:keys)
     end
   end
 
-  def awaiting_destroy?
-    pending_destroy_until && pending_destroy_until > Time.now
+  def acquire_destroy_lock?
+    Key.where(id:)
+       .where { (pending_destroy_until < Time.now) | (pending_destroy_until =~ nil) }
+       .update(pending_destroy_until: Time.now + 120) == 1
+  end
+
+  def release_destroy_lock!
+    update(pending_destroy_until: nil)
   end
 
   def self.issue(to:)
     user = to
 
-    if key = Key.where { reserved_until <= Time.now }.first
+    if !user.acquire_config_lock?
+      return :user_awaits_config
+    elsif key = Key.where { reserved_until <= Time.now }.first
       key.update(user_id: user.id, reserved_until: Time.now + 3_600)
       key
     else
@@ -44,6 +55,8 @@ class Key < Sequel::Model(:keys)
       attempt = 0
 
       begin
+        user.update(pending_config_until: Time.now + 120)
+
         keydesks = Keydesk.where { n_keys < max_keys }
                           .exclude(status: 0) # offline
                           .first(max_attempts)
@@ -51,7 +64,6 @@ class Key < Sequel::Model(:keys)
 
         current_keydesk = keydesks[attempt]
 
-        user.update(pending_config_until: Time.now + 120)
         key = current_keydesk.create_config(user:)
 
         DB.transaction do
@@ -73,7 +85,7 @@ class Key < Sequel::Model(:keys)
         LOGGER.warn "Error #{e.class}: #{e.message} when requesting config from keydesk=#{current_keydesk&.name.inspect}, user_id=#{to&.id}, backtrace=#{e.backtrace.join("\n")}"
         return :keydesks_error
       ensure
-        user.update(pending_config_until: nil)
+        user.release_config_lock!
       end
     end
   end

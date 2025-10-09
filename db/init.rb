@@ -39,7 +39,7 @@ end
 DB.create_table? :keys do
   primary_key :id
   foreign_key :user_id, :users, null: false
-  foreign_key :keydesk_id, :keydesks
+  foreign_key :keydesk_id, :keydesks, null: false
   String :keydesk_username, null: false
   String :desc
   DateTime :pending_destroy_until

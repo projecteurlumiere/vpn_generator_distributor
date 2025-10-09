@@ -24,11 +24,17 @@ class User < Sequel::Model(:users)
     keys.count >= MAX_KEYS
   end
 
-  def awaiting_config?
-    pending_config_until && pending_config_until > Time.now
-  end
-
   def config_reserved?
     keys.any? { |key| key.reserved_until && key.reserved_until > Time.now }
+  end
+
+  def acquire_config_lock?
+    User.where(id:)
+        .where { (pending_config_until < Time.now) | (pending_config_until =~ nil) }
+        .update(pending_config_until: Time.now + 120) == 1
+  end
+
+  def release_config_lock!
+    update(pending_config_until: nil)
   end
 end

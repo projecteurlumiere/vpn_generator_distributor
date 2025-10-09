@@ -34,7 +34,7 @@ class Keydesk < Sequel::Model(:keydesks)
         )
 
         sleep 2
-        keydesk.update(n_keys: keydesk.users.size, error_count: 0, last_error_at: nil, status: :online)
+        keydesk.update(n_keys: keydesk.users(update_n_keys: false).size, error_count: 0, last_error_at: nil, status: :online)
       end
     end
 
@@ -45,6 +45,7 @@ class Keydesk < Sequel::Model(:keydesks)
     now = Time.now
     DB.transaction do
       update(error_count: Sequel[:error_count] + 1, last_error_at: now)
+      reload
       update_status!
     end
   end
@@ -52,12 +53,14 @@ class Keydesk < Sequel::Model(:keydesks)
   def update_status!
     if last_error_at && Time.now - last_error_at > UNSTABLE_TIMEOUT
       update(error_count: 0, status: :online)
-    elsif error_count.to_i > 0 && Time.now - last_error_at <= UNSTABLE_TIMEOUT
+    elsif error_count > 0 && Time.now - last_error_at <= UNSTABLE_TIMEOUT
       update(status: :unstable)
     end
   end
 
-  def users
+  def users(update_n_keys: true)
+    users = vw.users
+    update(n_keys: users.size) if update_n_keys
     vw.users
   end
 

@@ -24,6 +24,12 @@ Layout/TrailingEmptyLines:
 Layout/EmptyLineAfterGuardClause:
   Enabled: true
 
+Layout/HashAlignment:
+  Enabled: true
+  EnforcedHashRocketStyle: separator
+  EnforcedColonStyle: separator
+  EnforcedLastArgumentHashStyle: always_ignore
+
 Style/BlockDelimiters:
   Enabled: true
 
@@ -43,3 +49,4 @@ Style/SymbolArray:
 
 Style/MultilineBlockChain:
   Enabled: true
+

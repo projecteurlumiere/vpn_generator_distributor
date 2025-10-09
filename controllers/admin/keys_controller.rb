@@ -32,12 +32,21 @@ class Admin::KeysController < ApplicationController
   end
 
   def destroy(id)
-    if (key = Key[id])
-      key.destroy
-      reply_with_inline_buttons("Ключ #{key.id} удалён успешно\n", [
-        admin_menu_inline_button,
-        { "К ключам пользователя" => callback_name(Admin::UsersController, "user_menu", key.user.tg_id) }
-      ])
+    if (key = Key[id]) && key.destroy
+      case key.destroy
+      in :pending_destroy
+        reply("Ключ #{key.id} в процессе удаления", reply_markup: nil)
+      in true
+        reply_with_inline_buttons("Ключ #{key.id} удалён успешно\n", [
+          admin_menu_inline_button,
+          { "К ключам пользователя" => callback_name(Admin::UsersController, "user_menu", key.user.tg_id) }
+        ])
+      in false
+        reply_with_inline_buttons("Не получилось удалить ключ #{key.id}", [
+          admin_menu_inline_button,
+          { "К ключам пользователя" => callback_name(Admin::UsersController, "user_menu", key.user.tg_id) }
+        ])
+      end
     else
       reply_with_inline_buttons("Такого ключа не существует", [
         admin_menu_inline_button
