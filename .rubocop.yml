@@ -24,6 +24,21 @@ Layout/TrailingEmptyLines:
 Layout/EmptyLineAfterGuardClause:
   Enabled: true
 
+Layout/CaseIndentation:
+  Enabled: true
+
+Layout/EndAlignment:
+  Enabled: true
+
+Layout/ElseAlignment:
+  Enabled: true
+
+Layout/BeginEndAlignment:
+  Enabled: true
+
+Layout/WhenThen:
+  Enabled: true
+
 Layout/HashAlignment:
   Enabled: true
   EnforcedHashRocketStyle: separator
