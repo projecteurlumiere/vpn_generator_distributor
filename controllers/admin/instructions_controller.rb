@@ -17,11 +17,7 @@
 # All changes git-versioned. Only track state during guided sessions.
 require "fileutils"
 
-class Admin::InstructionsController < ApplicationController
-  include AdminHelpers
-
-  def self.routes; end
-
+class Admin::InstructionsController < Admin::BaseController
   def call
     state = current_user.state_array
     @state_controller, @substate, * = state

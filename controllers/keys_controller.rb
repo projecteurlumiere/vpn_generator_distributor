@@ -1,8 +1,4 @@
 class KeysController < ApplicationController
-  def self.routes
-    []
-  end
-
   def call
     case message.text
     in "Управление ключами"
@@ -30,7 +26,8 @@ class KeysController < ApplicationController
     else
       reply("Добавляем вас в нашу сеть и создаём файлы.\nПожалуйста, подождите. Если вы уверены, что что-то пошло не так, нажмите /start")
       User.create(tg_id: user_id) if current_user.nil?
-      res = Key.issue(to: current_user) 
+      res = Key.issue(to: current_user)
+
       case res
       in :keydesks_full
         reply_with_start_menu("Извините, сейчас свободных мест нет.")

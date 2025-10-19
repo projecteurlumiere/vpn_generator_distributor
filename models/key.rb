@@ -2,6 +2,7 @@ class Key < Sequel::Model(:keys)
   many_to_one :user, key: :user_id
   many_to_one :keydesk, key: :keydesk_id
 
+  VALID_CONFIGS = %w(amnezia outline vless wireguard).freeze
   attr_accessor :config
 
   def destroy

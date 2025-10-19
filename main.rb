@@ -3,10 +3,10 @@ require "dotenv/load" if ENV["ENV"] != "production"
 require "logger"
 LOGGER = Logger.new((ENV["ENV"] == "production" ? "tmp/log.log" : $stdout))
 
+require "telegram/bot"
 require_relative "db/init"
 require_relative "initializers/all"
 
-require "telegram/bot"
 
 $token = ENV["TELEGRAM_TOKEN"].freeze
 $admin_chat_id = ENV["ADMIN_CHAT_ID"].to_i.freeze
@@ -29,8 +29,7 @@ Telegram::Bot::Client.run($token) do |bot|
       rescue StandardError => e
         msg = "Что-то пошло не так.\nЕсли вы потерялись, вернуться можно нажав на /start"
         ApplicationController.new(bot, message).send(:reply, msg, reply_markup: nil)
-        LOGGER.error "Unhandled error when processing request: #{e}\n#{e.full_message}"
-        raise e
+        LOGGER.error "Unhandled error when processing request: #{e.class}\n#{e.full_message}\n#{e.backtrace}"
       end
     end
   end

@@ -71,9 +71,8 @@ class Instructions
         errors << "(steps|issue_key) Вы выдаёте ключ более, чем один раз"
       end
 
-      valid_configs = %w[amnezia wireguard outline vless].freeze
-      if slide[:steps].any? { |step| step[:issue_key].is_a?(String) && valid_configs.none?(step[:issue_key]) }
-          errors << "(steps|issue_key) Поле issue_key может иметь только одно из следующих значений: #{valid_configs.join(" ")}"
+      if slide[:steps].any? { |step| step[:issue_key].is_a?(String) && Key::VALID_CONFIGS.none?(step[:issue_key]) }
+        errors << "(steps|issue_key) Поле issue_key может иметь только одно из следующих значений: #{Key::VALID_CONFIGS.join(" ")}"
       end
 
       if slide[:steps].any? { |step| !step[:text].is_a?(String) || step[:text].empty? }

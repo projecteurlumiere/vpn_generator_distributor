@@ -6,7 +6,7 @@ class ApplicationController
   attr_reader :bot, :message, :chat_id, :tg_id
 
   def self.routes
-    raise "#{__method__} method must be defined in the child class!"
+    []
   end
 
   def initialize(bot, message)
@@ -101,6 +101,24 @@ class ApplicationController
     reply(text, reply_markup:, **reply_opts)
   end
 
+  def edit_message(text,
+                   buttons = [],
+                   chat_id: message.message.chat.id,
+                   message_id: message.message.message_id,
+                   **opts)
+    if buttons.to_a.any?
+      opts[:reply_markup] = Telegram::Bot::Types::InlineKeyboardMarkup.new(
+        inline_keyboard: buttons.map do |btn|
+          btn.map do |text, callback_data|
+            Telegram::Bot::Types::InlineKeyboardButton.new(text: text, callback_data: callback_data)
+          end
+        end
+      )
+    end
+
+    bot.api.edit_message_text(text:, chat_id:, message_id:, **opts)
+  end
+
   # name - Symbol
   def reply_slide(name)
     slide = Slides.instance[name]
@@ -143,7 +161,7 @@ class ApplicationController
   def upload_file(path, message = nil)
     file = File.open(path)
     upload = Faraday::UploadIO.new(file, "text/plain", File.basename(file))
-    
+
     bot.api.send_document(
       chat_id: chat_id,
       document: upload,
@@ -161,13 +179,47 @@ class ApplicationController
     name
   end
 
-  def admin_menu_inline_button
-    {
-      "В меню" => callback_name(Admin::BaseController, "menu")
-    }
-  end
-
   def escape_md_v2(text)
     text.gsub(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/, '\\\\\1')
+  end
+
+  def is_callback?
+    message.is_a?(Telegram::Bot::Types::CallbackQuery)
+  end
+
+  def first_name
+    message.from.first_name
+  end
+
+  def last_name
+    message.from&.last_name
+  end
+
+  def repeat_message(chat_id:, message_thread_id: nil)
+    args = {
+      chat_id:,
+      message_thread_id:,
+    }
+
+    if message.text
+      bot.api.send_message(text: message.text, **args)
+    elsif message.photo
+      file_id = message.photo.last.file_id
+      bot.api.send_photo(photo: file_id, caption: message.caption, **args)
+    elsif message.document
+      bot.api.send_document(document: message.document.file_id, caption: message.caption, **args)
+    elsif message.audio
+      bot.api.send_audio(audio: message.audio.file_id, caption: message.caption, **args)
+    elsif message.voice
+      bot.api.send_voice(voice: message.voice.file_id, caption: message.caption, **args)
+    elsif message.video
+      bot.api.send_video(video: message.video.file_id, caption: message.caption, **args)
+    elsif message.sticker
+      bot.api.send_sticker(sticker: message.sticker.file_id, **args)
+    else
+      chat_id = self.chat_id
+      message_thread_id = self.message.reply_to_message.message_thread_id
+      bot.api.send_message(text: "Это сообщение не может быть перенаправлено через бота.", chat_id: self.chat_id)
+    end
   end
 end

@@ -17,17 +17,18 @@ end
 DB.create_table? :users do
   primary_key :id
   Integer :tg_id, unique: true, null: false # TG user id
-  Integer :n_keys, default: 0, null: false
+  Integer :n_keys, null: false, default: 0
   DateTime :pending_config_until
-  TrueClass :rules_read, default: false, null: false
-  TrueClass :admin, default: false, null: false
+  TrueClass :rules_read, null: false, default: false
+  TrueClass :admin, null: false, default: false
   String :state
+  Integer :role, null: false, default: 0
 end
 
 DB.create_table? :keydesks do
   primary_key :id
   String :ss_link, unique: true, null: false
-  Integer :n_keys, default: 0, null: false
+  Integer :n_keys, null: false, default: 0
   Integer :max_keys, null: false
   String :name, unique: true, null: false
   # errors & status
@@ -50,6 +51,9 @@ end
 DB.create_table? :support_requests do
   primary_key :id
   foreign_key :user_id, :users, null: false
-  Integer :status, null: false, default: 0
   DateTime :created_at, null: false, default: Sequel::CURRENT_TIMESTAMP
+  Integer :status, default: 0
+  Integer :message_thread_id
+  Integer :user_menu_message_id
+  Integer :chat_id, null: false # user's but we don't want to store permanent id's on user model
 end

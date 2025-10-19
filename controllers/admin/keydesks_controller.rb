@@ -16,13 +16,7 @@
 # Guided uploads link files to steps live; no post-facto missing check needed.
 # All changes git-versioned. Only track state during guided sessions.
 
-class Admin::KeydesksController < ApplicationController
-  include AdminHelpers
-
-  def self.routes
-    []
-  end
-
+class Admin::KeydesksController < Admin::BaseController
   def call
     state = current_user.state_array
 

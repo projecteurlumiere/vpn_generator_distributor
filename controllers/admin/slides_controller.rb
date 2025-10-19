@@ -1,10 +1,4 @@
-class Admin::SlidesController < ApplicationController
-  include AdminHelpers
-
-  def self.routes
-    []
-  end
-
+class Admin::SlidesController < Admin::BaseController
   def call
     @state_controller, @substate, @filename = current_user.state_array
     
