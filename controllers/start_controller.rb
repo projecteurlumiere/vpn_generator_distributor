@@ -2,7 +2,7 @@ class StartController < ApplicationController
   def self.routes
     [
       "/start", "Вернуться в меню",
-      "Ознакомиться с правилами", "Правила", 
+      "Ознакомиться с правилами", "Правила",
       "Правила подтверждаю",
       "О проекте"
     ]
@@ -47,8 +47,9 @@ class StartController < ApplicationController
       [
         ["Подключить VPN"],
         ["Правила"],
-        ["О проекте"]
-      ]
+        ["О проекте"],
+        ["Написать в поддержку"]
+      ].compact
     )
   end
 

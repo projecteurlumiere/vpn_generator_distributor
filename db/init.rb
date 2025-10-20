@@ -52,8 +52,8 @@ DB.create_table? :support_requests do
   primary_key :id
   foreign_key :user_id, :users, null: false
   DateTime :created_at, null: false, default: Sequel::CURRENT_TIMESTAMP
+  DateTime :updated_at, null: false, default: Sequel::CURRENT_TIMESTAMP
   Integer :status, default: 0
   Integer :message_thread_id
-  Integer :user_menu_message_id
   Integer :chat_id, null: false # user's but we don't want to store permanent id's on user model
 end

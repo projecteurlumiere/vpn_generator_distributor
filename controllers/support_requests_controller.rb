@@ -1,6 +1,6 @@
 class SupportRequestsController < ApplicationController
   def self.routes
-    ["Написать в поддержку"]
+    ["Написать в поддержку", "Задать вопрос"]
   end
 
   def call
@@ -12,16 +12,24 @@ class SupportRequestsController < ApplicationController
     state = current_user.state_array
 
     case message.text
-    in "Написать в поддержку" if pending_request
+    in ("Написать в поддержку" | "Задать вопрос") if unread_request
       msg = <<~TXT
-        Мы уже рассматриваем ваше обращение №#{pending_request.id} от #{pending_request.created_at.strftime("%Y-%m-%d %H:%M")}
+        Мы уже рассматриваем ваше обращение №#{unread_request.id} от #{unread_request.created_at.strftime("%Y-%m-%d %H:%M")}
 
         Если с вами не связались в течение трёх суток, вы сможете отправить новый запрос.
       TXT
 
       reply(msg, reply_markup: nil)
-    in "Написать в поддержку"
+    in ("Написать в поддержку" | "Задать вопрос") if open_request
+      current_user.update(state: ["SupportTopicsController", *state].join("|"))
+      msg = <<~TXT
+        Вы уже общаетесь с поддержкой. Напишите ваше сообщение, и волонтёры сразу получат его.
+      TXT
+
+      reply_with_buttons(msg, [["Вернуться в меню"]])
+    in ("Написать в поддержку" | "Задать вопрос")
       current_user.update(state: [self.class.name, "awaiting_input", *state].join("|"))
+
       msg = <<~TXT
         Напишите ваше обращение в поддержку. Постарайтесь описать свою проблему.
         В течение трёх дней волонтёр из нашей команды напишет вам в личные сообщения.
@@ -57,7 +65,7 @@ class SupportRequestsController < ApplicationController
       TXT
 
       if state.any?
-        admin_msg << "\n\nСостояние на момент обращенияv:\n#{"_#{escape_md_v2(state.join("|"))}_"}"
+        admin_msg << "\n\nСостояние на момент обращения:\n#{"_#{escape_md_v2(state.join("|"))}_"}"
       end
 
       actions = [
@@ -65,12 +73,12 @@ class SupportRequestsController < ApplicationController
         "Управление ключами" => callback_name(Admin::SupportRequestsController, "user_menu", current_user.id)
       ]
 
-      emoji = ["😎", "🎉", "🥳", "🚀", "🌟", "🤖"].sample
-
       res = bot.api.call("createForumTopic", {
         chat_id: $admin_chat_id,
-        name: "#{emoji} - Обращение №#{support_request.id}"
+        name: "Обращение №#{support_request.id}",
+        icon_custom_emoji_id: 5377316857231450742
       })
+
       message_thread_id = res["result"]["message_thread_id"]
       support_request.update(message_thread_id:)
       reply(admin_msg, chat_id: $admin_chat_id, message_thread_id:, parse_mode: "MarkdownV2")
@@ -84,17 +92,23 @@ class SupportRequestsController < ApplicationController
 
   private
 
-  def pending_request
+  def unread_request
     @pending_request ||= current_user.support_requests_dataset
-      .where(status: 0)
-      .where { created_at > Sequel.expr(Sequel::CURRENT_TIMESTAMP) - Sequel.lit("interval '3 days'") }
+      .where(status: [0, 1])
+      .where { updated_at > Sequel.expr(Sequel::CURRENT_TIMESTAMP) - Sequel.lit("interval '3 days'") }
       .first
+  end
+
+  def open_request
+    @open_request ||= current_user.support_requests_dataset
+                                  .where(status: 1)
+                                  .first
   end
 
   def close_abandoned_requests
     requests = current_user.support_requests_dataset
                            .where(status: 0)
-                           .where { created_at <= Sequel.expr(Sequel::CURRENT_TIMESTAMP) - Sequel.lit("interval '3 days'") }
+                           .where { updated_at <= Sequel.expr(Sequel::CURRENT_TIMESTAMP) - Sequel.lit("interval '3 days'") }
     requests.each do |request|
       message_thread_id = request.message_thread_id
 

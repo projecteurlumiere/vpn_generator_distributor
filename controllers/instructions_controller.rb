@@ -4,7 +4,7 @@ class InstructionsController < ApplicationController
       [
         content[:title], # instruction titles
       ]
-    end.flatten 
+    end.flatten
 
     instructions + ["Подключить VPN", "К инструкциям"]
   end

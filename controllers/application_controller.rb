@@ -198,7 +198,7 @@ class ApplicationController
   def repeat_message(chat_id:, message_thread_id: nil)
     args = {
       chat_id:,
-      message_thread_id:,
+      message_thread_id:
     }
 
     if message.text
@@ -219,7 +219,7 @@ class ApplicationController
     else
       chat_id = self.chat_id
       message_thread_id = self.message.reply_to_message.message_thread_id
-      bot.api.send_message(text: "Это сообщение не может быть перенаправлено через бота.", chat_id: self.chat_id)
+      bot.api.send_message(text: "Это сообщение не может быть перенаправлено через бота.", chat_id:, message_thread_id:)
     end
   end
 end

@@ -1,15 +1,24 @@
 # here by topics we mean actual conversations and messages bot forwards
 class SupportTopicsController < ApplicationController
   def call
-    repeat_message(chat_id: $admin_chat_id, 
-                   message_thread_id: current_support_request.message_thread_id)
+    if request
+      request.update(updated_at: Time.now)
+      repeat_message(chat_id: $admin_chat_id,
+                     message_thread_id: request.message_thread_id)
+    else
+      msg = <<~TXT
+        Похоже, что ваше обращение в поддержку потерялось.
+        Вы можете написать в поддержку с новым обращением или вернуться в меню.
+      TXT
+      reply_with_buttons(msg, [["Написать в поддержку"], ["Вернуться в меню"]])
+    end
   end
 
   private
 
-  def current_support_request
-    @support_request ||= current_user.support_requests_dataset
-                                     .where(status: 0)
-                                     .first
+  def request
+    @request ||= current_user.support_requests_dataset
+                             .where(status: [0, 1])
+                             .first
   end
 end
