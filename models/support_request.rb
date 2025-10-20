@@ -21,4 +21,50 @@ class SupportRequest < Sequel::Model(:support_requests)
 
     super
   end
+
+  def set_open!(bot)
+    if unread?
+      begin
+        bot.api.call("editForumTopic", {
+          chat_id: $admin_chat_id,
+          name: "Обращение №#{id}",
+          message_thread_id:,
+          icon_custom_emoji_id: 5238156910363950406
+        })
+      rescue Telegram::Bot::Exceptions::ResponseError => e
+        case e.data["description"]
+        in /TOPIC_NOT_MODIFIED/
+          LOGGER.warn "Topic #{id} was not modified by #{__method__} in #{self.class}"
+        else
+          raise e
+        end
+      end
+    end
+
+    DB.transaction do
+      user.update(state: ["SupportTopicsController"].join("|"))
+      update(status: 1, updated_at: Time.now)
+    end
+  end
+
+  def set_closed!(bot)
+    closed!
+    save
+
+    res = bot.api.call("editForumTopic", {
+      chat_id: $admin_chat_id,
+      name: "Обращение №#{id}",
+      message_thread_id:,
+      icon_custom_emoji_id: 5237699328843200968
+    })
+  rescue Telegram::Bot::Exceptions::ResponseError => e
+    case e.data["description"]
+    in /TOPIC_NOT_MODIFIED/
+      LOGGER.warn "Topic #{id} was not modified by #{__method__} in #{self.class}"
+    in /message thread not found/
+      LOGGER.warn "Topic is missing for request №#{id}."
+    else
+      raise e
+    end
+  end
 end

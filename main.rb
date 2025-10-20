@@ -27,7 +27,9 @@ Telegram::Bot::Client.run($token) do |bot|
       Thread.new do
         Routes.instance.dispatch_controller(bot, message)
       rescue StandardError => e
-        msg = case message.chat.id
+        controller = ApplicationController.new(bot, message)
+
+        msg = case controller.chat_id
               in ^$admin_chat_id
                 <<~TXT
                   ⚠️ Что-то пошло не так: #{e.class}
@@ -35,7 +37,8 @@ Telegram::Bot::Client.run($token) do |bot|
               else
                 "Что-то пошло не так.\nЕсли вы потерялись, вернуться можно нажав на /start"
               end
-        ApplicationController.new(bot, message).send(:reply, msg, reply_markup: nil, message_thread_id: message.reply_to_message&.message_thread_id)
+
+        controller.send(:reply, msg, reply_markup: nil)
         LOGGER.error "Unhandled error when processing request: #{e.class}\n#{e.full_message}\n#{e.backtrace}"
       end
     end

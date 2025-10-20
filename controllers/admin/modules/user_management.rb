@@ -9,6 +9,7 @@ module Admin::UserManagement
     actions = case self
               in Admin::UsersController
                 [
+                  admin_menu_inline_button,
                   { "Добавить ключ" => callback_name(Admin::KeysController, "create", target_user.id) },
                 ]
               in Admin::SupportRequestsController
@@ -18,7 +19,7 @@ module Admin::UserManagement
               end
 
     reply_with_actions(msg, [
-      # admin_menu_inline_button,
+      *actions,
       { "Управлять ключами" => callback_name("user_keys", target_user.id) }
     ])
   end

@@ -79,10 +79,10 @@ class SupportRequestsController < ApplicationController
         icon_custom_emoji_id: 5377316857231450742
       })
 
-      message_thread_id = res["result"]["message_thread_id"]
-      support_request.update(message_thread_id:)
-      reply(admin_msg, chat_id: $admin_chat_id, message_thread_id:, parse_mode: "MarkdownV2")
-      reply_with_inline_buttons("Нажмите сюда, чтобы управлять ключами", actions, chat_id: $admin_chat_id, message_thread_id:, parse_mode: "MarkdownV2")
+      thread_id = res["result"]["message_thread_id"]
+      support_request.update(message_thread_id: thread_id)
+      reply(admin_msg, chat_id: $admin_chat_id, message_thread_id: thread_id, parse_mode: "MarkdownV2")
+      reply_with_inline_buttons("Нажмите сюда, чтобы управлять ключами", actions, chat_id: $admin_chat_id, message_thread_id: thread_id, parse_mode: "MarkdownV2")
 
       reply_with_buttons("Ваше обращение (##{support_request.id}) принято. Мы ответим скоро! Пока можете попробовать другую инструкцию.", [["Вернуться в меню"]])
     else
@@ -110,16 +110,15 @@ class SupportRequestsController < ApplicationController
                            .where(status: 0)
                            .where { updated_at <= Sequel.expr(Sequel::CURRENT_TIMESTAMP) - Sequel.lit("interval '3 days'") }
     requests.each do |request|
-      message_thread_id = request.message_thread_id
+      thread_id = request.message_thread_id
 
       msg = "Это обращение было закрыто в связи с новым обращением пользователя."
-      reply(msg, chat_id: $admin_chat_id, message_thread_id:)
+      reply(msg, chat_id: $admin_chat_id, message_thread_id: thread_id)
 
       bot.api.call("closeForumTopic", {
         chat_id: $admin_chat_id,
-        message_thread_id:
+        message_thread_id: thread_id
       })
-      sleep 1
     rescue Telegram::Bot::Exceptions::ResponseError => e
       case e.data["description"]
       in /TOPIC_NOT_MODIFIED/

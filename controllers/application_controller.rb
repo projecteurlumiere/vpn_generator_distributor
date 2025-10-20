@@ -3,7 +3,7 @@
 class ApplicationController
   class RoutingError < StandardError; end
 
-  attr_reader :bot, :message, :chat_id, :tg_id
+  attr_reader :bot, :message, :chat_id, :message_thread_id, :tg_id
 
   def self.routes
     []
@@ -13,12 +13,14 @@ class ApplicationController
     @bot = bot
     @message = message
 
+    @tg_id = message.from.id
+
     if message.is_a?(Telegram::Bot::Types::CallbackQuery)
       @chat_id = message.message.chat.id
-      @tg_id = message.from.id
+      @message_thread_id = message.message&.message_thread_id
     else
       @chat_id = message.chat.id
-      @tg_id = message.from.id
+      @message_thread_id = message.reply_to_message&.message_thread_id
     end
   end
 
@@ -34,6 +36,7 @@ class ApplicationController
       if photos.size == 1
         bot.api.send_photo(
           chat_id:,
+          message_thread_id:,
           photo: photos.first,
           caption: text,
           **opts
@@ -46,18 +49,25 @@ class ApplicationController
 
         bot.api.send_media_group(
           chat_id:,
+          message_thread_id:,
           media:,
           **opts
         )
 
-        bot.api.send_message(chat_id:,
-                     text:,
-                     **opts)
+        bot.api.send_message(
+          chat_id:,
+          message_thread_id:,
+          text:,
+         **opts
+         )
       end
     else
-      bot.api.send_message(chat_id:,
-                           text:,
-                           **opts)
+      bot.api.send_message(
+        chat_id:,
+        message_thread_id:,
+        text:,
+        **opts
+      )
     end
   end
 
@@ -158,15 +168,17 @@ class ApplicationController
     dest_path
   end
 
-  def upload_file(path, message = nil)
+  def upload_file(path, message = nil, **opts)
     file = File.open(path)
     upload = Faraday::UploadIO.new(file, "text/plain", File.basename(file))
 
     bot.api.send_document(
       chat_id: chat_id,
       document: upload,
-      caption: message
+      caption: message,
+      **opts
     )
+  ensure
     file.close
   end
 
@@ -217,9 +229,8 @@ class ApplicationController
     elsif message.sticker
       bot.api.send_sticker(sticker: message.sticker.file_id, **args)
     else
-      chat_id = self.chat_id
-      message_thread_id = self.message.reply_to_message.message_thread_id
-      bot.api.send_message(text: "Это сообщение не может быть перенаправлено через бота.", chat_id:, message_thread_id:)
+      msg = "Это сообщение не может быть перенаправлено через бота."
+      bot.api.send_message(text: msg, chat_id: self.chat.id, message_thread_id: self.message_thread_id)
     end
   end
 end
