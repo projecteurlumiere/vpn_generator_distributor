@@ -1,7 +1,15 @@
 require "dotenv/load" if ENV["ENV"] != "production"
 
+Bundler.require(:default, ENV["ENV"])
+
+require "base64"
+require "fileutils"
 require "logger"
-LOGGER = Logger.new((ENV["ENV"] == "production" ? "tmp/log.log" : $stdout))
+require "singleton"
+require "uri"
+require "yaml"
+
+LOGGER = Logger.new((ENV["ENV"] == "production" ? "tmp/prod.log" : $stdout))
 
 require "telegram/bot"
 require_relative "db/init"
@@ -28,7 +36,6 @@ Telegram::Bot::Client.run($token) do |bot|
         Routes.instance.dispatch_controller(bot, message)
       rescue StandardError => e
         controller = ApplicationController.new(bot, message)
-
         msg = case controller.chat_id
               in ^$admin_chat_id
                 <<~TXT
@@ -37,7 +44,6 @@ Telegram::Bot::Client.run($token) do |bot|
               else
                 "Что-то пошло не так.\nЕсли вы потерялись, вернуться можно нажав на /start"
               end
-
         controller.send(:reply, msg, reply_markup: nil)
         LOGGER.error "Unhandled error when processing request: #{e.class}\n#{e.full_message}\n#{e.backtrace}"
       end

@@ -1,10 +1,7 @@
-require "singleton"
-
-# require all controllers at boot
-Dir[File.join(__dir__, "../controllers/**/*.rb")].sort.each { |f| require f }
-
 class Routes
   class ControllerNotFoundError < StandardError; end
+  
+  Dir[File.join(__dir__, "../controllers/**/*.rb")].sort.each { |f| require f }
 
   include Singleton
 

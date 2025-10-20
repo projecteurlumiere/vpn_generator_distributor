@@ -1,6 +1,3 @@
-require "yaml"
-require "singleton"
-
 class Instructions
   include Singleton
 
