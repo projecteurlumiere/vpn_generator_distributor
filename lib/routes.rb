@@ -37,6 +37,13 @@ class Routes
     in Telegram::Bot::Types::ChatMemberUpdated
       ApplicationController.new(bot, message).send(:reply, "Я подключился успешно.")
     end
+  rescue ControllerNotFoundError => e
+    msg = <<~TXT
+      Не получилось выполнить действие.
+      Если вы потерялись, вернуться можно нажав на /start
+    TXT
+
+    ApplicationController.new(bot, message).send(:reply, msg, reply_markup: nil)
   end
 
   def [](type)
