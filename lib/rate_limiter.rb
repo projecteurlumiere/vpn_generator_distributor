@@ -20,7 +20,7 @@ class RateLimiter
   private
 
   def worker_loop
-    Thread.new do
+    Async do
       while true
         while @new_jobs.shift in [id, block, event]
           @queues[id] << [block, event]
@@ -35,7 +35,7 @@ class RateLimiter
           false
         end
 
-        sleep(0.01) # so that it releases the lock
+        Async::Task.current.yield
       end
     end
   end

@@ -4,6 +4,6 @@ at_exit do
   system("scripts/keydesk_proxy_stop.sh")
 end
 
-Thread.new do
+Async do
   Keydesk.start_proxies
 end

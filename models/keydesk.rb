@@ -15,10 +15,10 @@ class Keydesk < Sequel::Model(:keydesks)
 
     Keydesk.dataset.update(status: 0)
 
-    threads = []
+    tasks = []
 
     Keydesk.all.each do |keydesk|
-      threads << Thread.new do
+      tasks << Async do
         conf = keydesk.decoded_ss_link
         id = keydesk.id
         proxy_port = keydesk.proxy_port
@@ -38,7 +38,7 @@ class Keydesk < Sequel::Model(:keydesks)
       end
     end
 
-    threads.each(&:join)
+    tasks.each(&:wait)
   end
 
   def record_error!

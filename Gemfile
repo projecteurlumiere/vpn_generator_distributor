@@ -10,6 +10,7 @@ group :development do
 end
 
 group :default do
+  gem "async"
   gem "concurrent-ruby", "~> 1.3"
   gem "socksify"
   gem "sequel"

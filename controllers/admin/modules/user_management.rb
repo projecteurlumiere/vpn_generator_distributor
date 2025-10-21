@@ -34,8 +34,8 @@ module Admin::UserManagement
 
     lines = Concurrent::Hash.new
 
-    threads = keys.map do |key|
-      Thread.new do
+    tasks = keys.map do |key|
+      Async do
         begin
           user_hash = key.keydesk.users.find { |user| key.keydesk_username == user["UserName"] }
           status =  case user_hash["Status"]
@@ -73,7 +73,7 @@ module Admin::UserManagement
       { "Удалить ключ #{key.id}" => callback_name(Admin::KeysController, "destroy", key.id) }
     end
 
-    threads.map(&:join)
+    tasks.map(&:wait)
 
     if lines.any?
       msg = "Пользователю `#{@target_id}` принадлежат следующие ключи:\n\n"
