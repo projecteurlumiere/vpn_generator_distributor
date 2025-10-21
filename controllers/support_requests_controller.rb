@@ -4,7 +4,7 @@ class SupportRequestsController < ApplicationController
   end
 
   def call
-    if $admin_chat_id.nil?
+    if Bot::ADMIN_CHAT_ID.nil?
       reply("Сейчас обратиться в поддержку нельзя. Попробуйте позже. Извините!", reply_markup: nil)
       return
     end
@@ -74,15 +74,15 @@ class SupportRequestsController < ApplicationController
       ]
 
       res = bot.api.call("createForumTopic", {
-        chat_id: $admin_chat_id,
+        chat_id: Bot::ADMIN_CHAT_ID,
         name: "Обращение №#{support_request.id}",
         icon_custom_emoji_id: 5377316857231450742
       })
 
       thread_id = res["result"]["message_thread_id"]
       support_request.update(message_thread_id: thread_id)
-      reply(admin_msg, chat_id: $admin_chat_id, message_thread_id: thread_id, parse_mode: "MarkdownV2")
-      reply_with_inline_buttons("Нажмите сюда, чтобы управлять ключами", actions, chat_id: $admin_chat_id, message_thread_id: thread_id, parse_mode: "MarkdownV2")
+      reply(admin_msg, chat_id: Bot::ADMIN_CHAT_ID, message_thread_id: thread_id, parse_mode: "MarkdownV2")
+      reply_with_inline_buttons("Нажмите сюда, чтобы управлять ключами", actions, chat_id: Bot::ADMIN_CHAT_ID, message_thread_id: thread_id, parse_mode: "MarkdownV2")
 
       reply_with_buttons("Ваше обращение (##{support_request.id}) принято. Мы ответим скоро! Пока можете попробовать другую инструкцию.", [["Вернуться в меню"]])
     else
@@ -113,10 +113,10 @@ class SupportRequestsController < ApplicationController
       thread_id = request.message_thread_id
 
       msg = "Это обращение было закрыто в связи с новым обращением пользователя."
-      reply(msg, chat_id: $admin_chat_id, message_thread_id: thread_id)
+      reply(msg, chat_id: Bot::ADMIN_CHAT_ID, message_thread_id: thread_id)
 
       bot.api.call("closeForumTopic", {
-        chat_id: $admin_chat_id,
+        chat_id: Bot::ADMIN_CHAT_ID,
         message_thread_id: thread_id
       })
     rescue Telegram::Bot::Exceptions::ResponseError => e

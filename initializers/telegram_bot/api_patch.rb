@@ -20,8 +20,14 @@ class Telegram::Bot::Api
 
   def throttler_args(raw_params)
     case raw_params
-    in { chat_id: ^$admin_chat_id, message_thread_id: message_thread_id }
-      [GROUP_THROTTLER, [$admin_chat_id, message_thread_id].join("_")]
+    in { chat_id: ^(Bot::ADMIN_CHAT_ID) }
+      [
+        GROUP_THROTTLER,
+        [
+          Bot::ADMIN_CHAT_ID,
+          raw_params.fetch(:raw_params, 0) # editing messages dose not have message_thread_id
+        ].join("_")
+      ]
     in { chat_id: chat_id }
       [USER_THROTTLER, chat_id]
     else

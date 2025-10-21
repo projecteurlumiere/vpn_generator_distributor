@@ -20,7 +20,7 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
           filename = File.basename(file_path, File.extname(file_path))
           next if configs.none?(filename)
 
-          if chat_id == $admin_chat_id
+          if chat_id == Bot::ADMIN_CHAT_ID
             support_request = SupportRequest.where(user_id: user_id)
                                             .where(status: [0, 1])
                                             .first

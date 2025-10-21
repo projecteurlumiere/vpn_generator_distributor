@@ -109,7 +109,7 @@ class Admin::InstructionsController < Admin::BaseController
   end
 
   def handle_review
-    $mutex.sync do
+    Bot::MUTEX.sync do
       current_instruction = YAML.load_file(@instruction_path, symbolize_names: true)
       actions = current_instruction[:steps].map { |step| step[:actions] }.flatten
 
@@ -168,7 +168,7 @@ class Admin::InstructionsController < Admin::BaseController
       return
     end
 
-    $mutex.sync do
+    Bot::MUTEX.sync do
       instruction = YAML.load_file(path, symbolize_names: true)
       new_title = instruction[:title].downcase
       new_path = File.join(File.dirname(path), "#{new_title}.yml")
@@ -204,7 +204,7 @@ class Admin::InstructionsController < Admin::BaseController
   def memorize_image
     image_id = message.photo.last.file_id
 
-    $mutex.sync do
+    Bot::MUTEX.sync do
       current_instruction = YAML.load_file(@instruction_path, symbolize_names: true)
       current_instruction[:steps][@step][:images] ||= []
       current_instruction[:steps][@step][:images] << image_id

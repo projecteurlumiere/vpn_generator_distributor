@@ -8,7 +8,9 @@ if ENV["ENV"] == "development"
     adapter: "postgres",
     database: "vpn_distributor_development",
     user: ENV["USER"],
-    logger: LOGGER
+    logger: LOGGER,
+    max_connections: 10,
+    pool_timeout: 10
   )
 else
   raise "not implemented!"

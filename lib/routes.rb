@@ -28,7 +28,7 @@ class Routes
 
   def dispatch_controller(bot, message)
     case message
-    in Telegram::Bot::Types::Message if message.chat.id == $admin_chat_id
+    in Telegram::Bot::Types::Message if message.chat.id == Bot::ADMIN_CHAT_ID
       Admin::SupportTopicsController.new(bot, message).call
     in Telegram::Bot::Types::Message
       handle_message(bot, message)

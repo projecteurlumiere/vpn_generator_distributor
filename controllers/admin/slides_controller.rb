@@ -132,7 +132,7 @@ class Admin::SlidesController < Admin::BaseController
     in nil if message.photo
       image_id = message.photo.last.file_id
 
-      $mutex.sync do
+      Bot::MUTEX.sync do
         slide = YAML.load_file(path, symbolize_names: true)
         slide[:images] ||= []
         slide[:images] << image_id
@@ -151,7 +151,7 @@ class Admin::SlidesController < Admin::BaseController
       reply("Слайд обновлён")
       menu
     in "Убрать изображения"
-      $mutex.sync do
+      Bot::MUTEX.sync do
         slide = YAML.load_file(path, symbolize_names: true)
         slide.delete(:images)
 

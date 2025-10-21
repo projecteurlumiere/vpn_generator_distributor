@@ -158,7 +158,7 @@ class ApplicationController
   def download_attachment(file_id, dest_path)
     file = bot.api.get_file(file_id:)
     file_path = file.file_path
-    file_url = "https://api.telegram.org/file/bot#{$token}/#{file_path}"
+    file_url = "https://api.telegram.org/file/bot#{Bot::TOKEN}/#{file_path}"
 
     FileUtils.mkdir_p(File.dirname(dest_path))
     File.open(dest_path, "wb") do |f|

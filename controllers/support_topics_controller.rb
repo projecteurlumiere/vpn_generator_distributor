@@ -3,7 +3,7 @@ class SupportTopicsController < ApplicationController
   def call
     if request
       request.update(updated_at: Time.now)
-      repeat_message(chat_id: $admin_chat_id,
+      repeat_message(chat_id: Bot::ADMIN_CHAT_ID,
                      message_thread_id: request.message_thread_id)
     else
       msg = <<~TXT

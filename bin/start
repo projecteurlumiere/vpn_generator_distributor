@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
 require "bundler/setup"
-ENV["ENV"] ||= "development"
-
 require_relative "../bot"
 

@@ -4,6 +4,7 @@ source "https://rubygems.org"
 
 group :development do
   gem "dotenv"
+  gem "irb"
   gem "rerun"
   gem "rubocop", require: false
   gem "rubocop-performance", require: false

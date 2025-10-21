@@ -26,7 +26,7 @@ class SupportRequest < Sequel::Model(:support_requests)
     if unread?
       begin
         bot.api.call("editForumTopic", {
-          chat_id: $admin_chat_id,
+          chat_id: Bot::ADMIN_CHAT_ID,
           name: "Обращение №#{id}",
           message_thread_id:,
           icon_custom_emoji_id: 5238156910363950406
@@ -52,7 +52,7 @@ class SupportRequest < Sequel::Model(:support_requests)
     save
 
     res = bot.api.call("editForumTopic", {
-      chat_id: $admin_chat_id,
+      chat_id: Bot::ADMIN_CHAT_ID,
       name: "Обращение №#{id}",
       message_thread_id:,
       icon_custom_emoji_id: 5237699328843200968
