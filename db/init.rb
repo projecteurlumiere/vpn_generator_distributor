@@ -1,8 +1,9 @@
 require "sequel"
 require "pg"
 
-# before altering the table after launch, implement migrations!
+Sequel.extension :fiber_concurrency
 
+# before altering the table after launch, implement migrations!
 if ENV["ENV"] == "development"
   DB = Sequel.connect(
     adapter: "postgres",
