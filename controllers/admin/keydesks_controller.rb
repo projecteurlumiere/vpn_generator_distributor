@@ -93,9 +93,10 @@ class Admin::KeydesksController < Admin::BaseController
     reply("Перезапускаем доступ к ключницам.")
 
     begin
-      $mutex.sync { Keydesk.start_proxies }
-    rescue StandardError
+      Bot::MUTEX.sync { Keydesk.start_proxies }
+    rescue StandardError => e
       reply("Прокси не были перезапущены: выдача ключей недоступна.")
+      raise e
     end
 
     reply("Прокси перезапущены успешно")

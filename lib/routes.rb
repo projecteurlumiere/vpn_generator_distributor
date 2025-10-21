@@ -38,11 +38,12 @@ class Routes
       ApplicationController.new(bot, message).send(:reply, "Я подключился успешно.")
     end
   rescue ControllerNotFoundError => e
+    LOGGER.error e.msg
+
     msg = <<~TXT
       Не получилось выполнить действие.
       Если вы потерялись, вернуться можно нажав на /start
     TXT
-
     ApplicationController.new(bot, message).send(:reply, msg, reply_markup: nil)
   end
 
@@ -78,6 +79,8 @@ class Routes
     end
 
     klasses.each do |klass|
+      break if klass.nil?
+
       begin
         controller = klass.new(bot, message)
         controller.instance_variable_set(:@current_user, current_user) if defined? current_user
