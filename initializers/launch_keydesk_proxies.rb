@@ -1,3 +1,5 @@
+return if ENV["ENV"] == "test"
+
 InstanceUtils.record
 
 at_exit do

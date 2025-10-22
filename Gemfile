@@ -10,6 +10,10 @@ group :development do
   gem "rubocop-performance", require: false
 end
 
+group :test do
+  gem "minitest"
+end
+
 group :default do
   gem "async"
   gem "base64"

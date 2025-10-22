@@ -8,15 +8,15 @@ class Key < Sequel::Model(:keys)
   def destroy
     return :pending_destroy unless acquire_destroy_lock?
 
-    attempts = 0
     begin
       keydesk.delete_user(username: keydesk_username)
       keydesk.update_status!
     rescue StandardError => e
+      attempts ||= 0
       attempts += 1
       keydesk.record_error!
-      LOGGER.warn "Error #{e.class}: #{e.message} when destroying key=username=#{keydesk_username.inspect}, keydesk=#{keydesk&.name.inspect}, attempt=#{attempts}, backtrace=#{e.backtrace.join("\n")}"
       retry if attempts < 3
+
       raise e
     end
 

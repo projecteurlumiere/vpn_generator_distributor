@@ -13,9 +13,20 @@ if ENV["ENV"] == "development"
     max_connections: 10,
     pool_timeout: 10
   )
+elsif ENV["ENV"] == "test"
+  DB = Sequel.connect(
+    adapter: "postgres",
+    database: "vpn_distributor_test",
+    user: ENV["USER"],
+    logger: LOGGER,
+    max_connections: 10,
+    pool_timeout: 10
+  )
 else
   raise "not implemented!"
 end
+
+DB.extension :pg_array
 
 DB.create_table? :users do
   primary_key :id
@@ -38,6 +49,7 @@ DB.create_table? :keydesks do
   Integer :status, null: false, default: 0
   Integer :error_count, null: false, default: 0
   DateTime :last_error_at
+  column :usernames_to_destroy, "text[]", null: false, default: Sequel.lit("ARRAY[]::text[]")
 end
 
 DB.create_table? :keys do

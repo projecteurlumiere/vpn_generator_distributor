@@ -25,6 +25,8 @@ class Admin::KeydesksController < Admin::BaseController
       create_keydesk(state)
     in [_, "edit_keydesk", *]
       update_keydesk(state)
+    in [_, "check_before_clean_up", *]
+     list_usernames_to_destroy
     else
       raise RoutingError
     end
@@ -66,10 +68,16 @@ class Admin::KeydesksController < Admin::BaseController
     reply_with_inline_buttons(msg, [
         admin_menu_inline_button,
         {
-          "Добавить ключницу" => callback_name("new")
+          "Обновить" => callback_name("refresh")
         },
         {
-          "Изменить" => callback_name("edit")
+          "Новая ключница" => callback_name("new")
+        },
+        {
+          "Настроить ключницу" => callback_name("edit")
+        },
+        {
+          "Очистить ключницы" => callback_name("usernames_to_destroy")
         },
         {
           "Перезапустить ключницы" => callback_name("restart")
@@ -78,6 +86,8 @@ class Admin::KeydesksController < Admin::BaseController
       parse_mode: "Markdown"
     )
   end
+
+  alias_method :refresh, :index
 
   def new
     current_user.update(state: [self.class.name, "new_keydesk", "name"].join("|"))
@@ -101,6 +111,55 @@ class Admin::KeydesksController < Admin::BaseController
 
     reply("Прокси перезапущены успешно")
     index
+  end
+
+  def usernames_to_destroy
+    header = "%-13s %3s %3s" % ["Имя", "ЗБТ", "ВЫД"]
+
+    tasks = Keydesk.all.map do |kd|
+      Async do
+        kd.find_usernames_to_destroy
+      end
+    end
+
+    tasks.map(&:wait)
+
+    rows = Keydesk.all.map do |keydesk|
+      usernames = keydesk.usernames_to_destroy.size / 2
+      "%-13s %3s %3s" % [
+        keydesk.name[0...13],
+        usernames.size,
+        keydesk.n_keys
+      ]
+    end
+
+    table = ([header] + rows).join("\n")
+    msg = <<~TXT
+      Пользователи на удаление:
+
+      - Имя: Имя ключницы
+      - ЗБТ: Брошенные ключи
+      - ВЫД: Выдано ключей
+
+      ```
+      #{table}
+      ```
+    TXT
+
+    reply_with_inline_buttons(msg, [
+      admin_menu_inline_button,
+      {
+        "Проверить" => callback_name("check_before_clean_up")
+      },
+      {
+        "Очистить" => callback_name("clean_up")
+      }
+    ], parse_mode: "Markdown")
+  end
+
+  def check_before_clean_up
+    current_user.update(state: [self.class.name, "check_before_clean_up", "awaiting_name"].join("|"))
+    reply("Введите имя ключницы")
   end
 
   private
@@ -142,8 +201,8 @@ class Admin::KeydesksController < Admin::BaseController
   def update_keydesk(state)
     msg = message.text.strip
 
-    case state
-    in [_, _, "name", *] if (kd = Keydesk.first(name: msg))
+    case state.drop(2)
+    in ["name", *] if (kd = Keydesk.first(name: msg))
       new_state = state << kd.id
       new_state[2] = "menu"
       current_user.update(state: new_state.join("|"))
@@ -151,30 +210,45 @@ class Admin::KeydesksController < Admin::BaseController
         ["Изменить имя или число ключей"],
         (["Удалить"] if kd.keys_dataset.count == 0)
       ].compact)
-    in [_, _, "name", *]
+    in ["name", *]
       reply("Нет такой ключницы")
-    in [_, _, "menu", *] if msg == "Удалить"
-      Keydesk.first(id: state[3]).destroy
-      reply("Ключница удалена")
-      self.current_user.update(state: nil)
-      self.restart
-    in [_, _, "menu", *] if msg == "Изменить имя или число ключей"
+    in ["menu", *] if msg == "Удалить"
+      new_state = state.dup
+      new_state[2] = "destroy_confirm"
+
+      kd = Keydesk.first(id: state[3])
+      current_user.update(state: new_state.join("|"))
+      reply_with_buttons(
+        "Точно ли вы хотите удалить ключницу #{kd.name}?\nВсе записи о ключах в базе данных бота будут удалены!", 
+        [["Да, удалить", "Нет, не удалять"]]
+      )
+    in ["destroy_confirm", *] if msg == "Да, удалить"
+      kd = Keydesk[state[3]] 
+      kd.keys_dataset.delete
+      kd.destroy
+      reply("Ключница #{kd.name} удалена")
+      current_user.update(state: nil)
+      restart
+    in ["destroy_confirm", *] if msg == "Нет, не удалять"
+      current_user.update(state: nil)
+      index
+    in ["menu", *] if msg == "Изменить имя или число ключей"
       new_state = state.dup
       new_state[2] = "edit_name"
       current_user.update(state: new_state.join("|"))
 
       reply_with_buttons("Введите новое имя", [["Оставить прежнее"]])
-    in [_, _, "edit_name", *] if msg == "Оставить прежнее"
+    in ["edit_name", *] if msg == "Оставить прежнее"
       new_state = state.dup
       new_state[2] = "edit_max_keys"
       current_user.update(state: new_state.join("|"))
 
       reply_with_buttons("Введите новое максимальное число пользователей для ключницы (целое число)", [["Оставить прежнее"]])
-    in [_, _, "edit_name", *] if msg.size > 13
+    in ["edit_name", *] if msg.size > 13
       reply("Новое имя не может быть длиннее 13 символов.", reply_markup: nil)
-    in [_, _, "edit_name", *] if (kd = Keydesk.first(name: msg))
+    in ["edit_name", *] if (kd = Keydesk.first(name: msg))
       reply("Такое имя уже занято", reply_markup: nil)
-    in [_, _, "edit_name", *]
+    in ["edit_name", *]
       Keydesk.first(id: state[3]).update(name: msg, status: false)
       reply("Имя обновлено")
 
@@ -183,15 +257,15 @@ class Admin::KeydesksController < Admin::BaseController
 
       current_user.update(state: new_state.join("|"))
       reply_with_buttons("Введите новое максимальное число пользователей для ключницы (целое число)", [["Оставить прежнее"]])
-    in [_, _, "edit_max_keys", *] if msg == "Оставить прежнее"
+    in ["edit_max_keys", *] if msg == "Оставить прежнее"
       reply("Редактирование окончено")
       current_user.update(state: nil)
       index
-    in [_, _, "edit_max_keys", *] unless msg.match?(/\A\d/)
+    in ["edit_max_keys", *] unless msg.match?(/\A\d/)
       reply("Введите целое число", reply_markup: nil)
-    in [_, _, "edit_max_keys", *] if msg.to_i > Keydesk::MAX_USERS
+    in ["edit_max_keys", *] if msg.to_i > Keydesk::MAX_USERS
       reply("Число не должно превышать #{Keydesk::MAX_USERS}", reply_markup: nil)
-    in [_, _, "edit_max_keys", *]
+    in ["edit_max_keys", *]
       Keydesk.first(id: state[3]).update(max_keys: msg)
       reply("Максимальное число ключей обновлено")
       reply("Редактирование окончено")
@@ -199,6 +273,30 @@ class Admin::KeydesksController < Admin::BaseController
       index
     else
       raise RoutingError
+    end
+  end
+
+  def list_usernames_to_destroy
+    if kd = Keydesk.first(name: message.text)
+      rows = []
+      kd.usernames_to_destroy.each_slice(2) do |username, last_visit|
+        rows << "%-17s %-7s" % [username[0...17], last_visit]
+      end
+
+      header = "%-14s %-10s" % ["Имя", "Был в сети"]
+      table = ([header] + rows).join("\n")
+
+      msg = <<~TXT
+        Пользователи на удаление из ключницы #{kd.name}:
+
+        ```
+        #{table}
+        ```
+      TXT
+
+      reply(msg, parse_mode: "Markdown")
+    else
+      reply("Ключница не найдена.")
     end
   end
 end

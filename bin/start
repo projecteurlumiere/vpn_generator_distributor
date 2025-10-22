@@ -2,3 +2,4 @@
 require "bundler/setup"
 require_relative "../bot"
 
+Bot.run!

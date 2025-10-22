@@ -38,7 +38,7 @@ class Routes
       ApplicationController.new(bot, message).send(:reply, "Я подключился успешно.")
     end
   rescue ControllerNotFoundError => e
-    LOGGER.error e.msg
+    LOGGER.error "ControllerNotFoundError: #{e.message}"
 
     msg = <<~TXT
       Не получилось выполнить действие.
@@ -90,8 +90,12 @@ class Routes
       end
     end
 
-    msg = "Could not execute any controller action in #{klasses} inferred from #{message.text}"
-    msg += " and user's state '#{user_state}'" if defined?(user_state)
+    msg = [
+      "Could not execute any controller action",
+      (klasses.any? ? "in #{klasses}" : "no Controller class found"),
+      "inferred from `#{message.text}`",
+      ("and user's state '#{user_state}'" if defined?(user_state))
+    ].compact.join(" ")
     raise ControllerNotFoundError, msg
   end
 

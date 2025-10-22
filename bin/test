@@ -1,0 +1,1 @@
+ENV=test bundle exec ruby -Itest -e 'Dir.glob("./test/**/*_test.rb", &method(:require))'

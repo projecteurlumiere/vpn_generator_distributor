@@ -9,6 +9,8 @@ class Keydesk < Sequel::Model(:keydesks)
 
   MAX_USERS = 250
   UNSTABLE_TIMEOUT = 24 * 60 * 60 # 24 hours
+  NEW_KEY_TIMEOUT= 24 * 60 * 60 # 2 days
+  ABANDONED_KEY_TIMEOUT = 24 * 60 * 60 * 182 # half a year
 
   def self.start_proxies
     system("scripts/keydesk_proxy_stop.sh")
@@ -18,6 +20,8 @@ class Keydesk < Sequel::Model(:keydesks)
     tasks = []
 
     Keydesk.all.each do |keydesk|
+      next unless keydesk.exists?
+
       tasks << Async do
         conf = keydesk.decoded_ss_link
         id = keydesk.id
@@ -39,6 +43,39 @@ class Keydesk < Sequel::Model(:keydesks)
     end
 
     tasks.each(&:wait)
+  end
+
+  def before_create
+    self.name = name.strip
+    self.ss_link = ss_link.strip
+    super
+  end
+
+  def find_usernames_to_destroy
+    list = filter_for_usernames_to_destroy(users)
+
+    list = list.flat_map do
+      [
+        it["UserName"],
+        (Date.parse(it["LastVisitHour"]).strftime("%Y-%m") rescue "-")
+      ]
+    end
+
+    update(usernames_to_destroy: Sequel.pg_array(list))
+  end
+
+  def cleanup_keys
+    usernames_to_destroy.map do |username|
+      if (key = keys_dataset.where(keydesk_username: username).first)
+        key.destroy
+      else
+        delete_user(username:)
+      end
+
+      true
+    rescue VpnWorksError
+      next false
+    end
   end
 
   def record_error!
@@ -72,9 +109,6 @@ class Keydesk < Sequel::Model(:keydesks)
     id ||= user_id(username)
     vw.delete_user(id)
     self.update(n_keys: Sequel[:n_keys] - 1)
-  rescue StandardError => e
-    LOGGER.warn "Error #{e.class}: #{e.message} deleting user with id=#{id.inspect}, username=#{username.inspect}, backtrace=#{e.backtrace.first(4).join('; ')}"
-    raise e
   end
 
   def user_id(username)
@@ -161,5 +195,20 @@ class Keydesk < Sequel::Model(:keydesks)
     end
 
     data
+  end
+
+  def filter_for_usernames_to_destroy(list)
+    list.select do |user|
+      res = if user["Status"] == "black"
+              created = Time.parse(user["CreatedAt"])
+              created_recently = created >= (Time.now - NEW_KEY_TIMEOUT)
+              created_recently
+            else
+              last_visit = Time.parse(user["LastVisitHour"])
+              visited_recently = last_visit >= (Time.now - ABANDONED_KEY_TIMEOUT)
+              visited_recently
+            end
+      !res
+    end
   end
 end

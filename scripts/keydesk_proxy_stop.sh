@@ -14,3 +14,5 @@ for pidfile in ./tmp/ss-local-*.pid; do
   fi
   rm -f "$pidfile"
 done
+
+pkill ss-local # in case it didn't kill something

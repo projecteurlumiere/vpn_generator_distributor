@@ -9,7 +9,7 @@ require "singleton"
 require "uri"
 require "yaml"
 
-LOGGER = Logger.new((ENV["ENV"] == "production" ? "tmp/prod.log" : $stdout))
+LOGGER = Logger.new(ENV["ENV"] == "development" ? $stdout : "tmp/#{ENV["ENV"]}.log")
 
 require "async"
 require "telegram/bot"
@@ -24,11 +24,14 @@ module Bot
   end
 
   class << self
+    def init
+      require_relative "db/init"
+      require_relative "initializers/all"
+    end
+
     def run!
       Async do
-        require_relative "db/init"
-        require_relative "initializers/all"
-
+        init
         Routes.instance.build!
 
         if $PROGRAM_NAME == "bin/console" # bin/console shouldn't start the listenter
@@ -68,5 +71,3 @@ module Bot
     end
   end
 end
-
-Bot.run!

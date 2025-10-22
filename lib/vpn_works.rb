@@ -9,11 +9,12 @@ class VpnWorks
 
   BASE_URL = "https://vpn.works".freeze
 
-  def initialize(proxy:)
+  def initialize(proxy:, id: nil)
     @base_headers = { "Accept" => "application/json, text/plain, */*", "User-Agent" => "python-httpx/0.27.0" }
     @user_headers = @base_headers.dup
     @config_headers = { "Accept" => "application/json" }
     @proxy = proxy
+    @id = id # for logging
   end
 
   def users
@@ -65,7 +66,14 @@ class VpnWorks
     req = Net::HTTP::Post.new(uri, @base_headers)
     resp = http.request(req)
 
-    raise VpnWorksError, "Error from server: #{resp.message}" unless resp.is_a?(Net::HTTPSuccess)
+    if !resp.is_a?(Net::HTTPSuccess)
+      msg = <<~TXT
+        Error when making request to vpn.works #{@id}.
+        #{resp.message}
+        #{caller.join("\n")}
+      TXT
+      raise VpnWorksError, msg 
+    end
 
     data = JSON.parse(resp.body)
 
@@ -75,7 +83,7 @@ class VpnWorks
     LOGGER.info("Successfully obtained authentication token")
   rescue StandardError => e
     LOGGER.error("Failed to get token: #{e}")
-    raise
+    raise e
   end
 
   def request(endpoint, req_type: :get, headers: nil, attempt: 0)
@@ -100,7 +108,14 @@ class VpnWorks
       return request(endpoint, req_type: req_type, headers: headers, attempt: attempt + 1)
     end
 
-    raise VpnWorksError, resp.message unless resp.is_a?(Net::HTTPSuccess)
+    if !resp.is_a?(Net::HTTPSuccess)
+      msg = <<~TXT
+        Error when making request to vpn.works #{@id}.
+        #{resp.message}
+        #{caller.join("\n")}
+      TXT
+      raise VpnWorksError, msg 
+    end
 
     resp
   end
