@@ -6,9 +6,8 @@ class Telegram::Bot::Api
     params = build_params(raw_params)
     path = build_path(endpoint)
 
-    response = nil
-    with_throttler(*throttler_args(raw_params)) do
-      response = connection.post(path, params)
+    response = with_throttler(*throttler_args(raw_params)) do
+      connection.post(path, params)
     end
 
     raise Telegram::Bot::Exceptions::ResponseError.new(response: response) unless response.status == 200

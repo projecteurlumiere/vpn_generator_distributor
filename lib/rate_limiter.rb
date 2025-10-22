@@ -6,35 +6,35 @@ class RateLimiter
   def initialize(interval)
     @interval = interval
     @queues = Hash.new { |hash, key| hash[key] = [] }
-    @new_jobs = Concurrent::Array.new
+    @new_jobs = []
     @job_available = Async::Notification.new
 
-    worker_loop
+    process_jobs
   end
 
-  def execute(id, &block)
-    event = Concurrent::Event.new
-    @new_jobs << [id, block, event]
+  def execute(id)
+    job_start = Async::Notification.new
+    @new_jobs << [id, job_start]
     @job_available.signal
-    event.wait
+    job_start.wait
+    yield
   end
 
   private
 
-  def worker_loop
+  def process_jobs
     Async do
       while true
         @job_available.wait if @queues.none?
 
-        while @new_jobs.shift in [id, block, event]
-          @queues[id] << [block, event]
+        while @new_jobs.shift in [id, job_start]
+          @queues[id] << [job_start]
         end
 
         @queues.reject! do |id, jobs|
-          next true unless jobs.shift in [block, event]
+          next true unless jobs.shift in [job_start]
 
-          block.call
-          event.set
+          job_start.signal
 
           sleep(@interval)
           false
