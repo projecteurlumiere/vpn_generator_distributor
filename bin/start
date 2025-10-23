@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+
+require "dotenv/load" if ENV["ENV"] != "production"
 require "bundler/setup"
 require_relative "../bot"
 

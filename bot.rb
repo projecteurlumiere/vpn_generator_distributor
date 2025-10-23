@@ -1,5 +1,3 @@
-require "dotenv/load" if ENV["ENV"] != "production"
-
 Bundler.require(:default, ENV["ENV"])
 
 require "base64"
@@ -37,7 +35,7 @@ module Bot
         if $PROGRAM_NAME == "bin/console" # bin/console shouldn't start the listenter
           IRB.start
         else
-          start_listener        
+          start_listener
         end
       end
     end
