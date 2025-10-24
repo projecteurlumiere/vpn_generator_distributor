@@ -1,4 +1,4 @@
-class Key < Sequel::Model(:keys)
+ Key < Sequel::Model(:keys)
   many_to_one :user, key: :user_id
   many_to_one :keydesk, key: :keydesk_id
 
@@ -13,7 +13,7 @@ class Key < Sequel::Model(:keys)
       keydesk.update_status!
     rescue VpnWorksError => e
       keydesk.record_error!
-      raise e
+      raise
     end
 
     super
@@ -39,13 +39,12 @@ class Key < Sequel::Model(:keys)
     update(pending_destroy_until: nil)
   end
 
-  def self.issue(to:)
+  def self.issue(to:, skip_limit: false)
     user = to
 
     if !user.acquire_config_lock?
       return :user_awaits_config
-    elsif key = Key.where { reserved_until <= Time.now }.first
-      key.update(user_id: user.id, reserved_until: Time.now + 3_600)
+    elsif key = assign_already_reserved_key
       key
     else
       max_attempts = 5
@@ -54,7 +53,8 @@ class Key < Sequel::Model(:keys)
       begin
         user.update(pending_config_until: Time.now + 120)
 
-        keydesks = Keydesk.where { n_keys < max_keys }
+        limit = skip_limit ? Keydesk::MAX_USERS : max_keys
+        keydesks = Keydesk.where { n_keys < limit }
                           .exclude(status: 0) # offline
                           .first(max_attempts)
         return :keydesks_full if keydesks.none?
@@ -62,11 +62,7 @@ class Key < Sequel::Model(:keys)
         current_keydesk = keydesks[attempt]
 
         key = current_keydesk.create_config(user:)
-
-        DB.transaction do
-          current_keydesk.update(n_keys: Sequel[:n_keys] + 1)
-          current_keydesk.update_status!
-        end
+        current_keydesk.update_status!
 
         return key
       rescue VpnWorksError => e
@@ -84,6 +80,15 @@ class Key < Sequel::Model(:keys)
       ensure
         user.release_config_lock!
       end
+    end
+  end
+
+  def self.assign_already_reserved_key
+    DB.transaction do
+      key = Key.where { reserved_until <= Time.now }
+               .for_update
+               .first
+      key.update(user_id: user.id, reserved_until: Time.now + 3_600) if key
     end
   end
 end

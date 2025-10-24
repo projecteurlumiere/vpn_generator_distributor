@@ -15,6 +15,7 @@ require "telegram/bot"
 module Bot
   TOKEN = ENV["TELEGRAM_TOKEN"].freeze
   ADMIN_CHAT_ID = ENV["ADMIN_CHAT_ID"].to_i.freeze
+  ADMIN_IDS = ENV["ADMIN_IDS"].split(",").map { it.strip.to_i }.freeze
   MUTEX = Mutex.new
 
   def MUTEX.sync

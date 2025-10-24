@@ -104,7 +104,7 @@ class SupportRequestsController < ApplicationController
       reply("🤖: Это обращение закрыто из-за внутренней ошибки: #{e.class}", chat_id: Bot::ADMIN_CHAT_ID, message_thread_id: thread_id)
     end
 
-    raise e
+    raise
   end
 
   def create_thread(support_request)
@@ -175,7 +175,7 @@ class SupportRequestsController < ApplicationController
         request.closed!
         request.save
       else
-        raise e
+        raise
       end
     end
   end

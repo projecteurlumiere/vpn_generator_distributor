@@ -233,4 +233,8 @@ class ApplicationController
       bot.api.send_message(text: msg, chat_id: self.chat.id, message_thread_id: self.message_thread_id)
     end
   end
+
+  def current_user_admin?
+    Bot::ADMIN_IDS.any?(tg_id)
+  end
 end

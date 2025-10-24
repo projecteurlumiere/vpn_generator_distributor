@@ -36,7 +36,7 @@ class SupportRequest < Sequel::Model(:support_requests)
         in /TOPIC_NOT_MODIFIED/
           LOGGER.warn "Topic #{id} was not modified by #{__method__} in #{self.class}"
         else
-          raise e
+          raise
         end
       end
     end
@@ -64,7 +64,7 @@ class SupportRequest < Sequel::Model(:support_requests)
     in /message thread not found/
       LOGGER.warn "Topic is missing for request №#{id}."
     else
-      raise e
+      raise
     end
   end
 end

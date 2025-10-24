@@ -5,7 +5,7 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
     if user = User[user_id]
       reply(with_emoji("Выдаём ключ пользователю #{user.id}. Нужно подождать."))
 
-      case key = Key.issue(to: user)
+      case key = Key.issue(to: user, skip_limit: current_user_admin?)
       in :keydesks_full
         msg = with_emoji("Свободных мест нет")
         reply(msg)
@@ -31,7 +31,7 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
           end
         end
 
-        desc = message_thread_id ? "Выдан администратором" : "Выдан волонтёром"  
+        desc = message_thread_id ? "Выдан администратором" : "Выдан волонтёром"
         desc = "#{desc} #{[first_name, last_name].compact.join(" ")}"
 
         key.update(desc:, reserved_until: nil)

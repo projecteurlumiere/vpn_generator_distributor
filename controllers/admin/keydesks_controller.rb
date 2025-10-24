@@ -106,7 +106,7 @@ class Admin::KeydesksController < Admin::BaseController
       Bot::MUTEX.sync { Keydesk.start_proxies }
     rescue StandardError => e
       reply("Прокси не были перезапущены: выдача ключей недоступна.")
-      raise e
+      raise
     end
 
     reply("Прокси перезапущены успешно")

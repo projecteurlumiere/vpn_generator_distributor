@@ -116,6 +116,7 @@ class Keydesk < Sequel::Model(:keydesks)
   end
 
   def create_config(user:)
+    current_keydesk.update(n_keys: Sequel[:n_keys] + 1)
     config = vw.create_conf_file
 
     key = add_key(
@@ -127,6 +128,9 @@ class Keydesk < Sequel::Model(:keydesks)
     key.config = create_conf_files("./tmp/vpn_configs/per_key/#{key.id}", config)
 
     key
+  rescue StandardError => e
+    current_keydesk.update(n_keys: Sequel[:n_keys] - 1)
+    raise
   end
 
   def vw

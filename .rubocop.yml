@@ -1,6 +1,5 @@
-require:
+plugins: 
   - rubocop-performance
-  # - rubocop-rspec   # If using RSpe
 
 AllCops:
   DisabledByDefault: true
@@ -17,7 +16,10 @@ Layout/IndentationConsistency:
 
 Layout/EmptyLines:
   Enabled: true
-  
+ 
+Layout/MultilineMethodCallIndentation:
+  Enabled: true
+
 Layout/SpaceAroundOperators:
   Enabled: true
 
@@ -42,14 +44,15 @@ Layout/ElseAlignment:
 Layout/BeginEndAlignment:
   Enabled: true
 
-Layout/WhenThen:
-  Enabled: true
 
 Layout/HashAlignment:
   Enabled: true
   EnforcedHashRocketStyle: table
   EnforcedColonStyle: table
   EnforcedLastArgumentHashStyle: always_ignore
+
+Style/WhenThen:
+  Enabled: true
 
 Style/BlockDelimiters:
   Enabled: true
