@@ -51,7 +51,7 @@ class Keydesk < Sequel::Model(:keydesks)
     super
   end
 
-  def find_usernames_to_destroy
+  def find_usernames_to_destroy!
     list = filter_for_usernames_to_destroy(users)
 
     list = list.flat_map do
@@ -64,8 +64,10 @@ class Keydesk < Sequel::Model(:keydesks)
     update(usernames_to_destroy: Sequel.pg_array(list))
   end
 
-  def cleanup_keys
-    usernames_to_destroy.map do |username|
+  def clean_up_keys
+    result = usernames_to_destroy.map.with_index do |username, i|
+      next if i.odd?
+
       if (key = keys_dataset.where(keydesk_username: username).first)
         key.destroy
       else
@@ -73,9 +75,12 @@ class Keydesk < Sequel::Model(:keydesks)
       end
 
       true
-    rescue VpnWorksError
+    rescue VpnWorks::Error
       next false
     end
+
+    update(usernames_to_destroy: Sequel.pg_array([]))
+    result
   end
 
   def record_error!
@@ -116,7 +121,7 @@ class Keydesk < Sequel::Model(:keydesks)
   end
 
   def create_config(user:)
-    current_keydesk.update(n_keys: Sequel[:n_keys] + 1)
+    update(n_keys: Sequel[:n_keys] + 1)
     config = vw.create_conf_file
 
     key = add_key(
@@ -129,7 +134,7 @@ class Keydesk < Sequel::Model(:keydesks)
 
     key
   rescue StandardError => e
-    current_keydesk.update(n_keys: Sequel[:n_keys] - 1)
+    update(n_keys: Sequel[:n_keys] - 1)
     raise
   end
 

@@ -51,6 +51,8 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
 
   def destroy(id)
     if (key = Key[id]) && (res = key.destroy)
+      reply(with_emoji("Удаляем ключ #{key.id}"), reply_markup: nil)
+
       case res
       in :pending_destroy
         msg = with_emoji("Ключ #{key.id} в процессе удаления")

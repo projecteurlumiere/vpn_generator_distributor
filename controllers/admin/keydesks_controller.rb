@@ -1,21 +1,3 @@
-# AdminController
-#
-# Commands:
-# /admin instructions
-#   - List all instruction sets (windows, mac, etc.)
-# /admin upload_instruction
-#   - YAML file to upload
-# /admin versions
-#   - Show git history
-# /admin rollback <version>
-#   - Go to a backup version
-# /admin upload_images_for <instruction_name>
-#   - Guided: per-step, prompt for file(s), save images by step.     
-#
-# Images: upload as files (not photos). Filenames preserved.
-# Guided uploads link files to steps live; no post-facto missing check needed.
-# All changes git-versioned. Only track state during guided sessions.
-
 class Admin::KeydesksController < Admin::BaseController
   def call
     state = current_user.state_array
@@ -37,7 +19,7 @@ class Admin::KeydesksController < Admin::BaseController
 
     rows = Keydesk.all.map do |keydesk|
       online   = case keydesk.status
-                 in :online 
+                 in :online
                    "🟢"
                  in :unstable
                    "🟡"
@@ -77,7 +59,7 @@ class Admin::KeydesksController < Admin::BaseController
           "Настроить ключницу" => callback_name("edit")
         },
         {
-          "Очистить ключницы" => callback_name("usernames_to_destroy")
+          "\"Мёртвые души\"" => callback_name("usernames_to_destroy")
         },
         {
           "Перезапустить ключницы" => callback_name("restart")
@@ -114,31 +96,28 @@ class Admin::KeydesksController < Admin::BaseController
   end
 
   def usernames_to_destroy
-    header = "%-13s %3s %3s" % ["Имя", "ЗБТ", "ВЫД"]
+    header = "%-13s %3s %3s" % ["Имя", "ДУШ", "ВЫД"]
 
     tasks = Keydesk.all.map do |kd|
       Async do
-        kd.find_usernames_to_destroy
+        kd.find_usernames_to_destroy!
+
+        "%-13s %3s %3s" % [
+          kd.name[0...13],
+          kd.usernames_to_destroy.size / 2,
+          kd.n_keys
+        ]
       end
     end
 
-    tasks.map(&:wait)
-
-    rows = Keydesk.all.map do |keydesk|
-      usernames = keydesk.usernames_to_destroy.size / 2
-      "%-13s %3s %3s" % [
-        keydesk.name[0...13],
-        usernames.size,
-        keydesk.n_keys
-      ]
-    end
+    rows = tasks.map(&:wait)
 
     table = ([header] + rows).join("\n")
     msg = <<~TXT
       Пользователи на удаление:
 
       - Имя: Имя ключницы
-      - ЗБТ: Брошенные ключи
+      - ДУШ: Мёртвые души
       - ВЫД: Выдано ключей
 
       ```
@@ -162,33 +141,68 @@ class Admin::KeydesksController < Admin::BaseController
     reply("Введите имя ключницы")
   end
 
+  def clean_up
+    reply("Удаляем \"мёртвые души\". Это займёт время")
+
+    tasks = Keydesk.all.map do |kd|
+      Async do
+        "%-13s %5d %5d" % [
+          kd.name[0...13],
+          kd.usernames_to_destroy.size / 2,
+          kd.clean_up_keys.count { it == true }
+        ]
+      end
+    end
+
+    rows = tasks.map(&:wait)
+
+    header = "%-13s %5s %5s" % ["Имя", "ДУШ", "УДЛ"]
+    table = ([header] + rows).join("\n")
+
+    msg = <<~TXT
+      Очистка завершена.
+
+      - Имя: Ключница
+      - ДУШ: Мёртвых душ найдено
+      - УДЛ: Удалено успешно
+
+      ```
+      #{table}
+      ```
+    TXT
+
+    reply_with_inline_buttons(msg, [admin_menu_inline_button], parse_mode: "Markdown")
+  rescue StandardError
+    reply("Что-то пошло не так при удалении мёртвых душ.")
+  end
+
   private
 
   def create_keydesk(state)
     msg = message.text.strip
-    
-    case state
-    in [_, _, "name", *] if Keydesk.first(name: msg)
+
+    case state.drop(2)
+    in ["name", *] if Keydesk.first(name: msg)
       reply("Ключница с таким именем уже существует")
-    in [_, _, "name", *] if msg.size > 13
+    in ["name", *] if msg.size > 13
       reply("Имя ключницы не должно превышать 13 символов")
-    in [_, _, "name", *]
+    in ["name", *]
       new_state = state << msg
       new_state[2] = "max_keys"
       current_user.update(state: new_state.join("|"))
       reply("Введите максимальное число пользователей для ключницы (целое число)")
-    in [_, _, "max_keys", *] unless msg.match?(/\A\d/)
+    in ["max_keys", *] unless msg.match?(/\A\d/)
       reply("Укажите целое число")
-    in [_, _, "max_keys", *] if msg.to_i > Keydesk::MAX_USERS
+    in ["max_keys", *] if msg.to_i > Keydesk::MAX_USERS
       reply("Число не должно превышать #{Keydesk::MAX_USERS}")
-    in [_, _, "max_keys", *]
+    in ["max_keys", *]
       new_state = state << msg
       new_state[2] = "ss_link"
       current_user.update(state: new_state.join("|"))
       reply("Отправьте ссылку для подключения к ключнице")
-    in [_, _, "ss_link", *] if Keydesk.first(ss_link: msg)
+    in ["ss_link", *] if Keydesk.first(ss_link: msg)
       reply("Ключница с такой ссылкой уже существует")
-    in [_, _, "ss_link", name, max_keys]
+    in ["ss_link", name, max_keys]
       Keydesk.create(name:, max_keys:, ss_link: msg)
       current_user.update(state: nil)
       reply("Ключница добавлена")

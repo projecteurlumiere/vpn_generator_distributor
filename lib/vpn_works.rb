@@ -4,7 +4,7 @@ require "json"
 require "uri"
 
 class VpnWorks
-  class VpnWorksError < StandardError; end
+  class Error < StandardError; end
 
   BASE_URL = "https://vpn.works".freeze
   BASE_HEADERS = {
@@ -69,7 +69,7 @@ class VpnWorks
     resp = request("token", type: :post, headers: BASE_HEADERS)
     resp = JSON.parse(resp.body)
     @@tokens[@id] = resp["Token"]
-    LOGGER.info("Successfully updated authentication token for Keydesk #{@id}")
+    LOGGER.info("Successfully updated authentication token for keydesk `#{@id}`")
     token
   end
 
@@ -83,28 +83,32 @@ class VpnWorks
 
     return resp if resp.is_a?(Net::HTTPSuccess)
 
-    raise VpnWorksError
+    raise Error
   rescue StandardError => e
-    attempt ||= 1
+    caller_method = caller_locations(1, 2)[1]&.base_label
+    attempt ||= 0
     attempt += 1
 
     if attempt <= 3
       case e
-      in VpnWorksError
-        LOGGER.error "Error in the keydesk #{@id}. Attempts: #{attempt} / 3"
+      in Error
+        LOGGER.error "Error in the keydesk `#{@id}`. Called from: `#{caller_method}`. Resp: `#{resp.body}`. Attempts: #{attempt} / 3"
         refresh_token if resp.code == 401
+        sleep 1
         retry
       else
-        LOGGER.error "Error #{e.class} when *reaching* keydesk #{@id}. Attempts: #{attempt} / 3"
+        LOGGER.error "Error #{e.class} when *reaching* keydesk `#{@id}`. Called from: `#{caller_method}` Attempts: #{attempt} / 3"
+        sleep 1
         retry
       end
     else
       msg = <<~MSG.strip
-        Unable to proceed with the request for keydesk #{@id} after #{attempt} attempts.
+        Unable to proceed with the request for keydesk `#{@id}` after #{attempt} attempts.
+        Called from: `#{caller_method}`
         Original error: #{e.class}: #{e.message}
       MSG
 
-      raise VpnWorksError, msg
+      raise Error, msg
     end
   end
 

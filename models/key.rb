@@ -1,4 +1,4 @@
- Key < Sequel::Model(:keys)
+class Key < Sequel::Model(:keys)
   many_to_one :user, key: :user_id
   many_to_one :keydesk, key: :keydesk_id
 
@@ -11,7 +11,7 @@
     begin
       keydesk.delete_user(username: keydesk_username)
       keydesk.update_status!
-    rescue VpnWorksError => e
+    rescue VpnWorks::Error => e
       keydesk.record_error!
       raise
     end
@@ -44,51 +44,57 @@
 
     if !user.acquire_config_lock?
       return :user_awaits_config
-    elsif key = assign_already_reserved_key
+    elsif key = assign_already_reserved_key(user)
       key
     else
-      max_attempts = 5
-      attempt = 0
-
-      begin
-        user.update(pending_config_until: Time.now + 120)
-
-        limit = skip_limit ? Keydesk::MAX_USERS : max_keys
-        keydesks = Keydesk.where { n_keys < limit }
-                          .exclude(status: 0) # offline
-                          .first(max_attempts)
-        return :keydesks_full if keydesks.none?
-
-        current_keydesk = keydesks[attempt]
-
-        key = current_keydesk.create_config(user:)
-        current_keydesk.update_status!
-
-        return key
-      rescue VpnWorksError => e
-        current_keydesk.record_error!
-
-        attempt += 1
-
-        if attempt < keydesks.size
-          sleep 0.5
-          retry
-        end
-
-        LOGGER.warn "Error #{e.class}: #{e.message} when requesting config from keydesk=#{current_keydesk&.name.inspect}, user_id=#{to&.id}, backtrace=#{e.backtrace.join("\n")}"
-        return :keydesks_error
-      ensure
-        user.release_config_lock!
-      end
+      browse_keydesks_for_keys(user, skip_limit)
     end
+  ensure
+    user.release_config_lock!
   end
 
-  def self.assign_already_reserved_key
+  def self.assign_already_reserved_key(user)
     DB.transaction do
       key = Key.where { reserved_until <= Time.now }
                .for_update
                .first
       key.update(user_id: user.id, reserved_until: Time.now + 3_600) if key
+    end
+  end
+
+  def self.browse_keydesks_for_keys(user, skip_limit)
+    max_attempts = 5
+    attempt = 0
+
+    begin
+      user.update(pending_config_until: Time.now + 120)
+
+      sql = Keydesk.exclude(status: 0) # offline
+      sql = if skip_limit
+              sql.where { n_keys < Keydesk::MAX_USERS }
+            else
+              sql.where { n_keys < max_keys }
+            end
+      keydesks = sql.first(max_attempts)
+      return :keydesks_full if keydesks.none?
+
+      current_keydesk = keydesks[attempt]
+
+      key = current_keydesk.create_config(user:)
+      current_keydesk.update_status!
+
+      return key
+    rescue VpnWorks::Error => e
+      current_keydesk.record_error!
+
+      attempt += 1
+
+      if attempt < keydesks.size
+        retry
+      end
+
+      LOGGER.warn "Could not issue key to a user #{user.id}. #{e.class}: #{e.message}\nbacktrace=#{e.backtrace.join("\n")}"
+      return :keydesks_error
     end
   end
 end
