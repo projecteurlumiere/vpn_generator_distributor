@@ -9,7 +9,7 @@ class Keydesk < Sequel::Model(:keydesks)
 
   MAX_USERS = 250
   UNSTABLE_TIMEOUT = 24 * 60 * 60 # 24 hours
-  NEW_KEY_TIMEOUT= 24 * 60 * 60 # 2 days
+  NEW_KEY_TIMEOUT = 24 * 60 * 60 # 2 days
   ABANDONED_KEY_TIMEOUT = 24 * 60 * 60 * 182 # half a year
 
   def self.start_proxies
@@ -130,7 +130,7 @@ class Keydesk < Sequel::Model(:keydesks)
   end
 
   def vw
-    @vw ||= VpnWorks.new(proxy: proxy_url)
+    @vw ||= VpnWorks.new(proxy: proxy_url, id: name)
   end
 
   def decoded_ss_link
@@ -152,9 +152,9 @@ class Keydesk < Sequel::Model(:keydesks)
     port = port&.split(/[\/\?#]/,2)[0]
 
     {
-      "method" => method,
-      "password" => password,
-      "server" => server,
+      "method"      => method,
+      "password"    => password,
+      "server"      => server,
       "server_port" => port.to_i
     }
   end

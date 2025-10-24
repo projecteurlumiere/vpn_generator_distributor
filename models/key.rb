@@ -11,12 +11,8 @@ class Key < Sequel::Model(:keys)
     begin
       keydesk.delete_user(username: keydesk_username)
       keydesk.update_status!
-    rescue StandardError => e
-      attempts ||= 0
-      attempts += 1
+    rescue VpnWorksError => e
       keydesk.record_error!
-      retry if attempts < 3
-
       raise e
     end
 
@@ -73,9 +69,9 @@ class Key < Sequel::Model(:keys)
         end
 
         return key
-      rescue StandardError => e
+      rescue VpnWorksError => e
         current_keydesk.record_error!
-      
+
         attempt += 1
 
         if attempt < keydesks.size

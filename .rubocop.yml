@@ -12,6 +12,12 @@ Layout/IndentationWidth:
   Enabled: true
   Width: 2
 
+Layout/IndentationConsistency:
+  Enabled: true
+
+Layout/EmptyLines:
+  Enabled: true
+  
 Layout/SpaceAroundOperators:
   Enabled: true
 
@@ -41,8 +47,8 @@ Layout/WhenThen:
 
 Layout/HashAlignment:
   Enabled: true
-  EnforcedHashRocketStyle: separator
-  EnforcedColonStyle: separator
+  EnforcedHashRocketStyle: table
+  EnforcedColonStyle: table
   EnforcedLastArgumentHashStyle: always_ignore
 
 Style/BlockDelimiters:

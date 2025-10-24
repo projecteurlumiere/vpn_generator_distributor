@@ -3,18 +3,21 @@ require "socksify/http"
 require "json"
 require "uri"
 
-# handles vpn.works API
 class VpnWorks
   class VpnWorksError < StandardError; end
 
   BASE_URL = "https://vpn.works".freeze
+  BASE_HEADERS = {
+    "Accept"     => "application/json, text/plain, */*",
+    "User-Agent" => "ruby/#{RUBY_VERSION}"
+  }.freeze
 
-  def initialize(proxy:, id: nil)
-    @base_headers = { "Accept" => "application/json, text/plain, */*", "User-Agent" => "python-httpx/0.27.0" }
-    @user_headers = @base_headers.dup
-    @config_headers = { "Accept" => "application/json" }
+  @@tokens = {}
+
+  def initialize(proxy:, id:)
     @proxy = proxy
-    @id = id # for logging
+    @id = id
+    @headers = BASE_HEADERS.dup
   end
 
   def users
@@ -28,105 +31,86 @@ class VpnWorks
   end
 
   def delete_user(user_id)
-    request("user/#{user_id}", req_type: :delete)
+    request("user/#{user_id}", type: :delete)
   end
 
   def user_id(name)
-    users_dict = users.to_h { |user| [user["UserName"], user] }
-    (users_dict[name.to_s] || {})["UserID"]
+    users.find { |user| user["UserName"] == name }&.fetch("UserID")
   end
 
   def create_conf_file
-    data = get_conf_file
+    h = get_conf_file
     {
-      "username" => data["UserName"],
-      "amnezia" => data["AmnzOvcConfig"],
-      "wireguard" => data["WireguardConfig"],
-      "outline" => data["OutlineConfig"],
-      "vless" => data["Proto0Config"]
+      "username"  => h["UserName"],
+      "amnezia"   => h["AmnzOvcConfig"],
+      "wireguard" => h["WireguardConfig"],
+      "outline"   => h["OutlineConfig"],
+      "vless"     => h["Proto0Config"]
     }
   end
 
   private
 
-  def token
-    @token ||= get_token
-  end
-
   def get_conf_file
-    resp = request("user", headers: @config_headers, req_type: :post)
+    resp = request("user", headers:, type: :post)
     JSON.parse(resp.body)
   end
 
-  def get_token
-    uri = URI("#{BASE_URL}/token")
-
-    http = make_http(uri)
-
-    req = Net::HTTP::Post.new(uri, @base_headers)
-    resp = http.request(req)
-
-    if !resp.is_a?(Net::HTTPSuccess)
-      msg = <<~TXT
-        Error when making request to vpn.works #{@id}.
-        #{resp.message}
-        #{caller.join("\n")}
-      TXT
-      raise VpnWorksError, msg 
-    end
-
-    data = JSON.parse(resp.body)
-
-    @token = data["Token"]
-    @user_headers["Authorization"] = "Bearer #{@token}"
-    @config_headers["Authorization"] = "Bearer #{@token}"
-    LOGGER.info("Successfully obtained authentication token")
-  rescue StandardError => e
-    LOGGER.error("Failed to get token: #{e}")
-    raise e
+  def headers
+    @headers["Authorization"] = token
+    @headers
   end
 
-  def request(endpoint, req_type: :get, headers: nil, attempt: 0)
-    headers ||= @user_headers
+  def token
+    @@tokens[@id] ||= refresh_token
+  end
 
+  def refresh_token
+    resp = request("token", type: :post, headers: BASE_HEADERS)
+    resp = JSON.parse(resp.body)
+    @@tokens[@id] = resp["Token"]
+    LOGGER.info("Successfully updated authentication token for Keydesk #{@id}")
+    token
+  end
+
+  def request(endpoint, type: :get, headers: self.headers)
     uri = URI("#{BASE_URL}/#{endpoint}")
-
     http = make_http(uri)
 
-    request_class = {
-      get: Net::HTTP::Get,
-      post: Net::HTTP::Post,
-      delete: Net::HTTP::Delete
-    }[req_type]
-
+    request_class = Net::HTTP.const_get(type.to_s.capitalize)
     req = request_class.new(uri, headers)
-
     resp = http.request(req)
-    if resp.code.to_i == 401 && attempt < 3
-      get_token
-      headers["Authorization"] = "Bearer #{@token}"
-      return request(endpoint, req_type: req_type, headers: headers, attempt: attempt + 1)
-    end
 
-    if !resp.is_a?(Net::HTTPSuccess)
-      msg = <<~TXT
-        Error when making request to vpn.works #{@id}.
-        #{resp.message}
-        #{caller.join("\n")}
-      TXT
-      raise VpnWorksError, msg 
-    end
+    return resp if resp.is_a?(Net::HTTPSuccess)
 
-    resp
+    raise VpnWorksError
+  rescue StandardError => e
+    attempt ||= 1
+    attempt += 1
+
+    if attempt <= 3
+      case e
+      in VpnWorksError
+        LOGGER.error "Error in the keydesk #{@id}. Attempts: #{attempt} / 3"
+        refresh_token if resp.code == 401
+        retry
+      else
+        LOGGER.error "Error #{e.class} when *reaching* keydesk #{@id}. Attempts: #{attempt} / 3"
+        retry
+      end
+    else
+      msg = <<~MSG.strip
+        Unable to proceed with the request for keydesk #{@id} after #{attempt} attempts.
+        Original error: #{e.class}: #{e.message}
+      MSG
+
+      raise VpnWorksError, msg
+    end
   end
 
   def make_http(uri)
-    if @proxy
-      proxy_uri = URI(@proxy)
-      http = Net::HTTP.SOCKSProxy(proxy_uri.host, proxy_uri.port).new(uri.host, uri.port)
-    else
-      http = Net::HTTP.new(uri.host, uri.port)
-    end
+    proxy_uri = URI(@proxy)
+    http = Net::HTTP.SOCKSProxy(proxy_uri.host, proxy_uri.port).new(uri.host, uri.port)
 
     http.use_ssl = true
     http.verify_mode = OpenSSL::SSL::VERIFY_NONE
