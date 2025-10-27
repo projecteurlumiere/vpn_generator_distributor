@@ -263,7 +263,7 @@ class Admin::KeydesksController < Admin::BaseController
     in ["edit_name", *] if (kd = Keydesk.first(name: msg))
       reply("Такое имя уже занято", reply_markup: nil)
     in ["edit_name", *]
-      Keydesk.first(id: state[3]).update(name: msg, status: false)
+      Keydesk.first(id: state[3]).update(name: msg)
       reply("Имя обновлено")
 
       new_state = state.dup
