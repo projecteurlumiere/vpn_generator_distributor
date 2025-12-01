@@ -20,7 +20,7 @@ group :default do
   gem "concurrent-ruby", "~> 1.3"
   gem "socksify"
   gem "sequel"
-  gem "pg"
+  gem "sqlite3"
   gem "telegram-bot-ruby", "~> 2.1"
   gem "zeitwerk"
 end

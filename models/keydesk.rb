@@ -45,6 +45,10 @@ class Keydesk < Sequel::Model(:keydesks)
     tasks.each(&:wait)
   end
 
+  def usernames_to_destroy
+    (super.nil? && []) || JSON[super]
+  end
+
   def before_create
     self.name = name.strip
     self.ss_link = ss_link.strip
@@ -61,7 +65,7 @@ class Keydesk < Sequel::Model(:keydesks)
       ]
     end
 
-    update(usernames_to_destroy: Sequel.pg_array(list))
+    update(usernames_to_destroy: JSON.dump(list))
   end
 
   def clean_up_keys
@@ -79,7 +83,7 @@ class Keydesk < Sequel::Model(:keydesks)
       next false
     end
 
-    update(usernames_to_destroy: Sequel.pg_array([]))
+    update(usernames_to_destroy: nil)
     result
   end
 

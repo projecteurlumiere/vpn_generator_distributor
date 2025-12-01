@@ -67,7 +67,7 @@ class SupportRequestsController < ApplicationController
   def unread_request
     @pending_request ||= current_user.support_requests_dataset
       .where(status: [0, 1])
-      .where { updated_at > Sequel.expr(Sequel::CURRENT_TIMESTAMP) - Sequel.lit("interval '3 days'") }
+      .where { updated_at > Sequel.lit("datetime(CURRENT_TIMESTAMP, '-3 days')") }
       .first
   end
 
@@ -153,7 +153,7 @@ class SupportRequestsController < ApplicationController
   def close_abandoned_requests
     requests = current_user.support_requests_dataset
                            .where(status: 0)
-                           .where { updated_at <= Sequel.expr(Sequel::CURRENT_TIMESTAMP) - Sequel.lit("interval '3 days'") }
+                           .where { updated_at > Sequel.lit("datetime(CURRENT_TIMESTAMP, '-3 days')") }
     requests.update(status: 2)
 
     requests.each do |request|
