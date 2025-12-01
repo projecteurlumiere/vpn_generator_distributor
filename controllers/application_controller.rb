@@ -2,6 +2,7 @@
 # offers controller-wide wrappers for tg api
 class ApplicationController
   class RoutingError < StandardError; end
+  class NotAuthorizedError < StandardError; end
 
   attr_reader :bot, :message, :chat_id, :message_thread_id, :tg_id
 
@@ -22,9 +23,16 @@ class ApplicationController
       @chat_id = message.chat.id
       @message_thread_id = message.reply_to_message&.message_thread_id
     end
+
+    raise NotAuthorizedError unless is_authorized?
   end
 
   private
+
+  # override
+  def is_authorized?
+    true
+  end
 
   # just a textual reply that removes keyboard/buttons altogether
   # usage:

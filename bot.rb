@@ -15,7 +15,7 @@ require "telegram/bot"
 module Bot
   TOKEN = ENV["TELEGRAM_TOKEN"].freeze
   ADMIN_CHAT_ID = ENV["ADMIN_CHAT_ID"].to_i.freeze
-  ADMIN_IDS = ENV["ADMIN_IDS"].split(",").map { it.strip.to_i }.freeze
+  ADMIN_IDS = ENV["ADMIN_IDS"].split(",").compact.map { it.strip.to_i }.freeze
   MUTEX = Mutex.new
 
   def MUTEX.sync
@@ -47,7 +47,7 @@ module Bot
       Telegram::Bot::Client.run(Bot::TOKEN) do |bot|
         bot.listen do |message|
           if message.respond_to?(:chat) && message.chat.type != "private" && message.chat.id != Bot::ADMIN_CHAT_ID
-            LOGGER.warn "Someone used the bot in a group chat that is not the admin chat"
+            LOGGER.warn "Someone used the bot in a group chat that is not the admin chat: #{message.chat.id}"
           else
             Async do
               Routes.instance.dispatch_controller(bot, message)

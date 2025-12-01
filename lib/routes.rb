@@ -45,6 +45,14 @@ class Routes
       Если вы потерялись, вернуться можно нажав на /start
     TXT
     ApplicationController.new(bot, message).send(:reply, msg, reply_markup: nil)
+  rescue ApplicationController::NotAuthorizedError => e
+    LOGGER.error "NotAuthorizedError: #{e.message}"
+
+    msg = <<~TXT
+      У вас нет прав для выполнения этого действия.
+      Если вы потерялись, вернуться можно нажав на /start
+    TXT
+    ApplicationController.new(bot, message).send(:reply, msg, reply_markup: nil)
   end
 
   def [](type)
@@ -85,7 +93,7 @@ class Routes
         controller = klass.new(bot, message)
         controller.instance_variable_set(:@current_user, current_user) if defined? current_user
         return controller.send(method)
-      rescue ApplicationController::RoutingError => e
+      rescue ApplicationController::RoutingError
         next
       end
     end

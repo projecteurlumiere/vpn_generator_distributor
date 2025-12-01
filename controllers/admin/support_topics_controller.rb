@@ -1,4 +1,8 @@
 class Admin::SupportTopicsController < Admin::BaseController
+  def is_authorized?
+    chat_id == Bot::ADMIN_CHAT_ID
+  end
+
   def call
     return unless concerns_request_topic?
 

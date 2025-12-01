@@ -1,6 +1,6 @@
 class Admin::BaseController < ApplicationController
-  def initialize(...)
-    super
+  def is_authorized?
+    Bot::ADMIN_IDS.any?(tg_id)
   end
 
   def admin_menu_inline_button
