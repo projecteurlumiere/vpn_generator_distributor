@@ -7,6 +7,10 @@ class Routes
 
   attr_reader :routes
 
+  def initialize
+    build!
+  end
+
   def build!
     @routes = { command: {}, callback: {} }
     @controllers = all_subclasses(ApplicationController)

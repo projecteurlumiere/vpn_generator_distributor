@@ -10,7 +10,7 @@ require "yaml"
 LOGGER = Logger.new(ENV["ENV"] == "development" ? $stdout : "tmp/#{ENV["ENV"]}.log")
 
 require "async"
-require "telegram/bot"
+require "telegram/bot" unless ENV["ENV"] == "test"
 
 module Bot
   TOKEN = ENV["TELEGRAM_TOKEN"].freeze
@@ -31,7 +31,6 @@ module Bot
     def run!
       Async do
         init
-        Routes.instance.build!
 
         if $PROGRAM_NAME == "bin/console" # bin/console shouldn't start the listenter
           IRB.start

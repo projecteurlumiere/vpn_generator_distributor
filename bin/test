@@ -1,1 +1,10 @@
-ENV=test bundle exec ruby -Itest -e 'Dir.glob("./test/**/*_test.rb", &method(:require))'
+#!/usr/bin/env bash
+
+export ENV=test
+
+# Optionally: load .env.test explicitly if you want to ensure it loads before anything else in Ruby
+if [ -f .env.test ]; then
+  export $(grep -v '^#' .env.test | xargs)
+fi
+
+bundle exec ruby -Itest -e 'Dir.glob("./test/**/*_test.rb", &method(:require))'

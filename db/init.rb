@@ -2,7 +2,7 @@ require "sequel"
 
 Sequel.extension :fiber_concurrency
 
-DB = Sequel.sqlite("db/db.sqlite3",
+DB = Sequel.sqlite("db/db_#{ENV["ENV"]}.sqlite3",
                    logger: LOGGER,
                    timeout: 20000)
 
