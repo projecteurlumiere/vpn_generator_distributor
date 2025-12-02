@@ -9,7 +9,7 @@ class KeydeskTest < Minitest::Test
     kd = Keydesk.new
 
     list = [
-      { "Status" => "black", "CreatedAt" => Time.now.utc.iso8601 }, # good 
+      { "Status" => "black", "CreatedAt" => Time.now.utc.iso8601 }, # good
       { "Status" => "black", "CreatedAt" => "2024-09-27T16:00:00.000Z" }, # bad
       { "Status" => "green", "LastVisitHour" => "2025-09-27T16:00:00.000Z" }, # good
       { "Status" => "gray", "LastVisitHour" => "2025-01-27T16:00:00.000Z" }  # bad
