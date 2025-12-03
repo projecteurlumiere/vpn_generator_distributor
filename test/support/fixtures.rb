@@ -1,6 +1,10 @@
 module Fixtures
-  def user(tg_id: 1, n_keys: 0, pending_config_until: nil, rules_read: true, admin: false, state: nil, role: 0)
-    @user ||= User.create(
+  def user(**args)
+    @user ||= create_user(**args)
+  end
+
+  def create_user(tg_id: 1, n_keys: 0, pending_config_until: nil, rules_read: true, admin: false, state: nil, role: 0)
+    User.create(
       tg_id:,
       n_keys:,
       pending_config_until:,
@@ -8,11 +12,14 @@ module Fixtures
       admin:,
       state:,
       role:,
-      **attrs
     )
   end
 
-  def keydesk(
+  def keydesk(**args)
+    @keydesk ||= create_keydesk(**args)
+  end
+
+  def create_keydesk(
     ss_link: "https://dummy.link",
     n_keys: 0,
     max_keys: 250,
@@ -20,8 +27,7 @@ module Fixtures
     status: 0,
     error_count: 0,
     last_error_at: nil,
-    usernames_to_destroy: nil,
-    **attrs
+    usernames_to_destroy: nil
   )
     Keydesk.create(
       ss_link:,

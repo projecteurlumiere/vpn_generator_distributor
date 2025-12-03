@@ -19,6 +19,10 @@ class ControllerTestBase < Minitest::Test
     @bot ||= FakeBot.new
   end
 
+  # checks if the given string/pattern was sent by the controller
+  # "index" to check the order of the messages
+  # "method" to check if any particular controller method was used
+  # "not"
   def assert_bot_response(pattern, index: nil, method: nil)
     calls = method ? bot.calls.select { |c| c[:method] == method } : bot.calls
     if index.nil?
@@ -41,4 +45,43 @@ class ControllerTestBase < Minitest::Test
       assert_match pattern, text
     end
   end
+
+  def assert_bot_response(pattern, index: nil, method: nil)
+    found = find_call_match(pattern, index: index, method: method)
+    if index
+      assert found, "No match for #{pattern.inspect} at index #{index}#{method ? " for #{method}" : ""}"
+    else
+      assert found, "No API call text/caption matched #{pattern.inspect}"
+    end
+  end
+
+  def refute_bot_response(pattern, index: nil, method: nil)
+    found = find_call_match(pattern, index: index, method: method)
+    if index
+      refute found, "Unexpected match for #{pattern.inspect} at index #{index}#{method ? " for #{method}" : ""}"
+    else
+      refute found, "Expected NO API call text/caption to match #{pattern.inspect}, but found one"
+    end
+  end
+
+  def find_call_match(pattern, index: nil, method: nil)
+  calls = method ? bot.calls.select { |c| c[:method] == method } : bot.calls
+
+  if index.nil?
+    calls.any? do |call|
+      text = call[:kwargs][:text] || call[:kwargs][:caption] ||
+             (call[:args].first[:text] rescue nil) ||
+             (call[:args].first[:caption] rescue nil)
+      text && text.match?(pattern)
+    end
+  else
+    call = calls[index]
+    return false unless call
+    text = call[:kwargs][:text] || call[:kwargs][:caption] ||
+           (call[:args].first[:text] rescue nil) ||
+           (call[:args].first[:caption] rescue nil)
+    text && text.match?(pattern)
+  end
+end
+
 end

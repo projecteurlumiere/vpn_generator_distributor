@@ -42,21 +42,21 @@ class Routes
       ApplicationController.new(bot, message).send(:reply, "Я подключился успешно.")
     end
   rescue ControllerNotFoundError => e
-    LOGGER.error "ControllerNotFoundError: #{e.message}"
-
     msg = <<~TXT
       Не получилось выполнить действие.
       Если вы потерялись, вернуться можно нажав на /start
     TXT
     ApplicationController.new(bot, message).send(:reply, msg, reply_markup: nil)
-  rescue ApplicationController::NotAuthorizedError => e
-    LOGGER.error "NotAuthorizedError: #{e.message}"
 
+    raise if ENV["ENV"] == "test"
+  rescue ApplicationController::NotAuthorizedError => e
     msg = <<~TXT
       У вас нет прав для выполнения этого действия.
       Если вы потерялись, вернуться можно нажав на /start
     TXT
     ApplicationController.new(bot, message).send(:reply, msg, reply_markup: nil)
+
+    raise if ENV["ENV"] == "test"
   end
 
   def [](type)
