@@ -13,8 +13,6 @@ class Keydesk < Sequel::Model(:keydesks)
   ABANDONED_KEY_TIMEOUT = 24 * 60 * 60 * 182 # half a year
 
   def self.start_proxies
-    system("scripts/keydesk_proxy_stop.sh")
-
     Keydesk.dataset.update(status: 0)
 
     tasks = []
@@ -27,6 +25,19 @@ class Keydesk < Sequel::Model(:keydesks)
         id = keydesk.id
         proxy_port = keydesk.proxy_port
 
+        if proxy_running?(keydesk.name, proxy_port)
+          msg = "The proxy for #{keydesk.name} is already running."
+          msg += "Have you forgot to exit bin/console?" if $PROGRAM_NAME != "bin/console"
+
+          if ENV["ENV"] == "production" && $PROGRAM_NAME != "bin/console"
+            raise msg
+          else
+            LOGGER.warn msg
+          end
+
+          next
+        end
+
         system(
           "scripts/keydesk_proxy_start.sh",
           keydesk.name,
@@ -36,13 +47,28 @@ class Keydesk < Sequel::Model(:keydesks)
           conf["method"],
           proxy_port.to_s
         )
-
         sleep 2
+
         keydesk.update(n_keys: keydesk.users(update_n_keys: false).size, error_count: 0, last_error_at: nil, status: :online)
       end
     end
 
     tasks.each(&:wait)
+  end
+
+  def self.proxy_running?(name, port)
+    pidfile = "./tmp/proxies/ss-local-#{name}.pid"
+    return false unless File.exist?(pidfile)
+
+    pid = File.read(pidfile).strip.to_i
+    cmdline = File.read("/proc/#{pid}/cmdline").tr("\0", " ")
+    cmdline.include?("ss-local") && cmdline.include?("-l #{port}")
+  rescue Errno::ENOENT, Errno::ESRCH
+    false
+  end
+
+  def self.stop_proxies
+    system("scripts/keydesk_proxy_stop.sh")
   end
 
   def usernames_to_destroy
@@ -176,9 +202,8 @@ class Keydesk < Sequel::Model(:keydesks)
     "socks5://127.0.0.1:#{proxy_port}"
   end
 
-  # ports start at 10000
   def proxy_port
-    ((9 + InstanceUtils.number) * 1000) + id
+    10000 + id
   end
 
   private

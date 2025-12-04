@@ -1,9 +1,7 @@
 #!/bin/bash
 # stops keydesk proxies
 
-set -9
-
-for pidfile in ./tmp/ss-local-*.pid; do
+for pidfile in ./tmp/proxies/ss-local-*.pid; do
   [ -e "$pidfile" ] || continue  # skip if no match
   pid=$(cat "$pidfile")
   if kill -0 "$pid" 2>/dev/null; then
