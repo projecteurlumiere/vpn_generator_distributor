@@ -2,6 +2,8 @@
 
 source "https://rubygems.org"
 
+ruby ">= 3.4"
+
 group :development do
   gem "dotenv"
   gem "irb"
