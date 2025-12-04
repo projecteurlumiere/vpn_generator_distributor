@@ -7,7 +7,11 @@ require "singleton"
 require "uri"
 require "yaml"
 
-LOGGER = Logger.new(ENV["ENV"] == "development" ? $stdout : "tmp/#{ENV["ENV"]}.log")
+LOGGER = Logger.new(
+  ENV["ENV"] == "development" ? $stdout : "tmp/#{ENV["ENV"]}.log",
+  10,   # keep 10 rotated log files
+  1_048_576 # max log file size in bytes (example: 1 MB)
+)
 
 require "async"
 require "telegram/bot" unless ENV["ENV"] == "test"
