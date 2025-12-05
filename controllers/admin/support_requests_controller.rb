@@ -3,7 +3,13 @@ class Admin::SupportRequestsController < Admin::BaseController
   include Admin::UserManagement
 
   def is_authorized?
-    chat_id == Bot::ADMIN_CHAT_ID &&
-      SupportRequest.where(status: [0, 1], message_thread_id:).first
+    authorized = (chat_id == Bot::ADMIN_CHAT_ID &&
+      SupportRequest.where(status: [0, 1], message_thread_id:).first)
+    
+    unless authorized
+      edit_message("Это обращение уже закрыто: действия недоступны.")
+    end
+
+    authorized
   end
 end

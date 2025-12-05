@@ -27,6 +27,9 @@ class Admin::MenuController < Admin::BaseController
           "Управление слайдами" =>  callback_name(Admin::SlidesController, "menu")
         },
         {
+          "Рассылка" => callback_name(Admin::BroadcastsController, "menu")
+        },
+        {
           "Управление ключницами" => callback_name(Admin::KeydesksController, "index")
         },
         {

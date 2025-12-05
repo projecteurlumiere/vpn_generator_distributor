@@ -50,11 +50,16 @@ class Routes
 
     raise if ENV["ENV"] == "test"
   rescue ApplicationController::NotAuthorizedError => e
-    msg = <<~TXT
-      У вас нет прав для выполнения этого действия.
-      Если вы потерялись, вернуться можно нажав на /start
-    TXT
-    ApplicationController.new(bot, message).send(:reply, msg, reply_markup: nil)
+    controller = ApplicationController.new(bot, message)
+
+    if controller.chat_id != Bot::ADMIN_CHAT_ID || (controller.chat_id != Bot::ADMIN_CHAT_ID && controller.message_thread_id)
+      msg = [
+        "У вас нет прав для выполнения этого действия.",
+        ("Если вы потерялись, вернуться можно нажав на /start" unless controller.chat_id == Bot::ADMIN_CHAT_ID)
+      ].compact.join("\n")
+
+      controller.send(:reply, msg, reply_markup: nil)
+    end
 
     raise if ENV["ENV"] == "test"
   end
