@@ -120,5 +120,7 @@ module Admin::UserManagement
              end
 
     send(method, *args, **kwargs)
+  rescue Telegram::Bot::Exceptions::ResponseError => e
+    raise unless e.message.match?(/message is not modified/i)
   end
 end
