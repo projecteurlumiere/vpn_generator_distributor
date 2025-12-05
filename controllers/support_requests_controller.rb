@@ -123,7 +123,9 @@ class SupportRequestsController < ApplicationController
   def add_messages_to_thread(support_request, state, thread_id)
     admin_msg = compose_admin_msg(support_request, state)
     reply(admin_msg, chat_id: Bot::ADMIN_CHAT_ID, message_thread_id: thread_id, parse_mode: "MarkdownV2")
-    reply_with_inline_buttons(*user_menu_args, chat_id: Bot::ADMIN_CHAT_ID, message_thread_id: thread_id, parse_mode: "MarkdownV2")
+
+    res = reply_with_inline_buttons(*user_menu_args, chat_id: Bot::ADMIN_CHAT_ID, message_thread_id: thread_id, parse_mode: "MarkdownV2")
+    support_request.update(user_menu_message_id: res.message_id)
   end
 
   def compose_admin_msg(support_request, state)

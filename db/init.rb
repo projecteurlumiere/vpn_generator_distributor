@@ -49,4 +49,5 @@ DB.create_table? :support_requests do
   DateTime :updated_at, null: false, default: Sequel::CURRENT_TIMESTAMP
   Integer :status, default: 0
   Integer :message_thread_id
+  Integer :user_menu_message_id
 end
