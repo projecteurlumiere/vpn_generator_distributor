@@ -1,11 +1,15 @@
 class Admin::KeysController < Admin::BaseController  # chat_id is the one the file is sent to
+  def is_authorized?
+    current_user.admin? || concerns_open_support_request?
+  end
+
   def create(user_id, configs = Key::VALID_CONFIGS)
     configs = YAML.load(configs) if configs.is_a?(String)
 
     if user = User[user_id]
       reply(with_emoji("Выдаём ключ пользователю #{user.id}. Нужно подождать."))
 
-      case key = Key.issue(to: user, skip_limit: current_user_admin?)
+      case key = Key.issue(to: user, skip_limit: current_user.admin?)
       in :keydesks_full
         msg = with_emoji("Свободных мест нет")
         reply(msg)

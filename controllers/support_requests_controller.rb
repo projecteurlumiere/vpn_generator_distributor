@@ -83,7 +83,7 @@ class SupportRequestsController < ApplicationController
     reply("Подождите: передаём ваше сообщение в поддержку.", reply_markup: nil)
 
     close_abandoned_requests
-    support_request = current_user.add_support_request(status: 0, chat_id:)
+    support_request = current_user.add_support_request(status: 0)
     
     thread_id = create_thread(support_request)
     add_messages_to_thread(support_request, state, thread_id)

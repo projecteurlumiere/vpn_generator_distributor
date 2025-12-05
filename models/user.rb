@@ -37,4 +37,8 @@ class User < Sequel::Model(:users)
   def release_config_lock!
     update(pending_config_until: nil)
   end
+
+  def admin?
+    Bot::ADMIN_IDS.any?(tg_id)
+  end
 end

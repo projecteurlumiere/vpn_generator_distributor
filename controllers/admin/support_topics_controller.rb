@@ -1,11 +1,9 @@
 class Admin::SupportTopicsController < Admin::BaseController
   def is_authorized?
-    chat_id == Bot::ADMIN_CHAT_ID
+    chat_id == Bot::ADMIN_CHAT_ID && concerns_support_request?
   end
 
   def call
-    return unless concerns_request_topic?
-
     if message.forum_topic_reopened
       reply("Закрытые обращения нельзя переоткрыть.")
     elsif message.forum_topic_closed && request
@@ -31,7 +29,7 @@ class Admin::SupportTopicsController < Admin::BaseController
 
   private
 
-  def concerns_request_topic?
+  def concerns_support_request?
     message_thread_id && SupportRequest.where(message_thread_id:).first
   end
 
