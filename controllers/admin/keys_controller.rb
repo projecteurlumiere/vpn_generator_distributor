@@ -25,7 +25,7 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
                                             .where(status: [0, 1])
                                             .first
             support_request.set_open!(bot)
-            upload_file(file_path, "Ваш файл настроек", chat_id: support_request.chat_id)
+            upload_file(file_path, "Ваш файл настроек", chat_id: support_request.user.chat_id)
           else
             upload_file(file_path, "VPN-файл #{filename} для пользователя #{user.id}")
           end

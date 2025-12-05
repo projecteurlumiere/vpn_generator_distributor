@@ -145,6 +145,8 @@ class ApplicationController
 
   def current_user
     @current_user ||= User.find(tg_id:) || User.create(tg_id:)
+    @current_user.update(chat_id:) if @current_user.chat_id.nil? && chat_id.positive?
+    @current_user
   end
 
   def reply_with_start_menu(message)

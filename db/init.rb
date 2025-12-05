@@ -9,6 +9,7 @@ DB = Sequel.sqlite("db/db_#{ENV["ENV"]}.sqlite3",
 DB.create_table? :users do
   primary_key :id
   Integer :tg_id, unique: true, null: false # TG user id
+  Integer :chat_id, unique: true # we store our best guess
   Integer :n_keys, null: false, default: 0
   DateTime :pending_config_until
   TrueClass :rules_read, null: false, default: false
@@ -48,5 +49,4 @@ DB.create_table? :support_requests do
   DateTime :updated_at, null: false, default: Sequel::CURRENT_TIMESTAMP
   Integer :status, default: 0
   Integer :message_thread_id
-  Integer :chat_id, null: false # user's but we don't want to store permanent id's on user model
 end

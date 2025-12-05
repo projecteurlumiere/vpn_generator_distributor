@@ -14,18 +14,18 @@ class Admin::SupportTopicsController < Admin::BaseController
       msg = "Ваше обращение в поддержку №#{request.id} от #{request.created_at.strftime("%Y-%m-%d %H:%M")} было помечено как рассмотренное"
       reply_with_buttons(msg,
         [["Вернуться в меню"]],
-        chat_id: request.chat_id,
+        chat_id: request.user.chat_id,
         message_thread_id: nil
       )
     elsif request.nil? && !message.text.nil?
       reply("Это обращение уже было закрыто.")
     elsif !message.text.nil?
       unless request.user.state_array in ["SupportTopicsController", *]
-        reply_with_buttons("Новое сообщение от поддержки:", [["Вернуться в меню"]], chat_id: request.chat_id, message_thread_id: nil)
+        reply_with_buttons("Новое сообщение от поддержки:", [["Вернуться в меню"]], chat_id: request.user.chat_id, message_thread_id: nil)
       end
 
       request.set_open!(bot)
-      repeat_message(chat_id: request.chat_id)
+      repeat_message(chat_id: request.user.chat_id)
     end
   end
 
