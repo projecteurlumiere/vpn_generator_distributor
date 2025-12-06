@@ -51,6 +51,11 @@ module Bot
         bot.listen do |message|
           if message.respond_to?(:chat) && message.chat.type != "private" && message.chat.id != Bot::ADMIN_CHAT_ID
             LOGGER.warn "Someone used the bot in a group chat that is not the admin chat: #{message.chat.id}"
+
+            if Bot::ADMIN_CHAT_ID.to_i == 0
+              controller = ApplicationController.new(bot, message)
+              controller.send(:reply, "No admin chat provided.\nchat id: `#{controller.chat_id}`", parse_mode: "Markdown")
+            end
           else
             Async do
               Routes.instance.dispatch_controller(bot, message)

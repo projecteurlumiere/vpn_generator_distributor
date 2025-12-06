@@ -4,7 +4,8 @@ class StartController < ApplicationController
       "/start", "Вернуться в меню",
       "Ознакомиться с правилами", "Правила",
       "Правила подтверждаю",
-      "О проекте"
+      "О проекте",
+      "/tg_id"
     ]
   end
 
@@ -23,6 +24,8 @@ class StartController < ApplicationController
       reply_menu
     in "О проекте"
       reply_about
+    in "/tg_id"
+      reply("`#{tg_id}`", parse_mode: "Markdown")
     else
       raise ApplicationController::RoutingError
     end
