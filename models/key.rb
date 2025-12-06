@@ -58,7 +58,10 @@ class Key < Sequel::Model(:keys)
       key = Key.where { reserved_until <= Time.now }
                .for_update
                .first
-      key.update(user_id: user.id, reserved_until: Time.now + 3_600) if key
+
+      if key && Dir.exist?("./tmp/vpn_configs/per_key/#{key.id}")
+        key.update(user_id: user.id, reserved_until: Time.now + 3_600)
+      end
     end
   end
 
