@@ -37,19 +37,28 @@ class Admin::InstructionsController < Admin::BaseController
       },
       {
         "Загрузить инструкцию" => callback_name("upload")
+      },
+      {
+        "Удалить инструкции" => callback_name("list", "destroy")
       }
     ])
   end
 
-  def list
+  def list(action = "download")
     msg = <<~TXT
       Загружены и работают следующие инструкции:
       #{Instructions.instance.titles.join("\n")}
     TXT
 
+    action_ru = case action
+                in "download"
+                  "Скачать"
+                in "destroy"
+                  "Удалить"
+                end
     buttons = Instructions.instance.paths.map do |path|
       filename = File.basename(path)
-      { "Скачать #{filename}" => callback_name("download_yml", filename) }
+      { "#{action_ru} #{filename}" => callback_name("#{action}_yml", filename) }
     end
 
     buttons.unshift(admin_menu_inline_button)
@@ -89,6 +98,18 @@ class Admin::InstructionsController < Admin::BaseController
       document: Faraday::UploadIO.new(path, 'application/x-yaml'),
       caption: "Инструкция: #{filename}"
     )
+  end
+
+  def destroy_yml(filename)
+    path = File.join("./data/instructions", filename)
+    if File.exist?(path)
+      FileUtils.rm(path)
+      reply("Инструкция #{filename} удалена")
+    else
+      reply("Такой инструкции не существует.")
+    end
+
+    reply("/admin, чтобы вернуться.")
   end
 
   private

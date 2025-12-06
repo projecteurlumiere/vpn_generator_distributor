@@ -161,7 +161,6 @@ class ApplicationController
                 ]
               end
 
-
     reply_with_buttons(message, buttons)
   end
 
