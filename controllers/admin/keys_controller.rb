@@ -16,6 +16,9 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
       in :keydesks_error
         msg = with_emoji("Что-то пошло во время создания конфигурации. Попробуйте ещё раз или позже.")
         reply(msg)
+      in :user_awaits_config
+        msg = with_emoji("Пользователю уже выдаётся ключ. Нужно подождать.")
+        reply(msg)
       in Key
         dir_path = "./tmp/vpn_configs/per_key/#{key.id}"
 
