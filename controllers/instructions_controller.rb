@@ -6,11 +6,11 @@ class InstructionsController < ApplicationController
       ]
     end.flatten
 
-    instructions + ["Подключить VPN", "К инструкциям"]
+    instructions + ["Подключить VPN", "К выбору устройства"]
   end
 
   def call
-    if ["Подключить VPN", "К инструкциям"].any?(message.text)
+    if ["Подключить VPN", "К выбору устройства"].any?(message.text)
       msg = <<~TXT
         Вот список доступных инструкций:
       TXT
@@ -39,8 +39,9 @@ class InstructionsController < ApplicationController
         @step = 0
       else
         msg = <<~TXT
-          Для работы VPN'а вам понадобится ключ, который мы выдаём. 
+          Для работы VPN'а вам понадобится ключ, который мы выдаём.
           Число таких ключей ограничено, но мы стараемся помочь всем.
+          Если вы не уверены, о чем идет речь, выбирайте "Мне нужен ключ"
         TXT
         reply_with_buttons(msg,
           [
@@ -53,7 +54,7 @@ class InstructionsController < ApplicationController
 
     @step = @step.to_i
     if message.text == "Назад"
-      if @step - 2 <= 0
+      if @step - 1 <= 0
         msg = <<~TXT
           Вот список доступных инструкций:
         TXT
@@ -92,7 +93,7 @@ class InstructionsController < ApplicationController
       current_step[:text],
       [
         *current_step[:actions].map { |a| [a] },
-        ["Назад", "К инструкциям", "Написать в поддержку"]
+        ["Назад", "К выбору устройства", "Написать в поддержку"]
       ],
       photos: current_step[:images],
       parse_mode: "Markdown"
@@ -107,7 +108,7 @@ class InstructionsController < ApplicationController
   end
 
   def reply_success
-    reply("Ура. У вас получилось! Наслаждайтесь свободным интернетом.")
+    reply("Ура! Очень рады, что все получилось ❤️")
     reply_slide(:about)
   end
 
@@ -115,12 +116,24 @@ class InstructionsController < ApplicationController
     reply_with_buttons(
       msg,
       [
-        ["Вернуться в меню"], 
+        ["Вернуться в меню"],
         *Instructions.instance
                      .titles
                      .each_slice(3)
                      .to_a
       ]
+    )
+  end
+
+  def reply_with_start_menu(msg = nil)
+    reply_with_buttons(
+      [msg, "Доступны следующие действия:"].compact.join("\n\n"),
+      [
+        ["Подключить VPN"],
+        ["Правила"],
+        ["О проекте"],
+        ["Написать в поддержку"]
+      ].compact
     )
   end
 
@@ -130,7 +143,7 @@ class InstructionsController < ApplicationController
         Ошибка!
         У вас слишком много ключей. Возможно, вы хотели свериться с инструкцией не получая ключ?
 
-        Вот доступные инструкции
+        Вот доступные инструкции:
       TXT
 
       reply_with_instructions(msg)
@@ -143,11 +156,11 @@ class InstructionsController < ApplicationController
     else
       reply("Резервируем для вас место в нашей VPN сети. Это займёт около минуты. Если вы уверены, что что-то пошло не так, нажмите /start")
 
-      case Key.issue(to: current_user) 
+      case Key.issue(to: current_user)
       in :user_awaits_config
         reply("Мы уже резервируем для вас место. Пожалуйста, подождите", reply_markup: nil)
       in :keydesks_full
-        reply_with_instructions("Извините, сейчас нет свободных мест в нашей сети.")
+        reply_with_instructions("К сожалению, сейчас ключи закончились. Зайдите, пожалуйста, завтра.")
       in :keydesks_error
         reply_with_instructions("Что-то пошло во время создания конфигурации. Попробуйте ещё раз или позже.")
       in Key
