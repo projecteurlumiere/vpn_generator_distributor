@@ -7,6 +7,7 @@ require "singleton"
 require "uri"
 require "yaml"
 
+Dir.mkdir("tmp") unless Dir.exist?("tmp")
 LOGGER = Logger.new(
   ENV["ENV"] == "development" ? $stdout : "tmp/#{ENV["ENV"]}.log",
   10,   # keep 10 rotated log files
