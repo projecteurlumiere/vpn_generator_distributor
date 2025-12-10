@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  vpn_bot:
+    image: projecteurlimuere/vpn_distributor_bot:latest
+    container_name: vpn_distributor
+    restart: unless-stopped
+    volumes:
+      - ./tmp:/vpn_distributor/tmp
+      - ./data:/vpn_distributor/data
+      - ./db/db_production.sqlite3:/vpn_distributor/db/db_production.sqlite3
+    environment:
+      - ENV=<production|development>
+      - TELEGRAM_TOKEN=<your Telegram bot token>
+      - ADMIN_CHAT_ID=<your admin chat id; if not specified, bot will report chat id of the group chat>
+      - ADMIN_IDS=<admin account IDs separated with comma>
