@@ -19,7 +19,6 @@ end
 group :default do
   gem "async"
   gem "base64"
-  gem "concurrent-ruby", "~> 1.3"
   gem "socksify"
   gem "sequel"
   gem "sqlite3"

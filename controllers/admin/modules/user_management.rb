@@ -32,7 +32,7 @@ module Admin::UserManagement
                       .order(Sequel.desc(:created_at))
                       .all
 
-    lines = Concurrent::Hash.new
+    lines = {}
 
     tasks = keys.map do |key|
       Async do
