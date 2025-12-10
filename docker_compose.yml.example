@@ -1,8 +1,6 @@
-version: '3'
-
 services:
   vpn_bot:
-    image: projecteurlimuere/vpn_distributor_bot:latest
+    image: projecteurlumiere/vpn_distributor_bot:latest
     container_name: vpn_distributor
     restart: unless-stopped
     volumes:
