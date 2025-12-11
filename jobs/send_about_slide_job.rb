@@ -12,7 +12,8 @@ class SendAboutSlideJob
     Async do
       while true
         if ENV["ENV"] == "production"
-          sleep 3600 and next unless Time.now.utc.hour == PERFORM_AT
+          sleep 3600
+          next unless Time.now.utc.hour == PERFORM_AT
         else
           sleep 5
         end
