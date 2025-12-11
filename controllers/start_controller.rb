@@ -3,7 +3,7 @@ class StartController < ApplicationController
     [
       "/start", "Вернуться в меню",
       "Ознакомиться с правилами", "Правила",
-      "Правила принимаю",
+      "Принимаю правила",
       "О проекте",
       "/tg_id"
     ]
@@ -19,7 +19,7 @@ class StartController < ApplicationController
       reply_welcome
     in "Ознакомиться с правилами" | "Правила"
       reply_rules
-    in "Правила принимаю"
+    in "Принимаю правила"
       current_user.update(rules_read: true)
       reply_menu
     in "О проекте"
