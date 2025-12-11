@@ -1,6 +1,6 @@
 FROM ruby:3.4
 
-WORKDIR /app
+WORKDIR /bot
 
 RUN apt-get update && \
     apt-get install -y sqlite3 libsqlite3-dev shadowsocks-libev && \

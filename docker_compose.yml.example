@@ -4,9 +4,9 @@ services:
     container_name: vpn_distributor
     restart: unless-stopped
     volumes:
-      - ./tmp:/vpn_distributor/tmp
-      - ./data:/vpn_distributor/data
-      - ./db/db_production.sqlite3:/vpn_distributor/db/db_production.sqlite3
+      - ./tmp:/bot/tmp
+      - ./data:/bot/data
+      - ./db/db_production.sqlite3:/bot/db/db_production.sqlite3
     environment:
       - ENV=<production|development>
       - TELEGRAM_TOKEN=<your Telegram bot token>
