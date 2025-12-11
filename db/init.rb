@@ -12,7 +12,9 @@ DB.create_table? :users do
   Integer :chat_id, unique: true # we store our best guess
   Integer :n_keys, null: false, default: 0
   DateTime :pending_config_until
+  DateTime :last_visit_at, null: false, default: Sequel::CURRENT_TIMESTAMP
   TrueClass :rules_read, null: false, default: false
+  TrueClass :about_received # after receiving key
   TrueClass :admin, null: false, default: false
   String :state
   Integer :role, null: false, default: 0

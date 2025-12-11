@@ -40,42 +40,46 @@ module Bot
         if $PROGRAM_NAME == "bin/console" # bin/console shouldn't start the listenter
           IRB.start
         else
-          start_listener
+          bot = Telegram::Bot::Client.new(Bot::TOKEN)
+          start_jobs(bot)
+          start_listener(bot)
         end
       end
     end
 
     private
 
-    def start_listener
-      Telegram::Bot::Client.run(Bot::TOKEN) do |bot|
-        bot.listen do |message|
-          if message.respond_to?(:chat) && message.chat.type != "private" && message.chat.id != Bot::ADMIN_CHAT_ID
-            LOGGER.warn "Someone used the bot in a group chat that is not the admin chat: #{message.chat.id}"
+    def start_listener(bot)
+      bot.listen do |message|
+        if message.respond_to?(:chat) && message.chat.type != "private" && message.chat.id != Bot::ADMIN_CHAT_ID
+          LOGGER.warn "Someone used the bot in a group chat that is not the admin chat: #{message.chat.id}"
 
-            if Bot::ADMIN_CHAT_ID.to_i == 0
-              controller = ApplicationController.new(bot, message)
-              controller.send(:reply, "No admin chat provided.\nchat id: `#{controller.chat_id}`", parse_mode: "Markdown")
-            end
-          else
-            Async do
-              Routes.instance.dispatch_controller(bot, message)
-            rescue StandardError => e
-              controller = ApplicationController.new(bot, message)
-              msg = case controller.chat_id
-                    in ^(Bot::ADMIN_CHAT_ID)
-                      <<~TXT
-                        ⚠️ Что-то пошло не так: #{e.class}
-                      TXT
-                    else
-                      "Что-то пошло не так.\nЕсли вы потерялись, вернуться можно нажав на /start"
-                    end
-              controller.send(:reply, msg, reply_markup: nil)
-              LOGGER.error "Unhandled error when processing request: #{e.class}\n#{e.full_message}\n#{e.backtrace}"
-            end
+          if Bot::ADMIN_CHAT_ID.to_i == 0
+            controller = ApplicationController.new(bot, message)
+            controller.send(:reply, "No admin chat provided.\nchat id: `#{controller.chat_id}`", parse_mode: "Markdown")
+          end
+        else
+          Async do
+            Routes.instance.dispatch_controller(bot, message)
+          rescue StandardError => e
+            controller = ApplicationController.new(bot, message)
+            msg = case controller.chat_id
+                  in ^(Bot::ADMIN_CHAT_ID)
+                    <<~TXT
+                      ⚠️ Что-то пошло не так: #{e.class}
+                    TXT
+                  else
+                    "Что-то пошло не так.\nЕсли вы потерялись, вернуться можно нажав на /start"
+                  end
+            controller.send(:reply, msg, reply_markup: nil)
+            LOGGER.error "Unhandled error when processing request: #{e.class}\n#{e.full_message}\n#{e.backtrace}"
           end
         end
       end
+    end
+
+    def start_jobs(bot)
+      SendAboutSlideJob.run!(bot)
     end
   end
 end

@@ -108,6 +108,7 @@ class InstructionsController < ApplicationController
   end
 
   def reply_success
+    current_user.update(about_received: true)
     reply("Ура! Очень рады, что все получилось ❤️")
     reply_slide(:about)
   end
@@ -185,7 +186,11 @@ class InstructionsController < ApplicationController
         reply(File.read(file_path), reply_markup: nil)
       end
 
-      key.update(desc: "Выдан для #{@instruction_name}", reserved_until: nil)
+      DB.transaction do
+        key.update(desc: "Выдан для #{@instruction_name}", reserved_until: nil)
+        current_user.update(about_received: false)
+      end
+
       FileUtils.rm_rf(dir_path)
     else
       msg = <<~TXT
