@@ -6,7 +6,6 @@ ruby ">= 3.4"
 
 group :development do
   gem "dotenv"
-  gem "irb"
   gem "rerun"
   gem "rubocop", require: false
   gem "rubocop-performance", require: false
@@ -19,6 +18,7 @@ end
 group :default do
   gem "async"
   gem "base64"
+  gem "irb"
   gem "socksify"
   gem "sequel"
   gem "sqlite3"
