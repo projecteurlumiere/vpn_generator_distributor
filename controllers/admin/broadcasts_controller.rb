@@ -2,6 +2,8 @@ class Admin::BroadcastsController < Admin::BaseController
   def call
     raise RoutingError unless current_user.state_array in [^(self.class.name), "awaiting"]
 
+    current_user.update(state: nil)
+
     case message.text
     in "Отменить рассылку"
       msg = <<~TXT
@@ -11,10 +13,10 @@ class Admin::BroadcastsController < Admin::BaseController
       TXT
 
       reply(msg)
-      current_user.update(state: nil)
+    in "Разослать" if @@broadcasting
+      reply("Рассылка уже проводится. Нужно подождать")
     in "Разослать"
       broadcast
-      current_user.update(state: nil)
     else
       raise RoutingError
     end
@@ -31,6 +33,10 @@ class Admin::BroadcastsController < Admin::BaseController
   private
 
   def broadcast
+    @@broadcasting = true
+
+    current_user.update(state: nil)
+
     reply(<<~TXT
       Начинаем рассылку. Это займёт время.
 
@@ -61,5 +67,7 @@ class Admin::BroadcastsController < Admin::BaseController
   rescue StandardError => e
     LOGGER.error("Broadcast failed: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}")
     reply("Сообщение не было разослано всем: #{e.class}.")
+  ensure
+    @@broadcasting = false
   end
 end
