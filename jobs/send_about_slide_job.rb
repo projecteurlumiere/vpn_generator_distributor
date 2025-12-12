@@ -15,9 +15,10 @@ class SendAboutSlideJob
           sleep 3600
           next unless Time.now.utc.hour == PERFORM_AT
         else
-          sleep 5
+          sleep 60
         end
 
+        LOGGER.info "Starting job: #{self.name}"
         chat_ids = User.where(about_received: false)
                        .where { last_visit_at < Time.now - 2 * 24 * 60 * 60 } # 2 days
                        .select_map(%i[chat_id id])
@@ -35,7 +36,8 @@ class SendAboutSlideJob
             success << id
           end
         ensure
-          User.where(id: success).update(about_received: true) if success.any?
+          User.where(id: success).update(about_received: true, state: nil) if success.any?
+          LOGGER.info "Job finished: #{self.name}"
         end
       end
     end
