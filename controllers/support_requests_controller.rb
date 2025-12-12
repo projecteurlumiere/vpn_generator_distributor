@@ -66,7 +66,7 @@ class SupportRequestsController < ApplicationController
 
   def unread_request
     @pending_request ||= current_user.support_requests_dataset
-      .where(status: [0, 1])
+      .where(status: [0])
       .where { updated_at > Sequel.lit("datetime(CURRENT_TIMESTAMP, '-3 days')") }
       .first
   end
