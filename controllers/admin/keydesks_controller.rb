@@ -99,6 +99,8 @@ class Admin::KeydesksController < Admin::BaseController
   end
 
   def usernames_to_destroy
+    reply("Мёртвые душие уже удаляются. Нужно подождать!") and return if @@cleaning_up
+
     header = "%-13s %3s %3s" % ["Имя", "ДУШ", "ВЫД"]
 
     tasks = Keydesk.all.map do |kd|
@@ -145,6 +147,9 @@ class Admin::KeydesksController < Admin::BaseController
   end
 
   def clean_up
+    reply("Мёртвые души уже удаляются. Нужно подождать!") and return if @@cleaning_up
+
+    @@cleaning_up = true
     reply("Удаляем \"мёртвые души\". Это займёт время")
 
     tasks = Keydesk.all.map do |kd|
@@ -177,6 +182,8 @@ class Admin::KeydesksController < Admin::BaseController
     reply_with_inline_buttons(msg, [admin_menu_inline_button], parse_mode: "Markdown")
   rescue StandardError
     reply("Что-то пошло не так при удалении мёртвых душ.")
+  ensure
+    @@cleaning_up = false
   end
 
   private
