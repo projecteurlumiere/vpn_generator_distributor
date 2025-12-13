@@ -166,7 +166,7 @@ class InstructionsController < ApplicationController
         reply_with_instructions("Что-то пошло во время создания конфигурации. Попробуйте ещё раз или позже.")
       in Key
         reply("Ключ успешно зарезервирован. Продолжайте следовать инструкции.")
-        
+
         @key_reserved = true
         @step = 0
         reply_instruction_step

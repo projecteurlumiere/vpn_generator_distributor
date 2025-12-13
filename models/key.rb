@@ -11,21 +11,20 @@ class Key < Sequel::Model(:keys)
     begin
       keydesk.delete_user(username: keydesk_username)
       keydesk.update_status!
+      super
     rescue VpnWorks::Error => e
       keydesk.record_error!
       raise
-    end
+    ensure
+      if exists?
+        release_destroy_lock!
+      else
+        per_key_dir  = "./tmp/vpn_configs/per_key/#{id}"
+        per_user_dir = "./tmp/vpn_configs/per_user/#{user_id}"
 
-    super
-  ensure
-    if exists?
-      release_destroy_lock!
-    else
-      per_key_dir  = "./tmp/vpn_configs/per_key/#{id}"
-      per_user_dir = "./tmp/vpn_configs/per_user/#{user_id}"
-
-      FileUtils.rm_rf(per_key_dir)  if Dir.exist?(per_key_dir)
-      FileUtils.rm_rf(per_user_dir) if Dir.exist?(per_user_dir)
+        FileUtils.rm_rf(per_key_dir)  if Dir.exist?(per_key_dir)
+        FileUtils.rm_rf(per_user_dir) if Dir.exist?(per_user_dir)
+      end
     end
   end
 
@@ -42,15 +41,14 @@ class Key < Sequel::Model(:keys)
   def self.issue(to:, skip_limit: false)
     user = to
 
-    if !user.acquire_config_lock?
-      return :user_awaits_config
-    elsif key = assign_already_reserved_key(user)
-      key
-    else
-      browse_keydesks_for_keys(user, skip_limit)
+    return :user_awaits_config unless user.acquire_config_lock?
+
+    begin
+      assign_already_reserved_key(user) ||
+        browse_keydesks_for_keys(user, skip_limit)
+    ensure
+      user.release_config_lock!
     end
-  ensure
-    user.release_config_lock!
   end
 
   def self.assign_already_reserved_key(user)

@@ -7,7 +7,12 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
     configs = YAML.load(configs) if configs.is_a?(String)
 
     if user = User[user_id]
-      reply(with_emoji("Выдаём ключ пользователю #{user.id}. Нужно подождать."))
+      # careful as request support tickets are **so** slow that sending this message
+      # circumvents the config locking mechanism, 
+      # and we end up creating several keys one after another
+      Async do
+        reply(with_emoji("Выдаём ключ пользователю #{user.id}. Нужно подождать."))
+      end
 
       case key = Key.issue(to: user, skip_limit: current_user.admin?)
       in :keydesks_full
@@ -57,9 +62,11 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
   end
 
   def destroy(id)
-    if (key = Key[id]) && (res = key.destroy)
-      reply(with_emoji("Удаляем ключ #{key.id}"), reply_markup: nil)
+    Async do
+      reply(with_emoji("Удаляем ключ #{id}"), reply_markup: nil)
+    end
 
+    if (key = Key[id]) && (res = key.destroy)
       case res
       in :pending_destroy
         msg = with_emoji("Ключ #{key.id} в процессе удаления")
