@@ -92,8 +92,8 @@ class VpnWorks
     if attempt <= 3
       case e
       in Error
-        LOGGER.error "Error in the keydesk `#{@id}`. Called from: `#{caller_method}`. Resp: `#{resp.body}`. Attempts: #{attempt} / 3"
-        refresh_token if resp.code == 401
+        LOGGER.error "Error in the keydesk `#{@id}`. Called from: `#{caller_method}`. Code: #{resp.code} Body: `#{resp.body}`. Attempts: #{attempt} / 3"
+        refresh_token if resp.code == 401 || resp.body.match?(/invalid token/i)
         sleep 1
         retry
       else
