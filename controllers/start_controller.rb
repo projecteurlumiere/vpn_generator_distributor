@@ -5,7 +5,7 @@ class StartController < ApplicationController
       "Ознакомиться с правилами", "Правила",
       "Принимаю правила",
       "О проекте",
-      "/tg_id"
+      "/my_id", "/tg_id"
     ]
   end
 
@@ -25,7 +25,9 @@ class StartController < ApplicationController
     in "О проекте"
       reply_about
     in "/tg_id"
-      reply("`#{tg_id}`", parse_mode: "Markdown")
+      reply("`#{tg_id}`", parse_mode: "Markdown", reply_markup: nil)
+    in "/my_id"
+      reply("`#{current_user.id}`", parse_mode: "Markdown", reply_markup: nil)
     else
       raise ApplicationController::RoutingError
     end
