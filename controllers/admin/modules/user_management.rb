@@ -69,7 +69,7 @@ module Admin::UserManagement
       end
     end
 
-     actions = keys.map do |key|
+    actions = keys.map do |key|
       { "Удалить ключ #{key.id}" => callback_name(Admin::KeysController, "destroy", key.id) }
     end
 

@@ -37,9 +37,9 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
                                             .where(status: [0, 1])
                                             .first
             support_request.set_open!(bot)
-            upload_file(file_path, "Ваш файл настроек", chat_id: support_request.user.chat_id)
+            upload_key(file_path, filename, msg: "Ваш ключ #{filename}:", chat_id: support_request.user.chat_id)
           else
-            upload_file(file_path, "VPN-файл #{filename} для пользователя #{user.id}")
+            upload_key(file_path, filename, msg: "Ключ #{filename} для пользователя #{user.id}:", chat_id:)
           end
         end
 
@@ -108,5 +108,16 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
 
   def with_emoji(msg)
     message_thread_id ? "🤖: #{msg}" : msg
+  end
+
+  def upload_key(file_path, key_type, chat_id:, msg:)
+    reply(msg, chat_id:, reply_markup: nil, message_thread_id: nil)
+
+    case key_type
+    in "amnezia" | "wireguard"
+      upload_file(file_path, chat_id:, message_thread_id: nil)
+    in "outline" | "vless"
+      reply(File.read(file_path), reply_markup: nil, chat_id:, message_thread_id: nil)
+    end
   end
 end
