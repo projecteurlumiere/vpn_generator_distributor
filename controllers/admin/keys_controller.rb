@@ -43,8 +43,8 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
           end
         end
 
-        desc = message_thread_id ? "Выдан администратором" : "Выдан волонтёром"
-        desc = "#{desc} #{[first_name, last_name].compact.join(" ")}"
+        desc = message_thread_id ? "Выдан волонтёром" : "Выдан администратором"
+        desc = "#{desc} #{[first_name, last_name].compact.join(" ")} (id #{current_user.id})"
 
         key.update(desc:, reserved_until: nil)
         FileUtils.rm_rf(dir_path)
@@ -100,10 +100,6 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
     else
       super
     end
-  end
-
-  def message_thread_id
-    message.message.message_thread_id rescue nil
   end
 
   def with_emoji(msg)
