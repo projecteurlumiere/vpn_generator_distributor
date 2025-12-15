@@ -62,13 +62,13 @@ class VpnWorks
   end
 
   def token
-    @@tokens[@id] ||= refresh_token
+    @@tokens.dig(@id, Date.today.to_s) || refresh_token
   end
 
   def refresh_token
     resp = request("token", type: :post, headers: BASE_HEADERS)
     resp = JSON.parse(resp.body)
-    @@tokens[@id] = resp["Token"]
+    @@tokens[@id] = { Date.today.to_s => resp["Token"] }
     LOGGER.info("Successfully updated authentication token for keydesk `#{@id}`")
     token
   end
@@ -93,7 +93,11 @@ class VpnWorks
       case e
       in Error
         LOGGER.error "Error in the keydesk `#{@id}`. Called from: `#{caller_method}`. Code: #{resp.code} Body: `#{resp.body}`. Attempts: #{attempt} / 3"
-        refresh_token if resp.code == 401 || resp.body.match?(/invalid token/i)
+
+        if caller_method == "delete_user" && (resp.code == 405 || resp.body.match?(/method DELETE is not allowed/))
+          return true
+        end
+
         sleep 1
         retry
       else
@@ -102,11 +106,11 @@ class VpnWorks
         retry
       end
     else
-      msg = <<~MSG.strip
+      msg = <<~TXT
         Unable to proceed with the request for keydesk `#{@id}` after #{attempt} attempts.
         Called from: `#{caller_method}`
         Original error: #{e.class}: #{e.message}
-      MSG
+      TXT
 
       raise Error, msg
     end
