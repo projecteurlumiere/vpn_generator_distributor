@@ -29,17 +29,7 @@ class SupportRequestsController < ApplicationController
       reply_with_buttons(msg, [["Вернуться в меню"]])
     in ("Написать в поддержку" | "Задать вопрос")
       current_user.update(state: [self.class.name, "awaiting_input", *state].join("|"))
-
-      msg = <<~TXT
-        Напишите ваше обращение в поддержку. Постарайтесь описать свою проблему.
-        В течение трёх дней волонтёр из нашей команды напишет вам в личные сообщения.
-        Не закрывайте доступ к ним иначе мы не сможем к вам дописаться!
-
-        Отправить можно только одно обращение.
-        Если в течение трёх суток вы не получили ответа, вы сможете отправить ещё одно обращение.
-      TXT
-
-      reply_with_buttons(msg, [["Назад"]])
+      reply_slide(:support)
     in "Назад"
       2.times { state.shift }
 
