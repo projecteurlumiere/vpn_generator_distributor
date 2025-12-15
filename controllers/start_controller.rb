@@ -36,8 +36,16 @@ class StartController < ApplicationController
   private
 
   def reply_welcome
+    msg = <<~TXT
+      Привет!
+
+      Для навигации в боте используйте кнопки. Они находятся внизу, возле поля ввода сообщения.
+
+      Чтобы продолжить, ознакомьтесь с правилами.
+    TXT
+
     reply_with_buttons(
-      "Привет! Ознакомьтесь с правилами, чтобы продолжить.",
+      msg,
       [["Ознакомиться с правилами"]]
     )
   end
@@ -48,7 +56,7 @@ class StartController < ApplicationController
 
   def reply_menu
     reply_with_buttons(
-      "Доступны следующие действия:",
+      "Выберите действие из предложенных",
       [
         ["Подключить VPN"],
         ["Правила"],

@@ -161,9 +161,9 @@ class InstructionsController < ApplicationController
       in :user_awaits_config
         reply("Мы уже резервируем для вас место. Пожалуйста, подождите", reply_markup: nil)
       in :keydesks_full
-        reply_with_instructions("К сожалению, сейчас ключи закончились. Зайдите, пожалуйста, завтра.")
+        reply_with_instructions("К сожалению, сейчас ключи закончились. Пожалуйста, зайдите завтра.")
       in :keydesks_error
-        reply_with_instructions("Что-то пошло во время создания конфигурации. Попробуйте ещё раз или позже.")
+        reply_with_instructions("Что-то пошло не так во время создания ключа. Попробуйте ещё раз или позже.")
       in Key
         reply("Ключ успешно зарезервирован. Продолжайте следовать инструкции.")
 

@@ -19,7 +19,7 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
         msg = with_emoji("Свободных мест нет")
         reply(msg)
       in :keydesks_error
-        msg = with_emoji("Что-то пошло во время создания конфигурации. Попробуйте ещё раз или позже.")
+        msg = with_emoji("Что-то пошло не так во время создания ключа. Попробуйте ещё раз или позже.")
         reply(msg)
       in :user_awaits_config
         msg = with_emoji("Пользователю уже выдаётся ключ. Нужно подождать.")

@@ -32,7 +32,7 @@ class KeysController < ApplicationController
       in :keydesks_full
         reply_with_start_menu("Извините, сейчас свободных мест нет.")
       in :keydesks_error
-        reply_with_start_menu("Что-то пошло во время создания конфигурации. Попробуйте ещё раз или позже.")
+        reply_with_start_menu("Что-то пошло не так во время создания ключа. Попробуйте ещё раз или позже.")
       in Key
         config = res.config
         reply("Вот ваш ключ для Outline - скопируйте его целиком:")
