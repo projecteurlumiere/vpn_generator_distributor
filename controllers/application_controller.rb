@@ -24,10 +24,18 @@ class ApplicationController
       @message_thread_id = message.reply_to_message&.message_thread_id
     end
 
+    return unless account_for_visit
     raise NotAuthorizedError unless is_authorized?
   end
 
   private
+
+  # skipping double actions if they are within 0.25sec
+  def account_for_visit
+    User.where(tg_id:)
+        .where { last_visit_at < (Time.now - 0.25) }
+        .update(last_visit_at: Time.now) == 1
+  end
 
   # override
   def is_authorized?
@@ -146,7 +154,6 @@ class ApplicationController
   def current_user
     @current_user ||= User.find(tg_id:) || User.create(tg_id:)
     @current_user.update(chat_id:) if @current_user.chat_id.nil? && chat_id.positive?
-    @current_user.update(last_visit_at: Time.now) if @current_user.last_visit_at.to_date != Date.today
     @current_user
   end
 
