@@ -62,13 +62,13 @@ class VpnWorks
   end
 
   def token
-    @@tokens.dig(@id, Date.today.to_s) || refresh_token
+    @@tokens.dig(@id, Time.now.hour) || refresh_token
   end
 
   def refresh_token
     resp = request("token", type: :post, headers: BASE_HEADERS)
     resp = JSON.parse(resp.body)
-    @@tokens[@id] = { Date.today.to_s => resp["Token"] }
+    @@tokens[@id] = { Time.now.hour => resp["Token"] }
     LOGGER.info("Successfully updated authentication token for keydesk `#{@id}`")
     token
   end
