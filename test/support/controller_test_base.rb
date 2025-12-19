@@ -19,33 +19,41 @@ class ControllerTestBase < Minitest::Test
     @bot ||= FakeBot.new
   end
 
+  def flush_replies
+    bot.calls.clear
+  end
+
+  def assert_bot_buttons(*buttons, index: nil, method: nil)
+    calls = method ? bot.calls.select { |c| c[:method] == method } : bot.calls
+    call = index ? calls[index] : calls.last
+    assert call, "No bot API call at index #{index || calls.size - 1}#{method ? " for #{method}" : ""}"
+
+    kb = call[:kwargs][:reply_markup] || (call[:args].first[:reply_markup] rescue nil)
+    btns = []
+
+    if kb
+      rows =
+        if kb.respond_to?(:inline_keyboard) && kb.inline_keyboard
+          kb.inline_keyboard
+        elsif kb.respond_to?(:keyboard) && kb.keyboard
+          kb.keyboard
+        elsif kb.is_a?(Hash) && kb[:inline_keyboard]
+          kb[:inline_keyboard]
+        elsif kb.is_a?(Hash) && kb[:keyboard]
+          kb[:keyboard]
+        else
+          []
+        end
+      btns = rows.flatten
+    end
+
+    texts = btns.map { |btn| btn.respond_to?(:text) ? btn.text : btn[:text] }
+    assert_includes texts, *buttons
+  end
+
   # checks if the given string/pattern was sent by the controller
   # "index" to check the order of the messages
   # "method" to check if any particular controller method was used
-  # "not"
-  def assert_bot_response(pattern, index: nil, method: nil)
-    calls = method ? bot.calls.select { |c| c[:method] == method } : bot.calls
-    if index.nil?
-      found = calls.any? do |call|
-        text = call[:kwargs][:text] || call[:kwargs][:caption] ||
-               (call[:args].first[:text] rescue nil) ||
-               (call[:args].first[:caption] rescue nil)
-        text && text.match?(pattern)
-      end
-      assert found, "No API call text/caption matched #{pattern.inspect}"
-    else
-      call = calls[index]
-      assert call, "No bot API call at index #{index}#{method ? " for #{method}" : ""}"
-
-      text = call[:kwargs][:text] || call[:kwargs][:caption] ||
-             (call[:args].first[:text] rescue nil) ||
-             (call[:args].first[:caption] rescue nil)
-      assert text, "No text/caption in call at index #{index}"
-
-      assert_match pattern, text
-    end
-  end
-
   def assert_bot_response(pattern, index: nil, method: nil)
     found = find_call_match(pattern, index: index, method: method)
     if index
@@ -65,23 +73,38 @@ class ControllerTestBase < Minitest::Test
   end
 
   def find_call_match(pattern, index: nil, method: nil)
-  calls = method ? bot.calls.select { |c| c[:method] == method } : bot.calls
+    calls = method ? bot.calls.select { |c| c[:method] == method } : bot.calls
 
-  if index.nil?
-    calls.any? do |call|
+    if index.nil?
+      calls.any? do |call|
+        text = call[:kwargs][:text] || call[:kwargs][:caption] ||
+               (call[:args].first[:text] rescue nil) ||
+               (call[:args].first[:caption] rescue nil)
+        case pattern
+        in Regexp
+          text.match?(pattern)
+        in String
+          text == pattern
+        else
+          false
+        end
+      end
+    else
+      call = calls[index]
+      return false unless call
+
       text = call[:kwargs][:text] || call[:kwargs][:caption] ||
              (call[:args].first[:text] rescue nil) ||
              (call[:args].first[:caption] rescue nil)
-      text && text.match?(pattern)
+      case pattern
+      in Regexp
+        text.match?(pattern)
+      in String
+        text == pattern
+      else
+        false
+      end
     end
-  else
-    call = calls[index]
-    return false unless call
-    text = call[:kwargs][:text] || call[:kwargs][:caption] ||
-           (call[:args].first[:text] rescue nil) ||
-           (call[:args].first[:caption] rescue nil)
-    text && text.match?(pattern)
   end
-end
 
 end
