@@ -2,9 +2,9 @@ class StartController < ApplicationController
   def self.routes
     [
       "/start", "Вернуться в меню",
-      "Ознакомиться с правилами", "Правила",
+      "Ознакомиться с правилами", "Прочитать правила",
       "Принимаю правила",
-      "О проекте",
+      "Узнать о проекте",
       "/my_id", "/tg_id"
     ]
   end
@@ -17,12 +17,12 @@ class StartController < ApplicationController
       reply_menu
     in "/start" | "Вернуться в меню"
       reply_welcome
-    in "Ознакомиться с правилами" | "Правила"
+    in "Ознакомиться с правилами" | "Прочитать правила"
       reply_rules
     in "Принимаю правила"
       current_user.update(rules_read: true)
       reply_menu
-    in "О проекте"
+    in "Узнать о проекте"
       reply_about
     in "/tg_id"
       reply("`#{tg_id}`", parse_mode: "Markdown", reply_markup: nil)
@@ -56,11 +56,11 @@ class StartController < ApplicationController
 
   def reply_menu
     reply_with_buttons(
-      "Выберите действие из предложенных",
+      "Что вы хотите сделать?\nВыберите действие внизу",
       [
         ["Подключить VPN"],
-        ["Правила"],
-        ["О проекте"],
+        ["Прочитать правила"],
+        ["Узнать о проекте"],
         ["Написать в поддержку"]
       ].compact
     )
