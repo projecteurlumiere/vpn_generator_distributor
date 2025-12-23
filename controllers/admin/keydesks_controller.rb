@@ -1,4 +1,6 @@
 class Admin::KeydesksController < Admin::BaseController
+  @@cleaning_up = false
+
   def call
     state = current_user.state_array
 

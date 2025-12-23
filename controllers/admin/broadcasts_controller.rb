@@ -1,4 +1,6 @@
 class Admin::BroadcastsController < Admin::BaseController
+  @@broadcasting = false
+
   def call
     raise RoutingError unless current_user.state_array in [^(self.class.name), "awaiting"]
 
