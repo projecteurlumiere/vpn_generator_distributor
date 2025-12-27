@@ -6,7 +6,7 @@ services:
     volumes:
       - ./tmp:/bot/tmp
       - ./data:/bot/data
-      - ./db/db_production.sqlite3:/bot/db/db_production.sqlite3
+      - ./db/storage:/bot/db
     environment:
       - ENV=<production|development>
       - TELEGRAM_TOKEN=<your Telegram bot token>

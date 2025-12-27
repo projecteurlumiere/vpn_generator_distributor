@@ -1,21 +1,31 @@
+# frozen_string_literal: true
+
+# for further changes, implement migrations first
+
 require "sequel"
 
 Sequel.extension :fiber_concurrency
 
-DB = Sequel.sqlite("db/db_#{ENV["ENV"]}.sqlite3",
+Dir.mkdir("db/storage") unless Dir.exist?("db/storage")
+DB = Sequel.sqlite("db/storage/db_#{ENV["ENV"]}.sqlite3",
                    logger: LOGGER,
                    timeout: 20000)
 
+DB.run("PRAGMA journal_mode = wal;")
+
 DB.create_table? :users do
   primary_key :id
-  Integer :tg_id, unique: true, null: false # TG user id
-  Integer :chat_id, unique: true # we store our best guess
+
+  Integer :tg_id, unique: true, null: false
+  Integer :chat_id, unique: true # this can be null: we store our best guess
   Integer :n_keys, null: false, default: 0
+
   DateTime :pending_config_until
   DateTime :last_visit_at, null: false, default: Sequel::CURRENT_TIMESTAMP
+
   TrueClass :rules_read, null: false, default: false
-  TrueClass :about_received # after receiving key
-  TrueClass :admin, null: false, default: false
+  TrueClass :about_received # meaning the slide we show after sending out the key
+
   String :state
   Integer :role, null: false, default: 0
 end
@@ -26,10 +36,12 @@ DB.create_table? :keydesks do
   Integer :n_keys, null: false, default: 0
   Integer :max_keys, null: false
   String :name, unique: true, null: false
+
   # errors & status
   Integer :status, null: false, default: 0
   Integer :error_count, null: false, default: 0
   DateTime :last_error_at
+
   String :usernames_to_destroy
 end
 
