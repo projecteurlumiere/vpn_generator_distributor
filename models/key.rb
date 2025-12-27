@@ -9,12 +9,17 @@ class Key < Sequel::Model(:keys)
     return :pending_destroy unless acquire_destroy_lock?
 
     begin
-      keydesk.delete_user(username: keydesk_username)
+      begin
+        keydesk.delete_user(username: keydesk_username)
+      rescue VpnWorks::UserAlreadyDestroyedError
+        true
+      rescue VpnWorks::Error => e
+        keydesk.record_error!
+        raise
+      end
+
       keydesk.update_status!
       super
-    rescue VpnWorks::Error => e
-      keydesk.record_error!
-      raise
     ensure
       if exists?
         release_destroy_lock!

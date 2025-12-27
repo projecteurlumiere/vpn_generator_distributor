@@ -1,10 +1,21 @@
+# frozen_string_literal: true
+
 require "net/http"
 require "socksify/http"
 require "json"
 require "uri"
 
+# Adapted from https://github.com/4erdenko/VPN-Generator-Manager
 class VpnWorks
   class Error < StandardError; end
+
+  class ConnectionError < Error; end # usually proxy/server refuses connection
+
+  class ResponseError < Error; end
+  class UserLimitExceededError < ResponseError; end    # max users count exceeds limit
+  class InvalidTokenError < ResponseError; end         # security token expired
+  class UserAlreadyDestroyedError < ResponseError; end # user id not found on server
+  class UnknownError < ResponseError; end
 
   BASE_URL = "https://vpn.works".freeze
   BASE_HEADERS = {
@@ -40,6 +51,7 @@ class VpnWorks
 
   def create_conf_file
     h = get_conf_file
+
     {
       "username"  => h["UserName"],
       "amnezia"   => h["AmnzOvcConfig"],
@@ -74,6 +86,8 @@ class VpnWorks
   end
 
   def request(endpoint, type: :get, headers: self.headers)
+    caller_method = caller_locations(1)&.first&.base_label # for logs
+
     uri = URI("#{BASE_URL}/#{endpoint}")
     http = make_http(uri)
 
@@ -81,38 +95,30 @@ class VpnWorks
     req = request_class.new(uri, headers)
     resp = http.request(req)
 
-    return resp if resp.is_a?(Net::HTTPSuccess)
-
-    raise Error
-  rescue StandardError => e
-    caller_method = caller_locations(1, 2)[1]&.base_label
+    if resp.is_a?(Net::HTTPSuccess)
+      resp
+    else
+      handle_unsuccesful_response(resp, caller_method)
+    end
+  rescue => e
     attempt ||= 0
     attempt += 1
 
-    if attempt <= 3
-      case e
-      in Error
-        LOGGER.error "Error in the keydesk `#{@id}`. Called from: `#{caller_method}`. Code: #{resp.code} Body: `#{resp.body}`. Attempts: #{attempt} / 3"
+    LOGGER.error <<~TXT
+      Connection error from Keydesk `#{@id}`;
+      Original error: #{e.class};
+      Original message: #{e.message};
+      Caller: `#{caller_method}`;
+      Attempts: #{attempt}.
+    TXT
 
-        if caller_method == "delete_user" && (resp.code == 405 || resp.body.match?(/method DELETE is not allowed/))
-          return true
-        end
-
-        sleep 1
-        retry
-      else
-        LOGGER.error "Error #{e.class} when *reaching* keydesk `#{@id}`. Called from: `#{caller_method}` Attempts: #{attempt} / 3"
-        sleep 1
-        retry
-      end
+    case e
+    in ResponseError
+      raise
+    in StandardError if attempt <= 3
+      retry
     else
-      msg = <<~TXT
-        Unable to proceed with the request for keydesk `#{@id}` after #{attempt} attempts.
-        Called from: `#{caller_method}`
-        Original error: #{e.class}: #{e.message}
-      TXT
-
-      raise Error, msg
+      raise ConnectionError
     end
   end
 
@@ -121,7 +127,20 @@ class VpnWorks
     http = Net::HTTP.SOCKSProxy(proxy_uri.host, proxy_uri.port).new(uri.host, uri.port)
 
     http.use_ssl = true
-    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE # since we're securely proxied
     http
+  end
+
+  def handle_unsuccesful_response(resp, caller_method)
+    case resp.body
+    in /method DELETE is not allowed/i if caller_method == "delete_user"
+      raise UserAlreadyDestroyedError
+    in /invalid token/i
+      raise InvalidTokenError
+    in "" if resp.code == "500" && caller_method == "get_conf_file"
+      raise UserLimitExceededError
+    else
+      raise UnknownError
+    end
   end
 end
