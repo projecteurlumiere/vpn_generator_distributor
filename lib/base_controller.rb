@@ -134,6 +134,12 @@ class BaseController
     bot.api.edit_message_text(text:, chat_id:, message_id:, **opts)
   end
 
+  # name - Symbol
+  def reply_slide(name)
+    slide = Slides.instance[name]
+    reply_with_buttons(slide[:text], [slide[:actions]], photos: slide[:images], parse_mode: "Markdown")
+  end
+
   def repeat_message(chat_id:, message_thread_id: nil)
     args = {
       chat_id:,

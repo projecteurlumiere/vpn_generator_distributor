@@ -33,12 +33,6 @@ class ApplicationController < BaseController
         .update(last_visit_at: Time.now) == 1
   end
 
-  # name - Symbol
-  def reply_slide(name)
-    slide = Slides.instance[name]
-    reply_with_buttons(slide[:text], [slide[:actions]], photos: slide[:images], parse_mode: "Markdown")
-  end
-
   def callback_name(*args)
     args.unshift(self.class.name) if args[0].instance_of?(String)
 

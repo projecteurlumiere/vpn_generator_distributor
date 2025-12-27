@@ -10,8 +10,8 @@ require "yaml"
 Dir.mkdir("tmp") unless Dir.exist?("tmp")
 LOGGER = Logger.new(
   ENV["ENV"] == "development" ? $stdout : "tmp/#{ENV["ENV"]}.log",
-  10,   # keep 10 rotated log files
-  1_048_576 # max log file size in bytes (example: 1 MB)
+  10,       # n of files
+  1_048_576 # size of a file
 )
 
 require "async"
@@ -58,7 +58,7 @@ module Bot
     end
 
     def start_jobs(bot)
-      SendAboutSlideJob.run!(bot)
+      SendAboutSlideJob.run_async(bot)
     end
   end
 end
