@@ -32,8 +32,19 @@ class Keydesk < Sequel::Model(:keydesks)
 
   def delete_user(id: nil, username: nil)
     id ||= user_id(username)
-    vw.delete_user(id)
+
+    begin
+      vw.delete_user(id)
+    rescue VpnWorks::UserAlreadyDestroyedError
+      true
+    rescue VpnWorks::Error => e
+      record_error!
+      raise
+    end
+
     self.update(n_keys: Sequel[:n_keys] - 1)
+    update_status!
+    true
   end
 
   def user_id(username)
@@ -49,12 +60,13 @@ class Keydesk < Sequel::Model(:keydesks)
       keydesk_username: config["username"],
       reserved_until: Time.now + 3_600 # 1 hour
     )
+    update_status!
 
     key.config = create_conf_files("./tmp/vpn_configs/per_key/#{key.id}", config)
-
     key
   rescue StandardError => e
     update(n_keys: Sequel[:n_keys] - 1)
+    record_error!
     raise
   end
 
