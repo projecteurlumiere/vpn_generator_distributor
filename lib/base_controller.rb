@@ -24,6 +24,10 @@ class BaseController
 
   private
 
+  def current_user
+    @current_user ||= User.find(tg_id:) || User.create(tg_id:)
+  end
+
   #
   # Replies handling
   #

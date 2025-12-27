@@ -1,5 +1,7 @@
 # here by topics we mean actual conversations and messages bot forwards
 class SupportTopicsController < ApplicationController
+  EXIT_COMMANDS = ["/start", "/admin", "Вернуться в меню"].freeze
+
   def call
     if request
       request.update(updated_at: Time.now)
@@ -10,6 +12,7 @@ class SupportTopicsController < ApplicationController
         Похоже, что ваше обращение в поддержку потерялось.
         Вы можете написать в поддержку с новым обращением или вернуться в меню.
       TXT
+
       reply_with_buttons(msg, [["Написать в поддержку"], ["Вернуться в меню"]])
     end
   end

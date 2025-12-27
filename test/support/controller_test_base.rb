@@ -6,11 +6,11 @@ class ControllerTestBase < Minitest::Test
 
   private
 
-  def message_bot(text, from_id: 1, chat_id: 100)
+  def message_bot(text, from_id: 1, chat_id: 100, chat_type: "private")
     msg = Telegram::Bot::Types::Message.new(
       text:,
       from: OpenStruct.new(id: from_id, first_name: "test_name", last_name: "test_last_name"),
-      chat: OpenStruct.new(id: chat_id)
+      chat: OpenStruct.new(id: chat_id, type: chat_type),
     )
     Routes.instance.dispatch_controller(bot, msg)
   end
