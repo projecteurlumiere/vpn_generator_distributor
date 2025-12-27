@@ -1,3 +1,8 @@
+# frozen_string_literal: true
+
+# Instructions are similar to slides: editable YAML files
+# On the contrary, they imply step by step progression, and
+# they rely on user state in the respective controller
 class Instructions
   include Singleton
 
@@ -31,7 +36,7 @@ class Instructions
   end
 
   def instruction_name_by_title(title)
-    @data.find { |key, instruction| instruction[:title] == title }&.first
+    @data.find { |_key, instruction| instruction[:title] == title }&.first
   end
 
   def pending
@@ -44,7 +49,8 @@ class Instructions
     begin
       slide = YAML.load_file(path, symbolize_names: true)
     rescue StandardError
-      return [:invalid, { errors: ["Не получилось обработать файл.\nПроверьте синтаксис: все ли отступы и служебные символы на месте?"] }]
+      msg = "Не получилось обработать файл.\nПроверьте синтаксис: все ли отступы и служебные символы на месте?"
+      return [:invalid, { errors: [msg] }]
     end
 
     if !slide[:title].is_a?(String) || slide[:title].empty?
@@ -69,7 +75,8 @@ class Instructions
       end
 
       if slide[:steps].any? { |step| step[:issue_key].is_a?(String) && Key::VALID_CONFIGS.none?(step[:issue_key]) }
-        errors << "(steps|issue_key) Поле issue_key может иметь только одно из следующих значений: #{Key::VALID_CONFIGS.join(" ")}"
+        msg = "(steps|issue_key) Поле issue_key может иметь одно из следующих значений: #{Key::VALID_CONFIGS.join(" ")}"
+        errors << msg
       end
 
       if slide[:steps].any? { |step| !step[:text].is_a?(String) || step[:text].empty? }
@@ -78,7 +85,6 @@ class Instructions
         errors << "Текст сообщения одного из шагов превышает 4096 символов"
       end
     end
-
 
     result = errors.any? ? :invalid : :valid
 

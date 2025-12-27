@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# Slides are single messages created out of editable YAML files
 class Slides
   include Singleton
 
@@ -36,7 +39,8 @@ class Slides
     begin
       slide = YAML.load_file(path, symbolize_names: true)
     rescue StandardError
-      return [:invalid, { errors: ["Не получилось обработать файл.\nПроверьте синтаксис: все ли отступы и служебные символы на месте?"] }]
+      msg = "Не получилось обработать файл.\nПроверьте синтаксис: все ли отступы и служебные символы на месте?"
+      return [:invalid, { errors: [msg] }]
     end
 
     if !slide[:text].is_a?(String) || slide[:text].empty?

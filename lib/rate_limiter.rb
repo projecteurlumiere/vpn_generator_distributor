@@ -1,6 +1,9 @@
+# frozen_string_literal: true
+
+# Telegram limits:
 # 30 messages per second for all users
 # 20 messages per minute for a group
-# 1 message per second to a particular user
+#  1 message per second to a particular user
 
 class RateLimiter
   def initialize(interval)
@@ -31,7 +34,7 @@ class RateLimiter
           @queues[id] << [job_start]
         end
 
-        @queues.reject! do |id, jobs|
+        @queues.reject! do |_id, jobs|
           next true unless jobs.shift in [job_start]
 
           job_start.signal
