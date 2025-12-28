@@ -19,9 +19,9 @@ class SupportRequestsController < ApplicationController
 
     case message.text
     in ("Написать в поддержку" | "Задать вопрос") if unread_request
-      reply_request_is_pending
+      reply_request_is_unread
     in ("Написать в поддержку" | "Задать вопрос") if open_request
-      redirect_to_current_request
+      redirect_to_current_request(state)
     in ("Написать в поддержку" | "Задать вопрос")
       reply_new_request(state)
     in "Назад"
@@ -56,7 +56,7 @@ class SupportRequestsController < ApplicationController
                                   .first
   end
 
-  def redirect_to_current_request
+  def redirect_to_current_request(state)
     current_user.update(state: ["SupportTopicsController", *state].join("|"))
     msg = <<~TXT
       Вы уже общаетесь с поддержкой. Напишите ваше сообщение, и волонтёры сразу получат его.

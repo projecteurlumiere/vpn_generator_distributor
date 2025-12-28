@@ -22,6 +22,10 @@ class User < Sequel::Model(:users)
     arr
   end
 
+  def update_state!(*args)
+    update(state: args.join("|"))
+  end
+
   def too_many_keys?
     keys.count >= MAX_KEYS
   end

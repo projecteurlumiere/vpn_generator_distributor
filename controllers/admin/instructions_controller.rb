@@ -96,11 +96,7 @@ class Admin::InstructionsController < Admin::BaseController
       return
     end
 
-    bot.api.send_document(
-      chat_id:,
-      document: Faraday::UploadIO.new(path, "application/x-yaml"),
-      caption: "Инструкция: #{filename}"
-    )
+    upload_file(path, "Инструкция: #{filename}")
   end
 
   def destroy_yml(filename)

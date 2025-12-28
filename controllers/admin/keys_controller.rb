@@ -16,7 +16,7 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
       in :keydesks_full
         msg = with_emoji("Свободных мест нет")
         reply(msg)
-      in :keydesks_error
+      in :keydesks_error | :keydesks_offline
         msg = with_emoji("Что-то пошло не так во время создания ключа. Попробуйте ещё раз или позже.")
         reply(msg)
       in :user_awaits_config

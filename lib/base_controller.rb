@@ -79,7 +79,7 @@ class BaseController
 
   # replies with buttons, attached to the message (inline buttons)
   # usage:
-  # reply_with_buttons("Here are your choices", { "Visible option text" => "Callback_info" } )
+  # reply_with_inline_buttons("Here are your choices", { "Visible option text" => "Callback_info" })
   def reply_with_inline_buttons(text, data, **reply_opts)
     data = [data] unless data.is_a?(Array)
 
@@ -98,7 +98,7 @@ class BaseController
 
   # replies with reply keyboard buttons that replace the user's text keyboard
   # usage:
-  # reply_with_reply_keyboard("Pick one:", [
+  # reply_with_buttons("Pick one:", [
   #   ["Option 1", "Option 2"],
   #   ["Option 3"]
   # ])
