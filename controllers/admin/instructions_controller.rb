@@ -12,7 +12,7 @@ class Admin::InstructionsController < Admin::BaseController
     if message.document || message.photo
       handle_download
     elsif @substate == "instruction_review"
-      FILESYSTEM_SEMAPHORE.async { handle_review }
+      FILESYSTEM_SEMAPHORE.async { handle_review }.wait
     else
       raise RoutingError
     end
@@ -122,11 +122,11 @@ class Admin::InstructionsController < Admin::BaseController
     in "instruction_upload" if message.document.nil? || !message.document.file_name.match?(/\.(ya?ml)\z/i)
       reply("Пожалуйста, загрузите файл с расширением .yml или .yaml")
     in "instruction_upload"
-      FILESYSTEM_SEMAPHORE.async { download_instruction }
+      FILESYSTEM_SEMAPHORE.async { download_instruction }.wait
     in "instruction_review" if message.document
       reply("Изображения, отправленные в качестве файлов (документов) не подходят.\nОтправляйте их как обычные картинки.")
     in "instruction_review"
-      FILESYSTEM_SEMAPHORE.async { memorize_image }
+      FILESYSTEM_SEMAPHORE.async { memorize_image }.wait
     else
       raise ApplicationController::RoutingError
     end

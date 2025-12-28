@@ -19,7 +19,7 @@ class Admin::BroadcastsController < Admin::BaseController
     in "Разослать" if IS_BROADCASTING.blocking?
       reply("Рассылка уже проводится. Нужно подождать")
     in "Разослать"
-      IS_BROADCASTING.async { broadcast }
+      IS_BROADCASTING.async { broadcast }.wait
     else
       raise RoutingError
     end

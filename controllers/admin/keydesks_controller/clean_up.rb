@@ -35,7 +35,7 @@ module Admin::KeydesksController::CleanUp
           "Очистить" => callback_name("clean_up")
         }
       ], parse_mode: "Markdown")
-    end
+    end.wait
   end
 
   def check_before_clean_up
@@ -65,7 +65,7 @@ module Admin::KeydesksController::CleanUp
       results = tasks.map(&:wait)
       msg = clean_up_finished_msg(results)
       reply_with_inline_buttons(msg, [admin_menu_inline_button], parse_mode: "Markdown")
-    end
+    end.wait
   rescue StandardError
     reply("Что-то пошло не так при удалении мёртвых душ.")
   end
