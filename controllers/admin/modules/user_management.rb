@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Admin::UserManagement
   def user_menu(id = nil)
     populate_target_id(id)
@@ -6,17 +8,7 @@ module Admin::UserManagement
       Возможные действия для пользователя #{target_user.id}
     TXT
 
-    actions = case self
-              in Admin::UsersController
-                [
-                  admin_menu_inline_button,
-                  { "Добавить ключ" => callback_name(Admin::KeysController, "create", target_user.id) },
-                ]
-              in Admin::SupportRequestsController
-                Key::VALID_CONFIGS.map do |config|
-                  { "Добавить #{config}" => callback_name(Admin::KeysController, "create", target_user.id, YAML.dump([config])) }
-                end
-              end
+    actions = user_menu_actions
 
     reply_with_actions(msg, [
       *actions,
@@ -31,42 +23,10 @@ module Admin::UserManagement
                       .eager(:keydesk)
                       .order(Sequel.desc(:created_at))
                       .all
-
     lines = {}
 
     tasks = keys.map do |key|
-      Async do
-        begin
-          user_hash = key.keydesk.users.find { |user| key.keydesk_username == user["UserName"] }
-          status =  case user_hash["Status"]
-                    in "black"
-                      "⚫️"
-                    in "green"
-                      "🟢"
-                    in "gray"
-                      "⚪️"
-                    else
-                      user_hash["Status"]
-                    end
-
-        rescue StandardError => e
-          LOGGER.error([
-            "Error fetching user status from keydesk.",
-            "Key ID: #{key.id}, Keydesk: #{key.keydesk.name}, Keydesk Username: #{key.keydesk_username}",
-            "Exception: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
-          ].join("\n"))
-          status = "❌"
-        end
-
-        lines[key.id] = [
-          "Статус: #{status}",
-          "ID: #{key.id}",
-          "Ключница: #{key.keydesk.name}",
-          "Имя в ключнице: #{key.keydesk_username}",
-          "Описание: #{key.desc}",
-          "Создан: #{key.created_at.strftime('%Y-%m-%d %H:%M')}"
-        ].join("\n")
-      end
+      Async { request_key_info(key, lines) }
     end
 
     actions = keys.map do |key|
@@ -109,6 +69,53 @@ module Admin::UserManagement
 
   def target_user
     @target_user ||= User.where(id: @target_id).first
+  end
+
+  def user_menu_actions
+    case self
+    in Admin::UsersController
+      [
+        admin_menu_inline_button,
+        { "Добавить ключ" => callback_name(Admin::KeysController, "create", target_user.id) },
+      ]
+    in Admin::SupportRequestsController
+      Key::VALID_CONFIGS.map do |config|
+        { "Добавить #{config}" => callback_name(Admin::KeysController, "create", target_user.id, JSON.dump([config])) }
+      end
+    end
+  end
+
+  def request_key_info(key, lines)
+    begin
+      user_hash = key.keydesk.users.find { |user| key.keydesk_username == user["UserName"] }
+      status =  case user_hash["Status"]
+                in "black"
+                  "⚫️"
+                in "green"
+                  "🟢"
+                in "gray"
+                  "⚪️"
+                else
+                  user_hash["Status"]
+                end
+
+    rescue StandardError => e
+      LOGGER.error([
+        "Error fetching user status from keydesk.",
+        "Key ID: #{key.id}, Keydesk: #{key.keydesk.name}, Keydesk Username: #{key.keydesk_username}",
+        "Exception: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
+      ].join("\n"))
+      status = "❌"
+    end
+
+    lines[key.id] = [
+      "Статус: #{status}",
+      "ID: #{key.id}",
+      "Ключница: #{key.keydesk.name}",
+      "Имя в ключнице: #{key.keydesk_username}",
+      "Описание: #{key.desc}",
+      "Создан: #{key.created_at.strftime('%Y-%m-%d %H:%M')}"
+    ].join("\n")
   end
 
   def reply_with_actions(*args, **kwargs)

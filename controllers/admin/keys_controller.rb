@@ -6,7 +6,7 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
   end
 
   def create(user_id, configs = Key::VALID_CONFIGS)
-    configs = YAML.load(configs) if configs.is_a?(String)
+    configs = JSON.parse(configs) if configs.is_a?(String)
 
     if user = User[user_id]
       # To avoid fiber yield - is this still necessary?
@@ -80,7 +80,7 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
     dir_path = "./tmp/vpn_configs/per_key/#{key.id}"
 
     config_files = Dir.glob("#{dir_path}/*")
-    config_files do |file_path|
+    config_files.each do |file_path|
       filename = File.basename(file_path, File.extname(file_path))
       next if configs.none?(filename)
 
