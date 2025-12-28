@@ -9,7 +9,7 @@ module Admin::KeydesksController::CleanUp
       return
     end
 
-    CLEANING_UP.async do
+    CLEANING_UP.acquire do
       tasks = Keydesk.all.map do |kd|
         Async do
           kd.find_usernames_to_destroy!
@@ -35,7 +35,7 @@ module Admin::KeydesksController::CleanUp
           "Очистить" => callback_name("clean_up")
         }
       ], parse_mode: "Markdown")
-    end.wait
+    end
   end
 
   def check_before_clean_up
@@ -49,7 +49,7 @@ module Admin::KeydesksController::CleanUp
       return
     end
 
-    CLEANING_UP.async do
+    CLEANING_UP.acquire do
       reply("Удаляем \"мёртвые души\". Это займёт время")
 
       tasks = Keydesk.all.map do |kd|
@@ -65,7 +65,7 @@ module Admin::KeydesksController::CleanUp
       results = tasks.map(&:wait)
       msg = clean_up_finished_msg(results)
       reply_with_inline_buttons(msg, [admin_menu_inline_button], parse_mode: "Markdown")
-    end.wait
+    end
   rescue StandardError
     reply("Что-то пошло не так при удалении мёртвых душ.")
   end

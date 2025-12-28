@@ -67,10 +67,10 @@ class Admin::KeydesksController < Admin::BaseController
     reply("Перезапускаем доступ к ключницам.")
 
     begin
-      Keydesk::PROXY_SEMAPHORE.async do
+      Keydesk::PROXY_SEMAPHORE.acquire do
         Keydesk.stop_proxies
         Keydesk.start_proxies
-      end.wait
+      end
     rescue StandardError => e
       reply("Прокси не были перезапущены: выдача ключей недоступна.")
       raise

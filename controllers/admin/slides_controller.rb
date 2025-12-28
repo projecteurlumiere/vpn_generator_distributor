@@ -8,9 +8,9 @@ class Admin::SlidesController < Admin::BaseController
 
     case @substate
     in "upload"
-      FILESYSTEM_SEMAPHORE.async { handle_upload_yml }.wait
+      FILESYSTEM_SEMAPHORE.acquire { handle_upload_yml }
     in "review"
-      FILESYSTEM_SEMAPHORE.async { handle_slide_edit }.wait
+      FILESYSTEM_SEMAPHORE.acquire { handle_slide_edit }
     else
       raise RoutingError
     end
