@@ -34,7 +34,7 @@ class Admin::SupportTopicsController < Admin::BaseController
   private
 
   def concerns_support_request?
-    message_thread_id && SupportRequest.where(message_thread_id:).first
+    message_thread_id && (SupportRequest.where(message_thread_id:).first || message.forum_topic_created)
   end
 
   def request
