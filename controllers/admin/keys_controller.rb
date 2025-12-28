@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Admin::KeysController < Admin::BaseController  # chat_id is the one the file is sent to
   def is_authorized?
     current_user.admin? || concerns_open_support_request?
@@ -7,12 +9,8 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
     configs = YAML.load(configs) if configs.is_a?(String)
 
     if user = User[user_id]
-      # careful as request support tickets are **so** slow that sending this message
-      # circumvents the config locking mechanism, 
-      # and we end up creating several keys one after another
-      Async do
-        reply(with_emoji("Выдаём ключ пользователю #{user.id}. Нужно подождать."))
-      end
+      # To avoid fiber yield - is this still necessary?
+      Async { reply(with_emoji("Выдаём ключ пользователю #{user.id}. Нужно подождать.")) }
 
       case key = Key.issue(to: user, skip_limit: current_user.admin?)
       in :keydesks_full
@@ -25,34 +23,7 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
         msg = with_emoji("Пользователю уже выдаётся ключ. Нужно подождать.")
         reply(msg)
       in Key
-        dir_path = "./tmp/vpn_configs/per_key/#{key.id}"
-
-        config_files = Dir.glob("#{dir_path}/*")
-        config_files.each_with_index do |file_path, i|
-          filename = File.basename(file_path, File.extname(file_path))
-          next if configs.none?(filename)
-
-          if chat_id == Bot::ADMIN_CHAT_ID
-            support_request = SupportRequest.where(user_id: user_id)
-                                            .where(status: [0, 1])
-                                            .first
-            support_request.set_open!(bot)
-            upload_key(file_path, filename, msg: "Ваш ключ #{filename}:", chat_id: support_request.user.chat_id)
-          else
-            upload_key(file_path, filename, msg: "Ключ #{filename} для пользователя #{user.id}:", chat_id:)
-          end
-        end
-
-        desc = message_thread_id ? "Выдан волонтёром" : "Выдан администратором"
-        desc = "#{desc} #{[first_name, last_name].compact.join(" ")} (id #{current_user.id})"
-
-        key.update(desc:, reserved_until: nil)
-        FileUtils.rm_rf(dir_path)
-
-        reply_with_inline_buttons(with_emoji("Ключ выдан успешно\n"), [
-          admin_menu_inline_button,
-          { "К ключам пользователя" => callback_name(Admin::UsersController, "user_menu", user.id) }
-        ])
+        send_out_key(key, user, configs)
       end
     else
       reply_with_inline_buttons("Такого пользователя не существует", [
@@ -62,9 +33,8 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
   end
 
   def destroy(id)
-    Async do
-      reply(with_emoji("Удаляем ключ #{id}"), reply_markup: nil)
-    end
+    # To avoid fiber yield - is this still necessary?
+    Async { reply(with_emoji("Удаляем ключ #{id}"), reply_markup: nil) }
 
     if (key = Key[id]) && (res = key.destroy)
       case res
@@ -104,6 +74,37 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
 
   def with_emoji(msg)
     message_thread_id ? "🤖: #{msg}" : msg
+  end
+
+  def send_out_key(key, user, configs)
+    dir_path = "./tmp/vpn_configs/per_key/#{key.id}"
+
+    config_files = Dir.glob("#{dir_path}/*")
+    config_files do |file_path|
+      filename = File.basename(file_path, File.extname(file_path))
+      next if configs.none?(filename)
+
+      if chat_id == Bot::ADMIN_CHAT_ID
+        support_request = SupportRequest.where(user_id: user.id)
+                                        .where(status: [0, 1])
+                                        .first
+        support_request.set_open!(bot)
+        upload_key(file_path, filename, msg: "Ваш ключ #{filename}:", chat_id: support_request.user.chat_id)
+      else
+        upload_key(file_path, filename, msg: "Ключ #{filename} для пользователя #{user.id}:", chat_id:)
+      end
+    end
+
+    desc = message_thread_id ? "Выдан волонтёром" : "Выдан администратором"
+    desc = "#{desc} #{[first_name, last_name].compact.join(" ")} (id #{current_user.id})"
+
+    key.update(desc:, reserved_until: nil)
+    FileUtils.rm_rf(dir_path)
+
+    reply_with_inline_buttons(with_emoji("Ключ выдан успешно"), [
+      admin_menu_inline_button,
+      { "К ключам пользователя" => callback_name(Admin::UsersController, "user_menu", user.id) }
+    ])
   end
 
   def upload_key(file_path, key_type, chat_id:, msg:)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Admin::MenuController < Admin::BaseController
   def self.routes
     [
@@ -24,7 +26,7 @@ class Admin::MenuController < Admin::BaseController
           "Управление инструкциями" => callback_name(Admin::InstructionsController, "menu")
         },
         {
-          "Управление слайдами" =>  callback_name(Admin::SlidesController, "menu")
+          "Управление слайдами" => callback_name(Admin::SlidesController, "menu")
         },
         {
           "Рассылка" => callback_name(Admin::BroadcastsController, "menu")
