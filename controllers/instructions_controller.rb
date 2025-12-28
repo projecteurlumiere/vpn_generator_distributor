@@ -1,81 +1,29 @@
+# frozen_string_literal: true
+
 class InstructionsController < ApplicationController
   def self.routes
-    instructions = Instructions.instance.all.map do |_file_name, content|
-      [
-        content[:title], # instruction titles
-      ]
+    instructions = Instructions.instance.all.map do |_filename, content|
+      [content[:title]]
     end.flatten
 
     instructions + ["Подключить VPN", "К выбору устройства"]
   end
 
   def call
-    if ["Подключить VPN", "К выбору устройства"].any?(message.text)
-      msg = <<~TXT
-        Вот список доступных инструкций:
-      TXT
+    return if requests_instruction_menu?
 
-      reply_with_instructions(msg)
-      return
-    end
-
-    if instruction_name = Instructions.instance.instruction_name_by_title(message.text)
-      current_user.update(state: "#{self.class.name}|#{instruction_name}|key|false")
-    end
-
-    if current_user.state.nil?
-      reply_with_instructions("Такой команды нет.\nПохоже, вы потеряли инструкции. Вот они:")
-      return
-    end
+    set_initial_instruction # if requested
+    return if no_instruction_found?
 
     @controller, @instruction_name, @step, @key_reserved = current_user.state_array
 
-    if @step == "key"
-      case message.text
-      in "Мне нужен ключ"
-        issue_key
-        return
-      in "У меня уже есть ключ"
-        @step = 0
-      else
-        msg = <<~TXT
-          Для работы VPN'а вам понадобится ключ, который мы выдаём.
-          Число таких ключей ограничено, но мы стараемся помочь всем.
-          Если вы не уверены, о чем идет речь, выбирайте "Мне нужен ключ"
-        TXT
-        reply_with_buttons(msg,
-          [
-            ["У меня уже есть ключ", "Мне нужен ключ"]
-          ]
-        )
-        return
-      end
-    end
+    # when step is "key"
+    return if manages_key?
 
     @step = @step.to_i
-    if message.text == "Назад"
-      if @step - 1 <= 0
-        msg = <<~TXT
-          Вот список доступных инструкций:
-        TXT
-  
-        reply_with_instructions(msg)
-        return
-      elsif @step > current_instruction[:steps].size
-         raise RoutingError
-      else
-        @step -= 2
-      end
-    elsif @step - 1 >= 0 &&
-       current_instruction[:steps][@step - 1][:actions].none?(message.text)
-      raise RoutingError
-    end
-
-    if @step >= current_instruction[:steps].size
-      current_user.update(state: nil)
-      reply_success
-      return
-    end
+    return if count_step_backwards! ||
+              invalid_forward_step_action! ||
+              instruction_is_over?
 
     reply_instruction_step
   end
@@ -84,6 +32,87 @@ class InstructionsController < ApplicationController
 
   def current_instruction
     Instructions.instance[@instruction_name]
+  end
+
+  def requests_instruction_menu?
+    if ["Подключить VPN", "К выбору устройства"].any?(message.text)
+      reply_with_instructions("Вот список доступных инструкций:")
+      true
+    end
+  end
+
+  def set_initial_instruction
+    if instruction_name = Instructions.instance.instruction_name_by_title(message.text)
+      current_user.update(state: "#{self.class.name}|#{instruction_name}|key|false")
+    end
+  end
+
+  def no_instruction_found?
+    if current_user.state.nil?
+      reply_with_instructions("Такой команды нет.\nПохоже, вы потеряли инструкции. Вот они:")
+      true
+    end
+  end
+
+  def manages_key?
+    return unless @step == "key"
+
+    case message.text
+    in "Мне нужен ключ"
+      issue_key
+      return true
+    in "У меня уже есть ключ"
+      @step = 0
+    else
+      msg = <<~TXT
+        Для работы VPN'а вам понадобится ключ, который мы выдаём.
+        Число таких ключей ограничено, но мы стараемся помочь всем.
+        Если вы не уверены, о чем идет речь, выбирайте "Мне нужен ключ"
+      TXT
+      reply_with_buttons(msg,
+        [
+          ["У меня уже есть ключ", "Мне нужен ключ"]
+        ]
+      )
+      return true
+    end
+
+    false
+  end
+
+  def count_step_backwards!
+    if message.text == "Назад"
+      if @step - 1 <= 0
+        msg = <<~TXT
+          Вот список доступных инструкций:
+        TXT
+
+        reply_with_instructions(msg)
+        return true
+      elsif @step > current_instruction[:steps].size
+        raise RoutingError
+      else
+        @step -= 2
+      end
+
+      false
+    end
+  end
+
+  def invalid_forward_step_action!
+    return if message.text == "Назад"
+
+    if @step - 1 >= 0 && current_instruction[:steps][@step - 1][:actions].none?(message.text)
+      raise RoutingError
+    end
+  end
+
+  def instruction_is_over?
+    if @step >= current_instruction[:steps].size
+      current_user.update(state: nil)
+      reply_success
+      return true
+    end
   end
 
   def reply_instruction_step

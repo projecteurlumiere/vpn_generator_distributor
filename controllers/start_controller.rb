@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class StartController < ApplicationController
   def self.routes
     [
@@ -18,12 +20,12 @@ class StartController < ApplicationController
     in "/start" | "Вернуться в меню"
       reply_welcome
     in "Ознакомиться с правилами" | "Прочитать правила"
-      reply_rules
+      reply_slide(:rules)
     in "Принимаю правила"
       current_user.update(rules_read: true)
       reply_menu
     in "Узнать о проекте"
-      reply_about
+      reply_slide(:about)
     in "/tg_id"
       reply("`#{tg_id}`", parse_mode: "Markdown", reply_markup: nil)
     in "/my_id"
@@ -50,10 +52,6 @@ class StartController < ApplicationController
     )
   end
 
-  def reply_rules
-    reply_slide(:rules)
-  end
-
   def reply_menu
     reply_with_buttons(
       "Что вы хотите сделать?\nВыберите действие внизу",
@@ -64,9 +62,5 @@ class StartController < ApplicationController
         ["Написать в поддержку"]
       ].compact
     )
-  end
-
-  def reply_about
-    reply_slide(:about)
   end
 end
