@@ -1,17 +1,20 @@
+# frozen_string_literal: true
+
+# editing instructions
 class Admin::InstructionsController < Admin::BaseController
+  FILESYSTEM_SEMAPHORE = Async::Semaphore.new(1)
+
   def call
-    state = current_user.state_array
-    @state_controller, @substate, * = state
-    _, _, @instruction_path, @step  = state
+    _, @substate, @instruction_path, @step = current_user.state_array
 
     @step = @step.to_i
 
-    if @state_controller == self.class.name && (message.document || message.photo)
-      handle_upload
+    if message.document || message.photo
+      handle_download
     elsif @substate == "instruction_review"
-      handle_review
+      FILESYSTEM_SEMAPHORE.async { handle_review }
     else
-      raise ApplicationController::RoutingError
+      raise RoutingError
     end
   end
 
@@ -56,6 +59,7 @@ class Admin::InstructionsController < Admin::BaseController
                 in "destroy"
                   "Удалить"
                 end
+
     buttons = Instructions.instance.paths.map do |path|
       filename = File.basename(path)
       { "#{action_ru} #{filename}" => callback_name("#{action}_yml", filename) }
@@ -69,8 +73,7 @@ class Admin::InstructionsController < Admin::BaseController
   def under_review
     msg = <<~TXT
       /admin, чтобы вернуться
-      *
-      *
+
       Выберите инструкцию-черновик ниже, чтобы отредактировать её.
     TXT
 
@@ -78,7 +81,7 @@ class Admin::InstructionsController < Admin::BaseController
       title = YAML.load_file(path, symbolize_names: true)[:title]
       filename = File.basename(path)
 
-      { 
+      {
         "Продолжить ревью #{title} (#{filename})" => callback_name(Admin::InstructionsController, "continue_review", filename)
       }
     end
@@ -95,7 +98,7 @@ class Admin::InstructionsController < Admin::BaseController
 
     bot.api.send_document(
       chat_id:,
-      document: Faraday::UploadIO.new(path, 'application/x-yaml'),
+      document: Faraday::UploadIO.new(path, "application/x-yaml"),
       caption: "Инструкция: #{filename}"
     )
   end
@@ -114,61 +117,59 @@ class Admin::InstructionsController < Admin::BaseController
 
   private
 
-  def handle_upload
+  def handle_download
     case @substate
     in "instruction_upload" if message.document.nil? || !message.document.file_name.match?(/\.(ya?ml)\z/i)
       reply("Пожалуйста, загрузите файл с расширением .yml или .yaml")
-    in "instruction_upload"        
-      download_instruction
+    in "instruction_upload"
+      FILESYSTEM_SEMAPHORE.async { download_instruction }
     in "instruction_review" if message.document
       reply("Изображения, отправленные в качестве файлов (документов) не подходят.\nОтправляйте их как обычные картинки.")
     in "instruction_review"
-      memorize_image
+      FILESYSTEM_SEMAPHORE.async { memorize_image }
     else
       raise ApplicationController::RoutingError
     end
   end
 
   def handle_review
-    Bot::MUTEX.sync do
-      current_instruction = YAML.load_file(@instruction_path, symbolize_names: true)
-      actions = current_instruction[:steps].map { |step| step[:actions] }.flatten
+    current_instruction = YAML.load_file(@instruction_path, symbolize_names: true)
+    actions = current_instruction[:steps].map { |step| step[:actions] }.flatten
 
-      case message.text
-      in "/admin clear_images" | "Удалить изображения"
-        current_instruction[:steps][@step].delete(:images)
-        File.write(@instruction_path, current_instruction.to_yaml)
-        instruction_step
-      in "/admin reject_instruction" | "Отклонить инструкцию"
-        FileUtils.rm(@instruction_path)
-        current_user.update(state: nil)
-        reply("Инструкция снята с ревью.\n/start - чтобы вернуться к боту\n/admin - чтобы посмотреть доступные команды для администрации")
-      in "Заново"
-        state = "#{self.class.name}|instruction_review|#{@instruction_path}|0"
-        current_user.update(state:)
-        instruction_step(new_path, 0)
-      in "Принять инструкцию"
-        filename = @instruction_path.split("/").last
-        FileUtils.mv(@instruction_path, "./data/instructions/#{filename}")
-        Instructions.instance.load!
-        Routes.instance.build!
-        reply("Инструкция загружена и доступна для использования")
-        current_user.update(state: nil)
-      in String if actions.any?(message.text)
-        @step += 1
+    case message.text
+    in "/admin clear_images" | "Удалить изображения"
+      current_instruction[:steps][@step].delete(:images)
+      File.write(@instruction_path, current_instruction.to_yaml)
+      instruction_step
+    in "/admin reject_instruction" | "Отклонить инструкцию"
+      FileUtils.rm(@instruction_path)
+      current_user.update(state: nil)
+      reply("Инструкция снята с ревью.\n/start - чтобы вернуться к боту\n/admin - чтобы посмотреть доступные команды для администрации")
+    in "Заново"
+      state = "#{self.class.name}|instruction_review|#{@instruction_path}|0"
+      current_user.update(state:)
+      instruction_step(@instruction_path, 0)
+    in "Принять инструкцию"
+      filename = @instruction_path.split("/").last
+      FileUtils.mv(@instruction_path, "./data/instructions/#{filename}")
+      Instructions.instance.load!
+      Routes.instance.build!
+      reply("Инструкция загружена и доступна для использования")
+      current_user.update(state: nil)
+    in String if actions.any?(message.text)
+      @step += 1
 
-        instruction_step
-        state = [@state_controller, @substate, @instruction_path, @step].join("|")
-        current_user.update(state:)
-      in "Это последний шаг инструкции"
-        reply_with_buttons("Инструкция #{current_instruction[:title]} - принять или отклонить?\nОтклонённая инструкция будет удалена; Принятая инструкция будет выложена в общий доступ.",
-          [
-            ["Принять инструкцию", "Заново", "Отклонить инструкцию"]
-          ]
-        )
-      else
-        reply("Нажмите любую кнопку для продолжения или загрузите изображения для этого шага инструкции", reply_markup: nil)
-      end
+      instruction_step
+      state = [self.class.name, @substate, @instruction_path, @step].join("|")
+      current_user.update(state:)
+    in "Это последний шаг инструкции"
+      reply_with_buttons("Инструкция #{current_instruction[:title]} - принять или отклонить?\nОтклонённая инструкция будет удалена; Принятая инструкция будет выложена в общий доступ.",
+        [
+          ["Принять инструкцию", "Заново", "Отклонить инструкцию"]
+        ]
+      )
+    else
+      reply("Нажмите любую кнопку для продолжения или загрузите изображения для этого шага инструкции", reply_markup: nil)
     end
   end
 
@@ -176,6 +177,20 @@ class Admin::InstructionsController < Admin::BaseController
     dest_path = File.join("./tmp/instructions", message.document.file_name)
     path = download_attachment(message.document.file_id, dest_path)
 
+    return if faulty_instruction?(path)
+
+    instruction = YAML.load_file(path, symbolize_names: true)
+    new_title = instruction[:title].downcase
+    new_path = File.join(File.dirname(path), "#{new_title}.yml")
+    FileUtils.mv(path, new_path) unless File.expand_path(path) == File.expand_path(new_path)
+
+    state = "#{self.class.name}|instruction_review|#{new_path}|0"
+    current_user.update(state:)
+
+    instruction_step(new_path, 0)
+  end
+
+  def faulty_instruction?(path)
     if Instructions.instance.errors_for(path) in [:invalid, { errors: errors }]
       msg = <<~TXT
         Файл-инструкций недействителен. Обнаружены следующие ошибки:
@@ -187,18 +202,6 @@ class Admin::InstructionsController < Admin::BaseController
 
       reply(msg)
       return
-    end
-
-    Bot::MUTEX.sync do
-      instruction = YAML.load_file(path, symbolize_names: true)
-      new_title = instruction[:title].downcase
-      new_path = File.join(File.dirname(path), "#{new_title}.yml")
-      FileUtils.mv(path, new_path) unless File.expand_path(path) == File.expand_path(new_path)
-      
-      state = "#{self.class.name}|instruction_review|#{new_path}|0"
-      current_user.update(state:)
-      
-      instruction_step(new_path, 0)
     end
   end
 
@@ -219,19 +222,17 @@ class Admin::InstructionsController < Admin::BaseController
 
     if key_name = current_step[:issue_key]
       reply("Выдаём ключ #{key_name}", reply_markup: nil)
-    end 
+    end
   end
 
   def memorize_image
     image_id = message.photo.last.file_id
 
-    Bot::MUTEX.sync do
-      current_instruction = YAML.load_file(@instruction_path, symbolize_names: true)
-      current_instruction[:steps][@step][:images] ||= []
-      current_instruction[:steps][@step][:images] << image_id
+    current_instruction = YAML.load_file(@instruction_path, symbolize_names: true)
+    current_instruction[:steps][@step][:images] ||= []
+    current_instruction[:steps][@step][:images] << image_id
 
-      File.write(@instruction_path, current_instruction.to_yaml)
-    end
+    File.write(@instruction_path, current_instruction.to_yaml)
 
     instruction_step
   end
