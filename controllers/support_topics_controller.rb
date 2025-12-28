@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # here by topics we mean actual conversations and messages bot forwards
 class SupportTopicsController < ApplicationController
   EXIT_COMMANDS = ["/start", "/admin", "Вернуться в меню"].freeze

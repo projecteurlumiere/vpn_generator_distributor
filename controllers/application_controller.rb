@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ApplicationController < BaseController
   class RoutingError < StandardError; end
   class NotAuthorizedError < StandardError; end
