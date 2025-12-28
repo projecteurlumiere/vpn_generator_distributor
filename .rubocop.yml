@@ -74,3 +74,11 @@ Style/SymbolArray:
 Style/MultilineBlockChain:
   Enabled: true
 
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Lint/UnusedMethodArgument:
+  AllowNamedUnderscoreVariables: true
+
+Lint/UnusedBlockArgument:
+  AllowNamedUnderscoreVariables: true

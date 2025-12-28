@@ -140,7 +140,7 @@ class VpnWorks
     in "" if resp.code == "500" && caller_method == "get_conf_file"
       raise UserLimitExceededError
     else
-      raise UnknownError
+      raise UnknownError, "code: #{resp.code}; body: `#{resp.body}`"
     end
   end
 end

@@ -42,7 +42,6 @@ class RateLimiter
           sleep(@interval)
           false
         end
-
       end
     end
   end

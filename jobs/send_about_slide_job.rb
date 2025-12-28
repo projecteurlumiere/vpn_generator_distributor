@@ -24,7 +24,7 @@ class SendAboutSlideJob < BaseJob
         DummyFrom.new(0)
       )
 
-      controller = ApplicationController.new(bot, message)
+      controller = BaseController.new(bot, message)
       controller.send(:reply_slide, :about)
       success << id
     end

@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+
 class Admin::SupportTopicsController < Admin::BaseController
   def is_authorized?
     chat_id == Bot::ADMIN_CHAT_ID && concerns_support_request?
   end
 
+  # No RoutingError is raised: we don't want to pollute Admin Chat
   def call
     if message.forum_topic_reopened
       reply("Закрытые обращения нельзя переоткрыть.")

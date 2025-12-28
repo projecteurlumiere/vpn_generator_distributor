@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SupportRequest < Sequel::Model(:support_requests)
   many_to_one :user
 

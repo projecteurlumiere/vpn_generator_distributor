@@ -13,6 +13,8 @@ class Routes
     build!
   end
 
+  # Routes Hash example:
+  # { command: { "/start" => [StartController], "Back" => [StartController, InstructionsController], ... } }
   def build!
     @routes = { command: Hash.new { |h, k| h[k] = [] } }
     @controllers = all_subclasses_of(ApplicationController)
@@ -30,14 +32,13 @@ class Routes
     @routes[type]
   end
 
-  # { command: { "/start" => [StartController], "Back" => [StartController, InstructionsController], ... } }
   def all
     @routes
   end
 
   def dispatch_controller(bot, message)
     if group_message?(message) && message.chat.id != Bot::ADMIN_CHAT_ID
-      reply_to_group(bot, message)
+      reply_to_alien_group(bot, message)
       return
     end
 
@@ -62,7 +63,7 @@ class Routes
     message.respond_to?(:chat) && message.chat.type != "private"
   end
 
-  def reply_to_group(bot, message)
+  def reply_to_alien_group(bot, message)
     LOGGER.warn "Someone used the bot in a group chat that is not the admin chat: #{message.chat.id}"
 
     if Bot::ADMIN_CHAT_ID.to_i == 0
@@ -77,7 +78,7 @@ class Routes
   # 1) When user in a conversation with support - invoke that controller only
   # 2) Routes predefined in controllers' classes (e.g. `/start`, `/admin`, etc.)
   # 3) Keep deducing the controller from user's state;
-  # User's state always starts with the controller_name;
+  # User's state (when not nil) always starts with the controller_name;
   # When routed by state, controller handles everything individually
   def handle_message(bot, message)
     current_user = BaseController.new(bot, message).send(:current_user)
@@ -110,7 +111,7 @@ class Routes
       "Could not execute any controller action",
       (klasses.any? ? "in #{klasses}" : "no Controller class found"),
       "inferred from `#{message.text}`",
-      ("and user's state: `#{user_state}`" if defined?(user_state))
+      "and user's state: `#{current_user.state}`"
     ].compact.join(" ")
     raise ControllerNotFoundError, msg
   end

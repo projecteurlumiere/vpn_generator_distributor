@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Keydesk < Sequel::Model(:keydesks)
   include Keydesk::ProxyManagement
   include Keydesk::KeysCleanUp
