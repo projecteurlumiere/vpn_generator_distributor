@@ -77,12 +77,6 @@ class VpnWorksTest < Minitest::Test
     assert_equal expected, result
   end
 
-  # Errors:
-  # Too many keys
-  # Cannot destroy user
-  # Random/Connection error: Errno::ECONNREFUSED
-  # Too many keys (error code - 500)
-
   def test_user_limit_exceeded_error
     stub_request(:post, "https://vpn.works/user")
       .with(headers)

@@ -13,8 +13,10 @@ class StartControllerTest < ControllerTestBase
   def test_rules_read_prompt
     message_bot("/start")
     assert_bot_response(/правила/i)
+
     message_bot("Ознакомиться с правилами")
     assert_bot_response(/Сначала/i, index: 1)
+
     message_bot("Принимаю правила")
     message_bot("/start")
     refute_bot_response(/правила/i, index: -1)
@@ -22,6 +24,7 @@ class StartControllerTest < ControllerTestBase
 
   def test_start_when_rules_read
     create_user
+
     message_bot("/start")
     refute_bot_response(/правила/i)
   end

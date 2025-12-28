@@ -6,7 +6,7 @@ require "sequel"
 
 Sequel.extension :fiber_concurrency
 
-Dir.mkdir("db/storage") unless Dir.exist?("db/storage")
+FileUtils.mkdir_p("db/storage")
 DB = Sequel.sqlite("db/storage/db_#{ENV["ENV"]}.sqlite3",
                    logger: LOGGER,
                    timeout: 20000)

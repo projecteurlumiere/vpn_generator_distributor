@@ -23,6 +23,10 @@ class ControllerTestBase < Minitest::Test
     bot.calls.clear
   end
 
+  #
+  # AI atrocities below
+  #
+
   def assert_bot_buttons(*buttons, index: nil, method: nil)
     calls = method ? bot.calls.select { |c| c[:method] == method } : bot.calls
     call = index ? calls[index] : calls.last
@@ -106,5 +110,4 @@ class ControllerTestBase < Minitest::Test
       end
     end
   end
-
 end

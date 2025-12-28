@@ -7,7 +7,7 @@ require "singleton"
 require "uri"
 require "yaml"
 
-Dir.mkdir("tmp") unless Dir.exist?("tmp")
+FileUtils.mkdir_p("tmp")
 LOGGER = Logger.new(
   ENV["ENV"] == "development" ? $stdout : "tmp/#{ENV["ENV"]}.log",
   10,       # n of files

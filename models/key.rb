@@ -8,7 +8,6 @@ class Key < Sequel::Model(:keys)
   class << self
     def issue(to:, skip_limit: false)
       user = to
-
       return :user_awaits_config unless user.acquire_config_lock?
 
       begin

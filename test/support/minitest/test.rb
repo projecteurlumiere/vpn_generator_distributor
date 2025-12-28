@@ -1,10 +1,14 @@
 class Minitest::Test
+  include Fixtures
+
   def teardown
     super
 
-    User.dataset.delete
     SupportRequest.dataset.delete
-    Keydesk.dataset.delete
+
     Key.dataset.delete
+    Keydesk.dataset.delete
+
+    User.dataset.delete
   end
 end

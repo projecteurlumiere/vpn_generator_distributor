@@ -16,7 +16,7 @@ class User < Sequel::Model(:users)
         s
       end
     end
-    
+
     arr
   end
 

@@ -1,10 +1,6 @@
 require_relative "../test_helper"
 
 class KeydeskTest < Minitest::Test
-  def setup
-    # @kd = Keydesk.new
-  end
-
   def test_filter_for_usernames_to_destroy
     kd = Keydesk.new
 

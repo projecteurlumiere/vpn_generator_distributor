@@ -23,7 +23,7 @@ module Fixtures
     n_keys: 0,
     max_keys: 250,
     name: "Test",
-    status: 0,
+    status: 2,
     error_count: 0,
     last_error_at: nil,
     usernames_to_destroy: nil
@@ -37,7 +37,6 @@ module Fixtures
       error_count:,
       last_error_at:,
       usernames_to_destroy:,
-      **attrs
     )
   end
 end
