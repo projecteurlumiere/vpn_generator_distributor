@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Admin::BaseController < ApplicationController
   def is_authorized?
     current_user.admin?

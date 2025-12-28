@@ -1,13 +1,14 @@
+# frozen_string_literal: true
+
 class Admin::BroadcastsController < Admin::BaseController
-  @@broadcasting = false
+  IS_BROADCASTING = Async::Semaphore.new(1)
 
   def call
     raise RoutingError unless current_user.state_array in [^(self.class.name), "awaiting"]
 
-    current_user.update(state: nil)
-
     case message.text
     in "Отменить рассылку"
+      current_user.update(state: nil)
       msg = <<~TXT
         Отредактировать сообщение для рассылки можно в меню слайдов - файл broadcast.yml
 
@@ -15,10 +16,10 @@ class Admin::BroadcastsController < Admin::BaseController
       TXT
 
       reply(msg)
-    in "Разослать" if @@broadcasting
+    in "Разослать" if IS_BROADCASTING.blocking?
       reply("Рассылка уже проводится. Нужно подождать")
     in "Разослать"
-      broadcast
+      IS_BROADCASTING.async { broadcast }
     else
       raise RoutingError
     end
@@ -35,8 +36,6 @@ class Admin::BroadcastsController < Admin::BaseController
   private
 
   def broadcast
-    @@broadcasting = true
-
     current_user.update(state: nil)
 
     reply(<<~TXT
@@ -50,6 +49,7 @@ class Admin::BroadcastsController < Admin::BaseController
     photos = Slides.instance[:broadcast][:images]
     chat_ids = Key.join(:users, id: :user_id)
                   .select(:users__chat_id)
+                  .where { chat_id !~ nil }
                   .distinct
                   .select_map(:chat_id)
 
@@ -57,19 +57,15 @@ class Admin::BroadcastsController < Admin::BaseController
       reply(text, photos:, chat_id: id)
     end
 
-    reply(
-      <<~TXT
-        Рассылка завершена успешно.
-        Пользователей, получивших сообщение: #{chat_ids.size}.
+    msg = <<~TXT
+      Рассылка завершена успешно.
+      Пользователей, получивших сообщение: #{chat_ids.size}.
 
-        /admin, чтобы вернуться к другим делам.
-      TXT
-    )
+      /admin, чтобы вернуться к другим делам.
+    TXT
 
   rescue StandardError => e
     LOGGER.error("Broadcast failed: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}")
     reply("Сообщение не было разослано всем: #{e.class}.")
-  ensure
-    @@broadcasting = false
   end
 end

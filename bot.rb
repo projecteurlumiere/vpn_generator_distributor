@@ -15,6 +15,7 @@ LOGGER = Logger.new(
 )
 
 require "async"
+require "async/semaphore"
 require "telegram/bot" unless ENV["ENV"] == "test"
 
 module Bot

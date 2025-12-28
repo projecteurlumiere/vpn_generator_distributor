@@ -43,7 +43,7 @@ module Keydesk::ProxyManagement
     end
 
     def handle_proxy_running
-      msg = "The proxy for `#{keydesk.name}` is already running."
+      msg = "The proxy for `#{name}` is already running."
       msg += "Have you forgot to exit bin/console?" if $PROGRAM_NAME != "bin/console"
 
       if ENV["ENV"] == "production" && $PROGRAM_NAME != "bin/console"
