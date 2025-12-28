@@ -41,7 +41,11 @@ module Bot
         if $PROGRAM_NAME == "bin/console" # bin/console shouldn't start the listenter
           IRB.start
         else
-          bot = Telegram::Bot::Client.new(Bot::TOKEN)
+          bot = Telegram::Bot::Client.new(Bot::TOKEN, logger: LOGGER)
+
+          # TODO: further implement graceful shutdown
+          Signal.trap("INT") { bot.stop }
+
           start_jobs(bot)
           start_listener(bot)
         end
