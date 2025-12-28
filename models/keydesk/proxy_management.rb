@@ -3,6 +3,8 @@
 require "base64"
 
 module Keydesk::ProxyManagement
+  PROXY_SEMAPHORE = Async::Semaphore.new(1)
+
   def self.included(base)
     base.extend(ClassMethods)
   end
