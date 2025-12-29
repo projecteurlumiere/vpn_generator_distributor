@@ -23,11 +23,6 @@ module Bot
   ADMIN_CHAT_ID = ENV["ADMIN_CHAT_ID"].to_i.freeze
   ADMIN_IDS = ENV["ADMIN_IDS"].split(",").compact.map { it.strip.to_i }.freeze
   ROOT_DIR = File.expand_path("..", __dir__)
-  MUTEX = Mutex.new
-
-  def MUTEX.sync
-    Bot::MUTEX.synchronize { yield }
-  end
 
   class << self
     def init
