@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-class Routes
+class Bot::Routes
   include Singleton
 
   class ControllerNotFoundError < StandardError; end
 
-  Dir[File.join(__dir__, "../controllers/**/*.rb")].sort.each { |f| require f }
+  Dir[File.join(Bot::ROOT_DIR, "controllers/**/*.rb")].sort.each { |f| require f }
 
   attr_reader :routes
 
@@ -67,7 +67,7 @@ class Routes
     LOGGER.warn "Someone used the bot in a group chat that is not the admin chat: #{message.chat.id}"
 
     if Bot::ADMIN_CHAT_ID.to_i == 0
-      controller = BaseController.new(bot, message)
+      controller = Bot::Controller.new(bot, message)
       controller.send(:reply, "No admin chat provided.\nChat id: `#{controller.chat_id}`", parse_mode: "Markdown")
     end
   end
@@ -81,17 +81,17 @@ class Routes
   # User's state (when not nil) always starts with the controller_name;
   # When routed by state, controller handles everything individually
   def handle_message(bot, message)
-    current_user = BaseController.new(bot, message).send(:current_user)
+    current_user = Bot::Controller.new(bot, message).send(:current_user)
     controller_from_state  = current_user.state_array.first
 
     klasses = case controller_from_state
               in "SupportTopicsController" if SupportTopicsController::EXIT_COMMANDS.none?(message&.text)
                 [SupportTopicsController]
               in nil
-                Routes.instance[:command][message.text]
+                self[:command][message.text]
               else
                 [
-                  *Routes.instance[:command][message.text],
+                  *self[:command][message.text],
                   @controllers.find { it.name == controller_from_state }
                 ].compact
               end
@@ -144,7 +144,7 @@ class Routes
       LOGGER.error "Error when dispatching controller: #{e.class}\n#{e.full_message}\n#{e.backtrace}"
     end
 
-    controller = BaseController.new(bot, message)
+    controller = Bot::Controller.new(bot, message)
 
     msg = case e
           in ApplicationController::TooManyRequestsError

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class BaseJob
+class Bot::Job
   def self.run_async(*args)
     Async do
       while true

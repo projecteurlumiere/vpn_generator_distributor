@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class BaseController
+class Bot::Controller
   attr_reader :bot, :message, :chat_id, :message_thread_id, :tg_id
 
   def self.routes

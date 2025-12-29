@@ -30,6 +30,6 @@ class StartControllerTest < ControllerTestBase
   end
 
   def test_routing_error
-    assert_raises(Routes::ControllerNotFoundError) { message_bot("/srart") }
+    assert_raises(Bot::Routes::ControllerNotFoundError) { message_bot("/srart") }
   end
 end

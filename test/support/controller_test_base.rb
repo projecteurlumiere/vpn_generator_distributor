@@ -12,7 +12,7 @@ class ControllerTestBase < Minitest::Test
       from: OpenStruct.new(id: from_id, first_name: "test_name", last_name: "test_last_name"),
       chat: OpenStruct.new(id: chat_id, type: chat_type),
     )
-    Routes.instance.dispatch_controller(bot, msg)
+    Bot::Routes.instance.dispatch_controller(bot, msg)
   end
 
   def bot

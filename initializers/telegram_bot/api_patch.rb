@@ -1,6 +1,6 @@
 class Telegram::Bot::Api
-  GROUP_THROTTLER = RateLimiter.new(4)
-  USER_THROTTLER = RateLimiter.new(1.0 / 30)
+  GROUP_THROTTLER = Bot::RateLimiter.new(4)
+  USER_THROTTLER = Bot::RateLimiter.new(1.0 / 30)
 
   def call(endpoint, raw_params = {})
     params = build_params(raw_params)

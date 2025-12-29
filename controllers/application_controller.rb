@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ApplicationController < BaseController
+class ApplicationController < Bot::Controller
   class RoutingError < StandardError; end
   class NotAuthorizedError < StandardError; end
   class TooManyRequestsError < StandardError; end

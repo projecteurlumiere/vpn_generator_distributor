@@ -22,6 +22,7 @@ module Bot
   TOKEN = ENV["TELEGRAM_TOKEN"].freeze
   ADMIN_CHAT_ID = ENV["ADMIN_CHAT_ID"].to_i.freeze
   ADMIN_IDS = ENV["ADMIN_IDS"].split(",").compact.map { it.strip.to_i }.freeze
+  ROOT_DIR = File.expand_path("..", __dir__)
   MUTEX = Mutex.new
 
   def MUTEX.sync
@@ -30,8 +31,8 @@ module Bot
 
   class << self
     def init
-      require_relative "db/init"
-      require_relative "initializers/all"
+      require_relative File.join(ROOT_DIR, "db/init")
+      require_relative File.join(ROOT_DIR, "initializers/all")
     end
 
     def run!
@@ -44,7 +45,7 @@ module Bot
           bot = Telegram::Bot::Client.new(Bot::TOKEN, logger: LOGGER)
 
           # TODO: further implement graceful shutdown
-          Signal.trap("INT") { bot.stop }
+          # Signal.trap("INT") { bot.stop }
 
           start_jobs(bot)
           start_listener(bot)

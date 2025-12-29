@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Sending out :about to users who haven't received it after receiving their key
-class SendAboutSlideJob < BaseJob
+class SendAboutSlideJob < Bot::Job
   PERFORM_AT = 16 # UTC hour
 
   # for accessing application controller methods:
@@ -24,7 +24,7 @@ class SendAboutSlideJob < BaseJob
         DummyFrom.new(0)
       )
 
-      controller = BaseController.new(bot, message)
+      controller = Bot::Controller.new(bot, message)
       controller.send(:reply_slide, :about)
       success << id
     end

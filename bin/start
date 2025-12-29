@@ -2,6 +2,6 @@
 
 require "dotenv/load" if ENV["ENV"] != "production"
 require "bundler/setup"
-require_relative "../bot"
+require_relative "../lib/bot"
 
 Bot.run!
