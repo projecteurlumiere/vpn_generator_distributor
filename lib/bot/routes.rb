@@ -75,8 +75,8 @@ class Bot::Routes
   # Handling regular messages
   # Always uses Controller_class#call
   # Priority:
-  # 1) When user in a conversation with support - invoke that controller only
-  # 2) Routes predefined in controllers' classes (e.g. `/start`, `/admin`, etc.)
+  # 1) When user in a conversation with the support team - invoke that controller only
+  # 2) Commands (routes) predefined in controllers' classes (e.g. `/start`, `/admin`, etc.)
   # 3) Keep deducing the controller from user's state;
   # User's state (when not nil) always starts with the controller_name;
   # When routed by state, controller handles everything individually
@@ -104,6 +104,7 @@ class Bot::Routes
 
       return controller.send(:call)
     rescue ApplicationController::RoutingError
+      # There is a risk of state, especially user's, being changed when trying
       next
     end
 

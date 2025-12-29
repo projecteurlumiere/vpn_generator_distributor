@@ -1,9 +1,20 @@
 # frozen_string_literal: true
 
 class ApplicationController < Bot::Controller
+  #
+  # Errors
+  #
+
+  # Raised when Controller explicitly rejected processing user's message
+  # Bot then routes the message to the next suitable controller (if any)
   class RoutingError < StandardError; end
+
   class NotAuthorizedError < StandardError; end
+
+  # To avoid duplicate requests (?)
   class TooManyRequestsError < StandardError; end
+
+  ###
 
   def initialize(...)
     super

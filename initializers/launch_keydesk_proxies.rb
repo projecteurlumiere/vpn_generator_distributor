@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 return if ENV["ENV"] == "test"
 
 at_exit do

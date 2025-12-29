@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Bundler.require(:default, ENV["ENV"])
 
 require "base64"
@@ -22,7 +24,7 @@ module Bot
   TOKEN = ENV["TELEGRAM_TOKEN"].freeze
   ADMIN_CHAT_ID = ENV["ADMIN_CHAT_ID"].to_i.freeze
   ADMIN_IDS = ENV["ADMIN_IDS"].split(",").compact.map { it.strip.to_i }.freeze
-  ROOT_DIR = File.expand_path("..", __dir__)
+  ROOT_DIR = File.expand_path("..", __dir__).freeze
 
   class << self
     def init
@@ -34,10 +36,10 @@ module Bot
       Async do
         init
 
-        if $PROGRAM_NAME == "bin/console" # bin/console shouldn't start the listenter
+        if $PROGRAM_NAME == "bin/console"
           IRB.start
         else
-          bot = Telegram::Bot::Client.new(Bot::TOKEN, logger: LOGGER)
+          bot = Telegram::Bot::Client.new(TOKEN, logger: LOGGER)
 
           # TODO: further implement graceful shutdown
           # Signal.trap("INT") { bot.stop }
