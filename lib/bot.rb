@@ -19,6 +19,7 @@ LOGGER = Logger.new(
 require "async"
 require "async/semaphore"
 require "telegram/bot" unless ENV["ENV"] == "test"
+require "faraday/net_http_persistent"
 
 module Bot
   TOKEN = ENV["TELEGRAM_TOKEN"].freeze
@@ -53,6 +54,10 @@ module Bot
     private
 
     def start_listener(bot)
+      Telegram::Bot.configure do |config|
+        config.adapter = :net_http_persistent
+      end
+
       bot.listen do |message|
         Async do
           Routes.instance.dispatch_controller(bot, message)
