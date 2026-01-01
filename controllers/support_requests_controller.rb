@@ -70,11 +70,11 @@ class SupportRequestsController < ApplicationController
     reply_slide(:support)
   end
 
-  def restore_previous_state(previous_state)
-    case previous_state
+  def restore_previous_state(prev_state) # arg is previous state!
+    case prev_state
     in ["InstructionsController", *]
-      state[0] = state[0].to_i - 1 unless state[2].to_i.zero? # step
-      current_user.update(state: state.join("|"))
+      prev_state[0] = prev_state[0].to_i - 1 unless prev_state[2].to_i.zero? # step
+      current_user.update(state: prev_state.join("|"))
       InstructionsController.new(bot, message).call
     else
       StartController.new(bot, message).send(:reply_menu)
