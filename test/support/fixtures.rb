@@ -3,12 +3,12 @@ module Fixtures
     @user ||= create_user(**args)
   end
 
-  def create_user(tg_id: 1, n_keys: 0, pending_config_until: nil, rules_read: true, state: nil, role: 0)
+  def create_user(tg_id: 1, n_keys: 0, pending_config_until: nil, initial_slide_read: true, state: nil, role: 0)
     User.create(
       tg_id:,
       n_keys:,
       pending_config_until:,
-      rules_read:,
+      initial_slide_read:,
       state:,
       role:,
     )

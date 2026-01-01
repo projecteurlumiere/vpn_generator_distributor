@@ -7,15 +7,15 @@ class StartControllerTest < ControllerTestBase
 
   def test_start
     message_bot("/start")
-    assert_bot_response(/правила/i)
+    assert_bot_response(/Для навигации/i)
   end
 
-  def test_rules_read_prompt
+  def test_initial_slide_prompt # :rules or :about
     message_bot("/start")
-    assert_bot_response(/правила/i)
+    assert_bot_response(/Для навигации/i)
 
-    message_bot("Ознакомиться с правилами")
-    assert_bot_response(/Сначала/i, index: 1)
+    message_bot("Узнать о проекте")
+    assert_bot_response(/бесплатный/i, index: 1)
 
     message_bot("Принимаю правила")
     message_bot("/start")
@@ -26,7 +26,7 @@ class StartControllerTest < ControllerTestBase
     create_user
 
     message_bot("/start")
-    refute_bot_response(/правила/i)
+    refute_bot_response(/Для навигации/i)
   end
 
   def test_routing_error

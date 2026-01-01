@@ -10,9 +10,12 @@ class KeyTest < Minitest::Test
                      keydesk_username: "Alice",
                      reserved_until: Time.now - 1)
 
-    Dir.mkdir "./tmp/vpn_configs/per_key/#{key.id}"
+    path = File.join(Bot::ROOT_DIR, "/tmp/vpn_configs/per_key/#{key.id}")
+    FileUtils.mkdir_p(path)
 
     assert_equal Key.assign_reserved_key(user_2).id, key.id
+  ensure
+    FileUtils.rm_rf(path) if Dir.exist?(path)
   end
 
   def test_not_issuing_reserved_key
@@ -24,8 +27,11 @@ class KeyTest < Minitest::Test
                      keydesk_username: "Alice",
                      reserved_until: Time.now + 3600)
 
-    Dir.mkdir "./tmp/vpn_configs/per_key/#{key.id}"
+    path = File.join(Bot::ROOT_DIR, "/tmp/vpn_configs/per_key/#{key.id}")
+    FileUtils.mkdir_p(path)
 
     assert_nil Key.assign_reserved_key(user_2)
+  ensure
+    FileUtils.rm_rf(path) if Dir.exist?(path)
   end
 end

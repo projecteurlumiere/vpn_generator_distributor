@@ -16,6 +16,9 @@ class InstructionsControllerTest < ControllerTestBase
     assert_bot_buttons("Android", "Windows")
 
     message_bot("Android")
+    assert_bot_response(Slides.instance[:rules][:text])
+
+    message_bot("Принимаю правила")
     assert_bot_response(/вам понадобится ключ/)
 
     message_bot("У меня уже есть ключ")
