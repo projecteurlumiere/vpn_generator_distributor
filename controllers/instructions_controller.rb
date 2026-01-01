@@ -6,7 +6,7 @@ class InstructionsController < ApplicationController
       [content[:title]]
     end.flatten
 
-    instructions + ["Подключить VPN", "К выбору устройства"]
+    instructions + ["Подключить VPN", "Принимаю правила", "К выбору устройства"]
   end
 
   def call
@@ -17,8 +17,8 @@ class InstructionsController < ApplicationController
 
     @controller, @instruction_name, @step, @key_reserved = current_user.state_array
 
-    # when step is "key"
-    return if manages_key?
+    return if show_rules? ||
+              manages_key?
 
     @step = @step.to_i
     return if count_step_backwards! ||
@@ -43,7 +43,7 @@ class InstructionsController < ApplicationController
 
   def set_initial_instruction
     if instruction_name = Instructions.instance.instruction_name_by_title(message.text)
-      current_user.update(state: "#{self.class.name}|#{instruction_name}|key|false")
+      current_user.update(state: "#{self.class.name}|#{instruction_name}|rules|false")
     end
   end
 
@@ -52,6 +52,19 @@ class InstructionsController < ApplicationController
       reply_with_instructions("Такой команды нет.\nПохоже, вы потеряли инструкции. Вот они:")
       true
     end
+  end
+
+  def show_rules?
+    return unless @step == "rules"
+
+    current_user.update_state!(self.class.name, @instruction_name, "key", "false")
+
+    # we have to do it manually to prepend an action
+    slide = Slides.instance[:rules]
+    actions = [["Принимаю правила"], slide[:actions]]
+    reply_with_buttons(slide[:text], actions, photos: slide[:images], parse_mode: "Markdown")
+
+    true
   end
 
   def manages_key?
@@ -63,7 +76,7 @@ class InstructionsController < ApplicationController
       return true
     in "У меня уже есть ключ"
       @step = 0
-    else
+    in "Принимаю правила"
       msg = <<~TXT
         Для работы VPN'а вам понадобится ключ, который мы выдаём.
         Число таких ключей ограничено, но мы стараемся помочь всем.

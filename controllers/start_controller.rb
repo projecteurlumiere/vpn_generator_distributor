@@ -4,7 +4,7 @@ class StartController < ApplicationController
   def self.routes
     [
       "/start", "Вернуться в меню",
-      "Ознакомиться с правилами", "Прочитать правила",
+      "Прочитать правила",
       "Перейти к меню",
       "Узнать о проекте",
       "/my_id", "/tg_id"
@@ -19,8 +19,8 @@ class StartController < ApplicationController
       reply_menu
     in "/start" | "Вернуться в меню"
       reply_welcome
-    in "Ознакомиться с правилами" | "Прочитать правила"
-      reply_slide(:about)
+    in "Прочитать правила"
+      reply_slide(:rules)
     in "Перейти к меню"
       current_user.update(rules_read: true)
       reply_menu
