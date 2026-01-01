@@ -6,6 +6,17 @@ class User < Sequel::Model(:users)
 
   MAX_KEYS = 3
 
+  def destroy
+    if keys_dataset.first
+      raise "You're not supposed to destroy user with existing keys"
+    end
+
+    DB.transaction do
+      support_requests_dataset.destroy
+      super
+    end
+  end
+
   def state_array
     arr = state&.split("|") || []
     arr.map! do |s|
