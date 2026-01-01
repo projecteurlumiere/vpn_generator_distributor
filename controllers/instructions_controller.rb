@@ -196,23 +196,35 @@ class InstructionsController < ApplicationController
 
       reply_with_instructions(msg)
     elsif current_user.config_reserved?
-      reply("Ваш ключ уже зарезервирован для вас!")
-
       @key_reserved = true
       @step = 0
       reply_instruction_step
     else
-      reply("Резервируем для вас место в нашей VPN сети. Это займёт около минуты. Если вы уверены, что что-то пошло не так, нажмите /start")
+      msg = <<~TXT
+        Нам надо кое-что подготовить. Это займёт около минуты.
+        Если ожидание затянулось, нажмите /start
+      TXT
+      reply(msg)
 
       case Key.issue(to: current_user)
       in :user_awaits_config
-        reply("Мы уже резервируем для вас место. Пожалуйста, подождите", reply_markup: nil)
+        reply("Пожалуйста, подождите ещё немного.", reply_markup: nil)
       in :keydesks_full
-        reply_with_instructions("К сожалению, сейчас ключи закончились. Пожалуйста, зайдите завтра.")
+        msg = <<~TXT
+          К сожалению, сейчас свободных мест нет.
+          Новые места появляются регулярно, поэтому, чтобы получить VPN, попробуйте пройти инструкцию в другой день.
+          Например завтра
+        TXT
+        reply_with_instructions(msg)
       in :keydesks_error | :keydesks_offline
-        reply_with_instructions("Что-то пошло не так во время создания ключа. Попробуйте ещё раз или позже.")
+        msg = <<~TXT
+          На сервере произошла непредвиденная ошибка. Попробуйте ещё раз или в другой день.
+
+          Если проблема не решается, обратитесь в поддержку - это можно сделать в стартовом меню /start
+        TXT
+        reply_with_instructions(msg)
       in Key
-        reply("Ключ успешно зарезервирован. Продолжайте следовать инструкции.")
+        reply("Все приготовления выполнены! Продолжайте следовать инструкции")
 
         @key_reserved = true
         @step = 0
