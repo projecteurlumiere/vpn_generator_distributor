@@ -73,7 +73,8 @@ class Key < Sequel::Model(:keys)
 
     begin
       keydesk.delete_user(username: keydesk_username)
-      super
+    rescue
+      return false
     ensure
       if exists?
         release_destroy_lock!
@@ -82,6 +83,8 @@ class Key < Sequel::Model(:keys)
         FileUtils.rm_rf(dir) if Dir.exist?(dir)
       end
     end
+
+    super
   end
 
   def acquire_destroy_lock?
