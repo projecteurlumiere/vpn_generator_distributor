@@ -15,14 +15,14 @@ class StartController < ApplicationController
     current_user.update(state: nil)
 
     case message.text
-    in ("/start" | "Вернуться в меню") if current_user.rules_read
+    in ("/start" | "Вернуться в меню") if current_user.initial_slide_read
       reply_menu
     in "/start" | "Вернуться в меню"
       reply_welcome
     in "Прочитать правила"
       reply_slide(:rules)
     in "Перейти к меню"
-      current_user.update(rules_read: true)
+      current_user.update(initial_slide_read: true)
       reply_menu
     in "Узнать о проекте"
       reply_slide(:about)

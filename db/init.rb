@@ -23,7 +23,7 @@ DB.create_table? :users do
   DateTime :pending_config_until
   DateTime :last_visit_at, null: false, default: Sequel::CURRENT_TIMESTAMP
 
-  TrueClass :rules_read, null: false, default: false # this was supposed to be rules but now show :about
+  TrueClass :initial_slide_read, null: false, default: false # this was supposed to be rules but now show :about
   TrueClass :about_received # meaning the slide we show after sending out the key
 
   String :state
