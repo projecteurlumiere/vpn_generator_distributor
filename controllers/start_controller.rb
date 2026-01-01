@@ -5,7 +5,7 @@ class StartController < ApplicationController
     [
       "/start", "Вернуться в меню",
       "Ознакомиться с правилами", "Прочитать правила",
-      "Принимаю правила",
+      "Перейти к меню",
       "Узнать о проекте",
       "/my_id", "/tg_id"
     ]
@@ -20,8 +20,8 @@ class StartController < ApplicationController
     in "/start" | "Вернуться в меню"
       reply_welcome
     in "Ознакомиться с правилами" | "Прочитать правила"
-      reply_slide(:rules)
-    in "Принимаю правила"
+      reply_slide(:about)
+    in "Перейти к меню"
       current_user.update(rules_read: true)
       reply_menu
     in "Узнать о проекте"
@@ -31,7 +31,7 @@ class StartController < ApplicationController
     in "/my_id"
       reply("`#{current_user.id}`", parse_mode: "Markdown", reply_markup: nil)
     else
-      raise ApplicationController::RoutingError
+      raise RoutingError
     end
   end
 
@@ -48,7 +48,7 @@ class StartController < ApplicationController
 
     reply_with_buttons(
       msg,
-      [["Ознакомиться с правилами"]]
+      [["Узнать о проекте"]]
     )
   end
 
