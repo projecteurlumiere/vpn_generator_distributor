@@ -130,12 +130,17 @@ class InstructionsController < ApplicationController
 
   def reply_instruction_step
     current_step = current_instruction[:steps][@step]
+    before_issuing_key = @step < current_instruction[:steps].find_index { it[:issue_key] }
 
     reply_with_buttons(
       current_step[:text],
       [
         *current_step[:actions].map { |a| [a] },
-        ["Назад", "К выбору устройства", "Написать в поддержку"]
+        [
+          "Назад",
+          ("К выбору устройства" if before_issuing_key),
+          "Написать в поддержку"
+        ].compact
       ],
       photos: current_step[:images],
       parse_mode: "Markdown"
