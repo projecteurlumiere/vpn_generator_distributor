@@ -1,3 +1,8 @@
+# frozen_string_literal: true
+
+# This patch adds throttlers to respect TG limits.
+# See Bot::RateLimiter for numbers
+
 class Telegram::Bot::Api
   GROUP_THROTTLER = Bot::RateLimiter.new(4)
   USER_THROTTLER = Bot::RateLimiter.new(1.0 / 30)

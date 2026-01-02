@@ -148,8 +148,6 @@ class Bot::Routes
     controller = Bot::Controller.new(bot, message)
 
     msg = case e
-          in ApplicationController::TooManyRequestsError
-            raise "Not Implemented!"
           in ApplicationController::NotAuthorizedError
             <<~TXT
               У вас нет прав для выполнения этого действия.

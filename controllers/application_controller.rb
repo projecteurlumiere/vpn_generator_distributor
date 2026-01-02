@@ -11,9 +11,6 @@ class ApplicationController < Bot::Controller
 
   class NotAuthorizedError < StandardError; end
 
-  # To avoid duplicate requests (?)
-  class TooManyRequestsError < StandardError; end
-
   ###
 
   def initialize(...)
@@ -32,7 +29,6 @@ class ApplicationController < Bot::Controller
   def current_user
     super
     @current_user.update(chat_id:) if @current_user.chat_id.nil? && chat_id.positive?
-    # raise TooManyRequestsError unless account_for_visit
 
     @current_user
   end
