@@ -11,7 +11,7 @@ module Admin::KeydesksController::CreateKeydesk
   def create_keydesk(state)
     msg = message.text.strip
 
-    case state.drop(1)
+    case state.drop(2)
     in ["name", *] if Keydesk.first(name: msg)
       reply("Ключница с таким именем уже существует")
     in ["name", *] if msg.size > 13
@@ -32,13 +32,19 @@ module Admin::KeydesksController::CreateKeydesk
       reply("Отправьте ссылку для подключения к ключнице")
     in ["ss_link", *] if Keydesk.first(ss_link: msg)
       reply("Ключница с такой ссылкой уже существует")
+    in ["ss_link", *] if invalid_ss_link?(msg)
+      reply("Ссылка на подключение не действительна")
     in ["ss_link", name, max_keys]
       Keydesk.create(name:, max_keys:, ss_link: msg)
       current_user.update(state: nil)
       reply("Ключница добавлена")
       self.restart
     else
-      raise RoutingError
+      raise ApplicationController::RoutingError
+    end
+
+    def invalid_ss_link?(link)
+      !Keydesk.new(ss_link: link).decoded_ss_link rescue true
     end
   end
 end

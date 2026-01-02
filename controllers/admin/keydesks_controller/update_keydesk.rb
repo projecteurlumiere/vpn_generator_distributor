@@ -82,7 +82,7 @@ module Admin::KeydesksController::UpdateKeydesk
       current_user.update(state: nil)
       index
     else
-      raise RoutingError
+      raise ApplicationController::RoutingError
     end
   end
 end
