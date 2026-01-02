@@ -3,12 +3,12 @@ require_relative "../test_helper"
 class InstructionsControllerTest < ControllerTestBase
   def test_menu
     message_bot("Подключить VPN")
-    assert_bot_response(/Вот список доступных инструкций/i)
+    assert_bot_response(/Выберите ваше устройство/i)
 
     flush_replies
 
     message_bot("К выбору устройства")
-    assert_bot_response(/Вот список доступных инструкций/i)
+    assert_bot_response(/Выберите ваше устройство/i)
   end
 
   def test_instruction_without_key_issue
