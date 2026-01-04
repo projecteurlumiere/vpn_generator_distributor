@@ -11,7 +11,9 @@ module Telegram
 
           yield handle_update(update)
         end
-      rescue Faraday::TimeoutError, Faraday::ConnectionFailed
+      rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
+        # if the error of bot dying silently happens here, add method for resetting `connection` in `Api` class
+        logger.warn("Faraday error: #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}")
         retry if @running
       end
 
