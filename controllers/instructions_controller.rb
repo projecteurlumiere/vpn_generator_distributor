@@ -157,7 +157,7 @@ class InstructionsController < ApplicationController
 
   def reply_success
     current_user.update(about_received: true)
-    reply("Ура! Очень рады, что все получилось ❤️")
+    reply("Ура! Очень рады, что все получилось ❤️", reply_markup: nil)
     reply_slide(:about)
   end
 
