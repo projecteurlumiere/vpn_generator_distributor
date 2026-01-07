@@ -102,7 +102,11 @@ class Bot::Controller
   #   ["Option 1", "Option 2"],
   #   ["Option 3"]
   # ])
-  def reply_with_buttons(text, buttons, one_time_keyboard: false, resize_keyboard: true, **reply_opts)
+  def reply_with_buttons(text, buttons, one_time_keyboard: false,
+                                        resize_keyboard: true,
+                                        is_persistent: true,
+                                        input_field_placeholder: "Выберите кнопку",
+                                        **reply_opts)
     keyboard = buttons.map do |row|
       row.map { |label| Telegram::Bot::Types::KeyboardButton.new(text: label) }
     end
@@ -110,7 +114,9 @@ class Bot::Controller
     reply_markup = Telegram::Bot::Types::ReplyKeyboardMarkup.new(
       keyboard:,
       one_time_keyboard:,
-      resize_keyboard:
+      resize_keyboard:,
+      is_persistent:,
+      input_field_placeholder:
     )
 
     reply(text, reply_markup:, **reply_opts)
