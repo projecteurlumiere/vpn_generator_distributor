@@ -7,6 +7,7 @@ module Telegram
     class Client
       def fetch_updates
         api.getUpdates(options).each do |update|
+          logger.debug "update_id: #{update.update_id}"
           next if update_processed?(update.update_id)
 
           yield handle_update(update)
