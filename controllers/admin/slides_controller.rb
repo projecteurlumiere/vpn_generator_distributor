@@ -85,7 +85,7 @@ class Admin::SlidesController < Admin::BaseController
     slide = YAML.load_file("./tmp/slides/#{@filename}", symbolize_names: true)
     reply_with_buttons(slide[:text], [
       ["Принять", "Убрать изображения", "Отклонить"]
-    ], photos: slide[:images])
+    ], photos: slide[:images], parse_mode: "Markdown")
 
     reply("Или загрузите фотографию", reply_markup: nil)
   end
