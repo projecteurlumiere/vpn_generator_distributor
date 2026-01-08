@@ -7,6 +7,8 @@ class Admin::SupportTopicsController < Admin::BaseController
 
   # No RoutingError is raised: we don't want to pollute Admin Chat
   def call
+    return if message.forum_topic_created
+
     if message.forum_topic_reopened
       reply("Закрытые обращения нельзя переоткрыть.")
     elsif message.forum_topic_closed && request
@@ -21,7 +23,7 @@ class Admin::SupportTopicsController < Admin::BaseController
       )
     elsif request.nil? && !message.text.nil?
       reply("Это обращение уже было закрыто.")
-    elsif !message.text.nil?
+    else
       unless request.user.state_array in ["SupportTopicsController", *]
         reply_with_buttons("Новое сообщение от поддержки:", [["Вернуться в меню"]], chat_id: request.user.chat_id, message_thread_id: nil)
       end
