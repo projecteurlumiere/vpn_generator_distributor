@@ -2,7 +2,7 @@
 
 # here by topics we mean actual conversations and messages bot forwards
 class SupportTopicsController < ApplicationController
-  EXIT_COMMANDS = ["/start", "/admin", "Вернуться в меню"].freeze
+  EXIT_COMMANDS = ["/start", "/admin", "Написать в поддержку", "Вернуться в меню"].freeze
 
   def call
     if request

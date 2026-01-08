@@ -170,7 +170,7 @@ class Bot::Controller
       bot.api.send_sticker(sticker: message.sticker.file_id, **args)
     else
       msg = "Это сообщение не может быть перенаправлено через бота."
-      bot.api.send_message(text: msg, chat_id: self.chat.id, message_thread_id: self.message_thread_id)
+      bot.api.send_message(text: msg, chat_id: self.chat_id, message_thread_id: self.message_thread_id)
     end
   end
 
