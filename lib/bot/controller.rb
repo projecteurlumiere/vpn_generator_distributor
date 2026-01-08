@@ -111,13 +111,14 @@ class Bot::Controller
       row.map { |label| Telegram::Bot::Types::KeyboardButton.new(text: label) }
     end
 
-    reply_markup = Telegram::Bot::Types::ReplyKeyboardMarkup.new(
+    keyboard_opts = {
       keyboard:,
       one_time_keyboard:,
       resize_keyboard:,
       is_persistent:,
       input_field_placeholder:
-    )
+    }.compact
+    reply_markup = Telegram::Bot::Types::ReplyKeyboardMarkup.new(**keyboard_opts)
 
     reply(text, reply_markup:, **reply_opts)
   end
@@ -141,9 +142,9 @@ class Bot::Controller
   end
 
   # name - Symbol
-  def reply_slide(name)
+  def reply_slide(name, **args)
     slide = Slides.instance[name]
-    reply_with_buttons(slide[:text], [slide[:actions]], photos: slide[:images], parse_mode: "Markdown")
+    reply_with_buttons(slide[:text], [slide[:actions]], photos: slide[:images], parse_mode: "Markdown", **args)
   end
 
   def repeat_message(chat_id:, message_thread_id: nil)
