@@ -105,7 +105,7 @@ class Bot::Controller
   def reply_with_buttons(text, buttons, one_time_keyboard: false,
                                         resize_keyboard: true,
                                         is_persistent: true,
-                                        input_field_placeholder: "Выберите кнопку",
+                                        input_field_placeholder: nil, # don't use: it's broken on mobile
                                         **reply_opts)
     keyboard = buttons.map do |row|
       row.map { |label| Telegram::Bot::Types::KeyboardButton.new(text: label) }
