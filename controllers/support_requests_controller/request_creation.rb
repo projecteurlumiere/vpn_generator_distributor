@@ -25,7 +25,7 @@ module SupportRequestsController::RequestCreation
       support_request.update(status: 2)
     end
 
-    reply_with_buttons("Не получилось передать сообщение в поддержку. Попробуйте ещё раз", reply_markup: nil)
+    reply("Не получилось передать сообщение в поддержку. Попробуйте ещё раз", reply_markup: nil)
 
     if thread_id
       reply("🤖: Это обращение закрыто из-за внутренней ошибки: #{e.class}", chat_id: Bot::ADMIN_CHAT_ID, message_thread_id: thread_id)

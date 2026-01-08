@@ -87,6 +87,8 @@ class SupportRequestsController < ApplicationController
     in "input_forwarded"
       msg = "Мы уже передали ваше сообщение в поддержку."
       reply_with_buttons(msg, [["Назад"]], reply_markup: nil)
+    in "awaiting_input" if message.text.nil?
+      reply("Пожалуйста, пришлите текстовое сообщение.", reply_markup: nil)
     in "awaiting_input"
       create_support_request(state) # see SupportRequestsController::RequestCreation
     else
