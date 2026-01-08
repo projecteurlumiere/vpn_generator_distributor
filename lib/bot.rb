@@ -40,7 +40,8 @@ module Bot
         if $PROGRAM_NAME == "bin/console"
           IRB.start
         else
-          bot = Telegram::Bot::Client.new(TOKEN, logger: LOGGER)
+          allowed_updates = ["message", "callback_query"]
+          bot = Telegram::Bot::Client.new(TOKEN, logger: LOGGER, allowed_updates:)
 
           # TODO: further implement graceful shutdown
           # Signal.trap("INT") { bot.stop }
