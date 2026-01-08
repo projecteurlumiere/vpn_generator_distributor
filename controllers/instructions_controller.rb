@@ -61,7 +61,7 @@ class InstructionsController < ApplicationController
 
     # we have to do it manually to prepend an action
     slide = Slides.instance[:rules]
-    actions = [["Принимаю правила"], slide[:actions]]
+    actions = [["Принимаю правила"], ["Назад", *slide[:actions].drop(1)]]
     reply_with_buttons(slide[:text], actions, photos: slide[:images], parse_mode: "Markdown")
 
     true
@@ -71,6 +71,8 @@ class InstructionsController < ApplicationController
     return unless @step == "key"
 
     case message.text
+    in "Назад"
+      reply_with_instructions("Выберите ваше устройство")
     in "Мне нужен ключ"
       issue_key
       return true
