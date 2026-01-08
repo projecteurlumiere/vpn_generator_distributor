@@ -67,15 +67,13 @@ class SupportRequestsController < ApplicationController
 
   def reply_new_request(state)
     current_user.update(state: [self.class.name, "awaiting_input", *state].join("|"))
-    reply_slide(:support)
+    reply_slide(:support, input_field_placeholder: nil)
   end
 
   def restore_previous_state(prev_state) # arg is previous state!
     case prev_state
     in ["InstructionsController", *]
-      prev_state[0] = prev_state[0].to_i - 1 unless prev_state[2].to_i.zero? # step
-      current_user.update(state: prev_state.join("|"))
-      InstructionsController.new(bot, message).call
+      InstructionsController.new(bot, message).send(:reply_with_instructions, "Выберите ваше устройство")
     else
       StartController.new(bot, message).send(:reply_menu)
     end
