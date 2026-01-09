@@ -11,23 +11,32 @@ class Bot::RateLimiter
     @queues = Hash.new { |hash, key| hash[key] = [] }
     @new_jobs = []
     @job_available = Async::Notification.new
+    @running = true
 
     process_jobs
   end
 
   def execute(id)
-    job_start = Async::Notification.new
-    @new_jobs << [id, job_start]
-    @job_available.signal
-    job_start.wait
+    if @running
+      job_start = Async::Notification.new
+      @new_jobs << [id, job_start]
+      @job_available.signal
+      job_start.wait
+    end
+
     yield
+  end
+
+  def stop
+    @running = false
+    @job_available.signal
   end
 
   private
 
   def process_jobs
     Async do
-      while true
+      while @running
         @job_available.wait if @queues.none?
 
         while @new_jobs.shift in [id, job_start]
@@ -43,6 +52,8 @@ class Bot::RateLimiter
           false
         end
       end
+
+      LOGGER.debug "Gracefully shut down RateLimiter"
     end
   end
 end

@@ -40,11 +40,16 @@ module Bot
         if $PROGRAM_NAME == "bin/console"
           IRB.start
         else
+          Telegram::Bot.configure do |config|
+            # to satisfy graceful shutdowns
+            config.connection_open_timeout = 5
+            config.connection_timeout = 5
+          end
+
           allowed_updates = ["message", "callback_query"]
           bot = Telegram::Bot::Client.new(TOKEN, logger: LOGGER, allowed_updates:)
 
-          # TODO: further implement graceful shutdown
-          # Signal.trap("INT") { bot.stop }
+          prepare_graceful_shutdown(bot)
 
           start_jobs(bot)
           start_listener(bot)
@@ -68,6 +73,17 @@ module Bot
 
     def start_jobs(bot)
       SendAboutSlideJob.run_async(bot)
+    end
+
+    def prepare_graceful_shutdown(bot)
+      Signal.trap("INT") do
+        [
+          bot,
+          SendAboutSlideJob,
+          Telegram::Bot::Api::GROUP_THROTTLER,
+          Telegram::Bot::Api::USER_THROTTLER
+        ].each(&:stop)
+      end
     end
   end
 end
