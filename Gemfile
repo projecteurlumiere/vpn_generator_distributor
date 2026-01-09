@@ -19,7 +19,6 @@ end
 group :default do
   gem "async"
   gem "base64"
-  gem "faraday-net_http_persistent"
   gem "irb"
   gem "socksify"
   gem "sequel"
