@@ -113,9 +113,15 @@ class VpnWorks
     TXT
 
     case e
+    in InvalidTokenError if attempt <= 3
+      refresh_token
+      self.headers
+      sleep 1
+      retry
     in ResponseError
       raise
     in StandardError if attempt <= 3
+      sleep 1
       retry
     else
       raise ConnectionError
