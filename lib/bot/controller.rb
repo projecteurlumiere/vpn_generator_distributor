@@ -64,6 +64,7 @@ class Bot::Controller
           chat_id:,
           message_thread_id:,
           text:,
+          link_preview_options: Telegram::Bot::Types::LinkPreviewOptions.new(is_disabled: true),
          **opts
          )
       end
@@ -72,6 +73,7 @@ class Bot::Controller
         chat_id:,
         message_thread_id:,
         text:,
+        link_preview_options: Telegram::Bot::Types::LinkPreviewOptions.new(is_disabled: true),
         **opts
       )
     end
