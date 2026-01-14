@@ -189,7 +189,12 @@ class InstructionsController < ApplicationController
   end
 
   def issue_key
-    if current_user.too_many_keys?
+    if current_user.config_reserved?
+      @key_reserved = true
+      @step = 0
+      reply("Ключ зарезервирован. Продолжайте следовать инструкции")
+      reply_instruction_step
+    elsif current_user.too_many_keys?
       msg = <<~TXT
         У вас слишком много ключей.
         Мы выдаём не более #{User::MAX_KEYS} ключей в одни руки.
@@ -201,10 +206,6 @@ class InstructionsController < ApplicationController
       TXT
 
       reply_with_instructions(msg)
-    elsif current_user.config_reserved?
-      @key_reserved = true
-      @step = 0
-      reply_instruction_step
     else
       msg = <<~TXT
         Нам необходимо зарезервировать для вас ключ на нашем сервере.
@@ -242,7 +243,8 @@ class InstructionsController < ApplicationController
   end
 
   def upload_key(key_type)
-    if key = current_user.keys_dataset.where { reserved_until >= Time.now }.first
+
+    if key = find_reserved_key
       dir_path = "./tmp/vpn_configs/per_key/#{key.id}"
       file_path = Dir.glob(File.join(dir_path, "#{key_type}*")).first
 
@@ -253,11 +255,6 @@ class InstructionsController < ApplicationController
         reply(File.read(file_path), reply_markup: nil)
       end
 
-      DB.transaction do
-        key.update(desc: "Выдан для #{@instruction_name}", reserved_until: nil)
-        current_user.update(about_received: false)
-      end
-
       FileUtils.rm_rf(dir_path)
     else
       msg = <<~TXT
@@ -266,7 +263,20 @@ class InstructionsController < ApplicationController
         Попробуйте пройти инструкцию заново и запросить ключ в начале её прохождения.
       TXT
 
-      reply(msg)
+      reply_with_instructions(msg)
+    end
+  end
+
+  def find_reserved_key
+    DB.transaction do
+      key = current_user.keys_dataset.where { reserved_until >= Time.now }.for_update.first
+
+      if key
+        key.update(desc: "Выдан для #{@instruction_name}", reserved_until: nil)
+        current_user.update(about_received: false)
+      end
+
+      key
     end
   end
 end
