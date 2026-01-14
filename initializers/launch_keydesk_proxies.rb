@@ -3,7 +3,9 @@
 return if ENV["ENV"] == "test"
 
 at_exit do
-  system("scripts/keydesk_proxy_stop.sh")
+  if $PROGRAM_NAME != "bin/console"
+    Keydesk.stop_proxies
+  end
 end
 
 Async do
