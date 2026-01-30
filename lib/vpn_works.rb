@@ -133,7 +133,6 @@ class VpnWorks
     http = Net::HTTP.SOCKSProxy(proxy_uri.host, proxy_uri.port).new(uri.host, uri.port)
 
     http.use_ssl = true
-    http.verify_mode = OpenSSL::SSL::VERIFY_NONE # since we're securely proxied
     http
   end
 
