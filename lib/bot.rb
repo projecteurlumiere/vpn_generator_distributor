@@ -71,14 +71,17 @@ module Bot
     end
 
     def prepare_graceful_shutdown(bot)
-      Signal.trap("INT") do
-        [
-          bot,
-          SendAboutSlideJob,
-          Telegram::Bot::Api::GROUP_THROTTLER,
-          Telegram::Bot::Api::USER_THROTTLER
-        ].each(&:stop)
-      end
+      Signal.trap("INT") { shutdown(bot) }
+      Signal.trap("TERM") { shutdown(bot) }
+    end
+
+    def shutdown(bot)
+      [
+        bot,
+        SendAboutSlideJob,
+        Telegram::Bot::Api::GROUP_THROTTLER,
+        Telegram::Bot::Api::USER_THROTTLER
+      ].each(&:stop)
     end
   end
 end
