@@ -11,11 +11,11 @@ class Bot::Job
         while @running
           since_timeout += 1 and sleep 1 and next if since_timeout < timeout
 
-          since_timeout = 0
-
           next if ENV["ENV"] == "production" && Time.now.utc.hour != PERFORM_AT
 
           LOGGER.info "Starting job: #{self}"
+
+          since_timeout = 0
 
           begin
             self.new.perform_now(*args)
