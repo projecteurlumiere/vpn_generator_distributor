@@ -1,14 +1,21 @@
 #!/bin/bash
 # stops keydesk proxies
 
-for pidfile in ./tmp/proxies/ss-local-*.pid; do
-  [ -e "$pidfile" ] || continue  # skip if no match
-  pid=$(cat "$pidfile")
-  if kill -0 "$pid" 2>/dev/null; then
-    kill "$pid"
-    echo "Killed ss-local PID $pid from $pidfile"
-  else
-    echo "No process found for PID $pid from $pidfile"
-  fi
-  rm -f "$pidfile"
-done
+NAME="$1"
+PIDFILE="./tmp/proxies/ss-local-${NAME}.pid"
+
+if [ ! -f "$PIDFILE" ]; then
+  echo "No PID file found for $NAME"
+  exit 0
+fi
+
+PID=$(cat "$PIDFILE")
+
+if kill -0 "$PID" 2>/dev/null; then
+  kill "$PID"
+  echo "Killed ss-local PID $PID from $PIDFILE"
+else
+  echo "No process found for PID $PID from $PIDFILE (perhaps, it already exited)"
+fi
+
+rm -f "$PIDFILE"

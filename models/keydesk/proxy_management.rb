@@ -21,7 +21,7 @@ module Keydesk::ProxyManagement
         tasks << Async do
           handle_proxy_running and next if proxy_running?(keydesk.name, keydesk.proxy_port)
 
-          keydesk.launch_proxy
+          keydesk.start_proxy
           sleep 2
           keydesk.update(n_keys: keydesk.users(update_n_keys: false).size,
                          error_count: 0,
@@ -56,26 +56,30 @@ module Keydesk::ProxyManagement
     end
 
     def stop_proxies
-      system("scripts/keydesk_proxy_stop.sh")
+      Keydesk.all.each { it.stop_proxy }
     end
   end
 
-  def launch_proxy
+  def start_proxy
     conf = decoded_ss_link
-
-    system(
-      "scripts/keydesk_proxy_start.sh",
+    args = [
       name,
       conf["server"],
       conf["server_port"],
       conf["password"],
       conf["method"],
       proxy_port
-    )
+    ]
+
+    args.map! { Shellwords.escape(it.to_s) }
+
+    output = %x[scripts/keydesk_proxy_start.sh #{args.join(" ")}]
+    LOGGER.info("#{name} proxy: #{output}")
   end
 
   def stop_proxy
-    raise "Not implemented!"
+    output = %x[scripts/keydesk_proxy_stop.sh #{Shellwords.escape(name.to_s)}]
+    LOGGER.info("#{name} proxy: #{output}")
   end
 
   def proxy_url
