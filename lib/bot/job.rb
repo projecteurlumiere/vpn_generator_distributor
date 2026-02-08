@@ -6,7 +6,7 @@ class Bot::Job
       Async do
         @running = true
 
-        timeout = ENV["ENV"] == "production" ? 3600 : 5
+        timeout = ENV["ENV"] == "production" ? 3600 : 60
         since_timeout = 0
 
         while @running
