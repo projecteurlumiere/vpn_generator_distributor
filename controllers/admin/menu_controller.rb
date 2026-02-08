@@ -18,9 +18,23 @@ class Admin::MenuController < Admin::BaseController
 
   def menu
     current_user.update(state: nil)
-    reply("Привет, администратор!")
 
-    reply_with_inline_buttons("Возможные админские действия",
+    stats = %x[./scripts/server_metrics.sh].strip.split("\n")
+    rows = stats.map do |line|
+      metric, value = line.split(":", 2)
+      "%-7s %-17s" % [metric.to_s.strip[0,7], value.to_s.strip[0,16]]
+    end
+
+    msg = <<~TXT
+      Привет, администратор!
+
+      Статус сервера:
+      ```
+      #{rows.join("\n")}
+      ```
+    TXT
+
+    reply_with_inline_buttons(msg,
       [
         {
           "Управление инструкциями" => callback_name(Admin::InstructionsController, "menu")
@@ -37,7 +51,7 @@ class Admin::MenuController < Admin::BaseController
         {
           "Управление пользователем" => callback_name(Admin::UsersController, "find_user")
         }
-      ]
+      ], parse_mode: "Markdown"
     )
   end
 end
