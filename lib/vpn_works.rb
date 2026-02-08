@@ -116,12 +116,12 @@ class VpnWorks
     in InvalidTokenError if attempt <= 3
       refresh_token
       self.headers
-      sleep 1
+      sleep 1 unless ENV["ENV"] == "test"
       retry
     in ResponseError
       raise
     in StandardError if attempt <= 3
-      sleep 1
+      sleep 1 unless ENV["ENV"] == "test"
       retry
     else
       raise ConnectionError
