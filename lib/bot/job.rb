@@ -6,12 +6,14 @@ class Bot::Job
       Async do
         @running = true
 
-        timeout = ENV["ENV"] == "production" ? 3600 : 60
+        timeout = ENV["ENV"] == "production" ? 3600 : 5
         since_timeout = 0
-        while @running
-          since_timeout += 1 and sleep 1 and next if since_timeout < timeout
 
-          next if ENV["ENV"] == "production" && Time.now.utc.hour != PERFORM_AT
+        while @running
+          since_timeout += 1
+          sleep 1 and next if since_timeout < timeout
+
+          next if ENV["ENV"] == "production" && Time.now.utc.hour != self::PERFORM_AT
 
           LOGGER.info "Starting job: #{self}"
 
