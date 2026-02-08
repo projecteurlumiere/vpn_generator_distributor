@@ -12,7 +12,7 @@ require "yaml"
 FileUtils.mkdir_p("tmp")
 LOGGER = Logger.new(
   ENV["ENV"] == "development" ? $stdout : "tmp/#{ENV["ENV"]}.log",
-  10,       # n of files
+  2,        # n of files
   1_048_576 # size of a file
 )
 
