@@ -6,3 +6,4 @@ data/
 *.swp
 *.swo
 .env
+rbspy
