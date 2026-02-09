@@ -21,6 +21,7 @@ module Keydesk::ProxyManagement
         tasks << Async do
           handle_proxy_running and next if proxy_running?(keydesk.name, keydesk.proxy_port)
 
+          keydesk.update(status: 0)
           keydesk.start_proxy
         end
       end
