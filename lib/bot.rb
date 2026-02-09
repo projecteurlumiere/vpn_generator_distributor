@@ -74,6 +74,7 @@ module Bot
 
     def start_jobs(bot)
       SendAboutSlideJob.run_async(bot)
+      RestartUnstableKeydesksJob.run_async
     end
 
     def prepare_graceful_shutdown(bot)
@@ -85,6 +86,7 @@ module Bot
       [
         bot,
         SendAboutSlideJob,
+        RestartUnstableKeydesksJob,
         Telegram::Bot::Api::GROUP_THROTTLER,
         Telegram::Bot::Api::USER_THROTTLER
       ].each(&:stop)

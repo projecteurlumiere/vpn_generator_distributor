@@ -59,6 +59,7 @@ class Key < Sequel::Model(:keys)
 
     def find_available_keydesk(attempt, skip_limit)
       sql = Keydesk.exclude(status: 0) # offline
+      sql = sql.where { (status =~ 2) | ((status =~ 1) & (error_count < 5)) } # online or unstable with less than 5 errors
       sql = if skip_limit
               sql.where { n_keys < Keydesk::MAX_USERS }
             else

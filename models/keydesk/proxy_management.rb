@@ -22,11 +22,6 @@ module Keydesk::ProxyManagement
           handle_proxy_running and next if proxy_running?(keydesk.name, keydesk.proxy_port)
 
           keydesk.start_proxy
-          sleep 2
-          keydesk.update(n_keys: keydesk.users(update_n_keys: false).size,
-                         error_count: 0,
-                         last_error_at: nil,
-                         status: :online)
         end
       end
 
@@ -75,9 +70,18 @@ module Keydesk::ProxyManagement
 
     output = %x[scripts/keydesk_proxy_start.sh #{args.join(" ")}]
     LOGGER.info("#{name} proxy: #{output}")
+
+    sleep 2
+    self.update(n_keys: self.users(update_n_keys: false).size,
+                error_count: 0,
+                last_error_at: nil,
+                status: :online)
+  rescue VpnWorks::Error => e
+    LOGGER.error "Proxy `#{name}` is unreachable after start. #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
   end
 
   def stop_proxy
+    self.update(status: 0)
     output = %x[scripts/keydesk_proxy_stop.sh #{Shellwords.escape(name.to_s)}]
     LOGGER.info("#{name} proxy: #{output}")
   end
