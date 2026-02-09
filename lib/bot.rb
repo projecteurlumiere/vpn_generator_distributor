@@ -20,6 +20,12 @@ require "async"
 require "async/semaphore"
 require "telegram/bot" unless ENV["ENV"] == "test"
 
+# top-level async-related logging goes to a json file:
+if ENV["ENV"] == "production"
+  serialized = Console::Output::Serialized.new(File.open("./tmp/#{ENV["ENV"]}_async.json", "a"))
+  Console.logger = Console::Logger.new(serialized)
+end
+
 module Bot
   TOKEN = ENV["TELEGRAM_TOKEN"].freeze
   ADMIN_CHAT_ID = ENV["ADMIN_CHAT_ID"].to_i.freeze
