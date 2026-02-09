@@ -81,7 +81,7 @@ class VpnWorks
     resp = request("token", type: :post, headers: BASE_HEADERS)
     resp = JSON.parse(resp.body)
     @@tokens[@id] = { Time.now.hour => resp["Token"] }
-    LOGGER.info("Successfully updated authentication token for keydesk `#{@id}`")
+    LOGGER.info("Keydesk `#{@id}`: authentication token updated")
     token
   end
 
