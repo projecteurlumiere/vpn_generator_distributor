@@ -19,6 +19,8 @@ class Admin::MenuController < Admin::BaseController
   def menu
     current_user.update(state: nil)
 
+    reply("Привет администратор!")
+
     stats = %x[./scripts/server_metrics.sh].strip.split("\n")
     rows = stats.map do |line|
       metric, value = line.split(":", 2)
@@ -26,7 +28,7 @@ class Admin::MenuController < Admin::BaseController
     end
 
     msg = <<~TXT
-      Привет, администратор!
+      Выберите действие из предложенных ниже.
 
       Статус сервера:
       ```
