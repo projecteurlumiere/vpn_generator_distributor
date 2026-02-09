@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-ruby ">= 3.4"
+ruby ">= 4.0"
 
 group :development do
   gem "dotenv"
@@ -12,6 +12,7 @@ group :development do
 end
 
 group :test do
+  gem "ostruct"
   gem "minitest"
   gem "webmock"
 end

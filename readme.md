@@ -25,7 +25,7 @@ The bot communicates in Russian only.
 
 ### Prerequistes
 
-- Ruby 3.4.2
+- Ruby 4.0.1
 - SQLite3
 ```sh
 sudo apt update
