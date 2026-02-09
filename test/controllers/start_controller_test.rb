@@ -15,7 +15,7 @@ class StartControllerTest < ControllerTestBase
     assert_bot_response(/Для навигации/i)
 
     message_bot("Узнать о проекте")
-    assert_bot_response(/бесплатный/i, index: 1)
+    assert_bot_response(/открытый исходный код/i, index: 1)
 
     message_bot("Принимаю правила")
     message_bot("/start")
