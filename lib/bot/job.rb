@@ -23,9 +23,8 @@ class Bot::Job
 
         while @running
           since_timeout += 1
-          sleep 1 and next if since_timeout < timeout
-
-          next if ENV["ENV"] == "production" && Time.now.utc.hour != self::PERFORM_AT
+          sleep 1 and next if since_timeout < timeout ||
+                              (ENV["ENV"] == "production" && Time.now.utc.hour != self::PERFORM_AT)
 
           since_timeout = 0
 
