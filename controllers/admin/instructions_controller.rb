@@ -12,7 +12,7 @@ class Admin::InstructionsController < Admin::BaseController
     if message.document || message.photo
       handle_download
     elsif @substate == "instruction_review"
-      FILESYSTEM_SEMAPHORE { handle_review }
+      FILESYSTEM_SEMAPHORE.acquire { handle_review }
     else
       raise RoutingError
     end
@@ -149,7 +149,7 @@ class Admin::InstructionsController < Admin::BaseController
       filename = @instruction_path.split("/").last
       FileUtils.mv(@instruction_path, "./data/instructions/#{filename}")
       Instructions.instance.load!
-      Routes.instance.build!
+      Bot::Routes.instance.build!
       reply("Инструкция загружена и доступна для использования")
       current_user.update(state: nil)
     in String if actions.any?(message.text)
