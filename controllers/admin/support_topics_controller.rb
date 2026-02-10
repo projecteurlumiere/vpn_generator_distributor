@@ -13,7 +13,12 @@ class Admin::SupportTopicsController < Admin::BaseController
       request.set_closed!(bot)
       edit_message("Это обращение было закрыто: действия недоступны.", chat_id:, message_id: request.user_menu_message_id)
 
-      msg = "Ваше обращение в поддержку №#{request.id} от #{request.created_at.strftime("%Y-%m-%d %H:%M")} было помечено как рассмотренное"
+      msg = <<~TXT
+        Ваше обращение в поддержку №#{request.id} от #{request.created_at.strftime("%Y-%m-%d %H:%M")} было помечено как рассмотренное.
+
+        Вы можете обратиться ещё раз в любое время
+      TXT
+
       reply_with_buttons(msg,
         [["Вернуться в меню"]],
         chat_id: request.user.chat_id,
@@ -25,11 +30,12 @@ class Admin::SupportTopicsController < Admin::BaseController
       # ignore
       return
     else
+      request.set_open!(bot)
+
       unless request.user.state_array in ["SupportTopicsController", *]
         reply_with_buttons("Новое сообщение от поддержки:", [["Вернуться в меню"]], chat_id: request.user.chat_id, message_thread_id: nil)
       end
 
-      request.set_open!(bot)
       repeat_message(chat_id: request.user.chat_id)
     end
   end

@@ -15,6 +15,11 @@ class SupportRequest < Sequel::Model(:support_requests)
   end
 
   def set_open!(bot)
+    DB.transaction do
+      user.update(state: ["SupportTopicsController"].join("|"))
+      update(status: 1, updated_at: Time.now)
+    end
+
     if unread?
       begin
         bot.api.call("editForumTopic", {
@@ -31,11 +36,6 @@ class SupportRequest < Sequel::Model(:support_requests)
           raise
         end
       end
-    end
-
-    DB.transaction do
-      user.update(state: ["SupportTopicsController"].join("|"))
-      update(status: 1, updated_at: Time.now)
     end
   end
 
