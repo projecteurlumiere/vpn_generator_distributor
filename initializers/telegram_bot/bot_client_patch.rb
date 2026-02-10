@@ -5,6 +5,17 @@
 module Telegram
   module Bot
     class Client
+      def listen(&block)
+        logger.info('Starting bot')
+        @running = true
+        begin
+          fetch_updates(&block) while @running
+        rescue => e
+          logger.error("Error fetching updates. #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}")
+          retry if @running
+        end
+      end
+
       def fetch_updates
         api.getUpdates(options).each do |update|
           logger.debug "update_id: #{update.update_id}"

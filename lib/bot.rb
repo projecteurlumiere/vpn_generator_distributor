@@ -70,6 +70,10 @@ module Bot
           Routes.instance.dispatch_controller(bot, message)
         end
       end
+    rescue => e
+      LOGGER.error "Listener encountered error. #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"      
+    ensure
+      LOGGER.warn "Listener exited" 
     end
 
     def start_jobs(bot)
