@@ -62,6 +62,7 @@ class Key < Sequel::Model(:keys)
       sql = sql.where { (status =~ 2) | ((status =~ 1) & (error_count < 5)) } # online or unstable with less than 5 errors
       sql = if skip_limit
               sql.where { n_keys < Keydesk::MAX_USERS }
+                 .where { max_keys > 0}
             else
               sql.where { n_keys < max_keys }
             end
