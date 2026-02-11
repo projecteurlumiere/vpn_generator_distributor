@@ -22,7 +22,7 @@ require "telegram/bot" unless ENV["ENV"] == "test"
 
 # top-level async-related logging goes to a json file:
 if ENV["ENV"] == "production"
-  serialized = Console::Output::Serialized.new(File.open("./tmp/#{ENV["ENV"]}_async.json", "a"))
+  serialized = Console::Output::Serialized.new(File.open("./tmp/async_#{ENV["ENV"]}.json", "a"))
   Console.logger = Console::Logger.new(serialized)
 end
 
