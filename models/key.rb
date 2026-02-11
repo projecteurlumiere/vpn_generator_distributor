@@ -37,7 +37,7 @@ class Key < Sequel::Model(:keys)
 
       return :keydesks_offline if Keydesk.exclude(status: 0).first.nil?
 
-      user.update(pending_config_until: Time.now + 120)
+      user.update(pending_config_until: Time.now + 600)
 
       begin
         current_keydesk = find_available_keydesk(attempt, skip_limit)
@@ -92,7 +92,7 @@ class Key < Sequel::Model(:keys)
   def acquire_destroy_lock?
     Key.where(id:)
        .where { (pending_destroy_until < Time.now) | (pending_destroy_until =~ nil) }
-       .update(pending_destroy_until: Time.now + 120) == 1
+       .update(pending_destroy_until: Time.now + 600) == 1
   end
 
   def release_destroy_lock!

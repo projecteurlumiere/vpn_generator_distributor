@@ -133,6 +133,10 @@ class VpnWorks
     http = Net::HTTP.SOCKSProxy(proxy_uri.host, proxy_uri.port).new(uri.host, uri.port)
 
     http.use_ssl = true
+
+    http.open_timeout = 300
+    http.read_timeout = 300
+
     http
   end
 
