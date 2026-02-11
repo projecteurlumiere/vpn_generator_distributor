@@ -46,8 +46,9 @@ module Bot
           IRB.start
         else
           Telegram::Bot.configure do |config|
-            # to satisfy graceful shutdowns
-            config.connection_timeout = 5
+            if ENV["ENV"] == "development"
+              config.connection_timeout = 5
+            end
           end
 
           allowed_updates = ["message", "callback_query"]
