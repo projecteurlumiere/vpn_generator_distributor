@@ -47,7 +47,6 @@ module Bot
         else
           Telegram::Bot.configure do |config|
             # to satisfy graceful shutdowns
-            config.connection_open_timeout = 5
             config.connection_timeout = 5
           end
 
