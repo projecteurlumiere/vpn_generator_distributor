@@ -13,7 +13,7 @@ module Keydesk::ProxyManagement
     def start_proxies
       tasks = []
 
-      keydesks = Keydesk.all.reject { proxy_running?(it.name, it.proxy_port) && handle_proxy_running }
+      keydesks = Keydesk.all.reject { it.proxy_running? && it.handle_proxy_running }
       Keydesk.dataset.where(id: keydesks.map(&:id)).update(status: 0)
 
       keydesks.each do |kd|
@@ -23,28 +23,6 @@ module Keydesk::ProxyManagement
       end
 
       tasks.each(&:wait)
-    end
-
-    def proxy_running?(name, port)
-      pidfile = "./tmp/proxies/ss-local-#{name}.pid"
-      return false unless File.exist?(pidfile)
-
-      pid = File.read(pidfile).strip.to_i
-      cmdline = File.read("/proc/#{pid}/cmdline").tr("\0", " ")
-      cmdline.include?("ss-local") && cmdline.include?("-l #{port}")
-    rescue Errno::ENOENT, Errno::ESRCH
-      false
-    end
-
-    def handle_proxy_running
-      msg = "The proxy for `#{name}` is already running."
-      msg += " Have you forgot to exit bin/console?" if $PROGRAM_NAME != "bin/console"
-
-      if ENV["ENV"] == "production" && $PROGRAM_NAME != "bin/console"
-        raise msg
-      else
-        LOGGER.warn msg
-      end
     end
 
     def stop_proxies
@@ -116,5 +94,27 @@ module Keydesk::ProxyManagement
       "server"      => server,
       "server_port" => port
     }
+  end
+
+  def proxy_running?
+    pidfile = "./tmp/proxies/ss-local-#{name}.pid"
+    return false unless File.exist?(pidfile)
+
+    pid = File.read(pidfile).strip.to_i
+    cmdline = File.read("/proc/#{pid}/cmdline").tr("\0", " ")
+    cmdline.include?("ss-local") && cmdline.include?("-l #{proxy_port}")
+  rescue Errno::ENOENT, Errno::ESRCH
+    false
+    end
+
+  def handle_proxy_running
+    msg = "The proxy for `#{name}` is already running."
+    msg += " Have you forgot to exit bin/console?" if $PROGRAM_NAME != "bin/console"
+
+    if ENV["ENV"] == "production" && $PROGRAM_NAME != "bin/console"
+      raise msg
+    else
+      LOGGER.warn msg
+    end
   end
 end
