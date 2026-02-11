@@ -70,6 +70,13 @@ docker compose up -d
 docker compose down
 ```
 
+Используйте опцию `-t` c количеством секунд, чтобы бот закончил обрабатывать текущие запросы перед выключением:
+```sh
+docker compose down -t 600
+# или 
+docker compose up -d -t 600
+```
+
 Для обновления бота:
 ```sh
  sudo docker pull projecteurlumiere/vpn_generator_distributor:latest
