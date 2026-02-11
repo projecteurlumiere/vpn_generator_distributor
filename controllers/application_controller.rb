@@ -62,4 +62,17 @@ class ApplicationController < Bot::Controller
   def last_name
     message.from&.last_name
   end
+
+  def reply_about
+    slide = Slides.instance[:about]
+
+    text = <<~TXT
+      #{slide[:text]}
+
+      Этот бот имеет [открытый исходный код](https://github.com/projecteurlumiere/vpn_generator_distributor)
+      Разработано [projecteurlumiere](https://github.com/projecteurlumiere)
+    TXT
+
+    reply_with_buttons(text, [slide[:actions]], photos: slide[:images], parse_mode: "Markdown")
+  end
 end

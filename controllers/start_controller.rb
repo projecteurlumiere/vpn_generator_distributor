@@ -25,7 +25,7 @@ class StartController < ApplicationController
       current_user.update(initial_slide_read: true)
       reply_menu
     in "Узнать о проекте"
-      reply_about
+      reply_about # moved to application_controller
     in "/tg_id"
       reply("`#{tg_id}`", parse_mode: "Markdown", reply_markup: nil)
     in "/my_id"
@@ -62,18 +62,5 @@ class StartController < ApplicationController
         ["Написать в поддержку"]
       ].compact
     )
-  end
-
-  def reply_about
-    slide = Slides.instance[:about]
-
-    text = <<~TXT
-      #{slide[:text]}
-
-      Этот бот имеет [открытый исходный код](https://github.com/projecteurlumiere/vpn_generator_distributor)
-      Разработано [projecteurlumiere](https://github.com/projecteurlumiere)
-    TXT
-
-    reply_with_buttons(text, [slide[:actions]], photos: slide[:images], parse_mode: "Markdown")
   end
 end

@@ -24,8 +24,8 @@ class SendAboutSlideJob < Bot::Job
         DummyFrom.new(0)
       )
 
-      controller = Bot::Controller.new(bot, message)
-      controller.send(:reply_slide, :about)
+      controller = ApplicationController.new(bot, message)
+      controller.send(:reply_about)
       success << id
     end
   ensure
