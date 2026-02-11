@@ -15,12 +15,14 @@ class SupportRequest < Sequel::Model(:support_requests)
   end
 
   def set_open!(bot)
+    was_unread = self.unread?
+
     DB.transaction do
       user.update(state: ["SupportTopicsController"].join("|"))
       update(status: 1, updated_at: Time.now)
     end
 
-    if unread?
+    if was_unread
       begin
         bot.api.call("editForumTopic", {
           chat_id: Bot::ADMIN_CHAT_ID,
