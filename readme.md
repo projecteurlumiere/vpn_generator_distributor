@@ -1,6 +1,6 @@
 # VPN Generator Distributor
 
-> Более детальная инструкция и скриншоты [доступны на русском языке](./readme.ru.md).
+> **Более детальная инструкция и скриншоты [доступны на русском языке](./readme.ru.md).**
 
 This is a Telegram bot to manage multiple VPN servers, which are provided by [the VPN Generator project](https://github.com/vpngen).
 
