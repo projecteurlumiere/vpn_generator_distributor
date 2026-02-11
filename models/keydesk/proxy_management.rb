@@ -11,18 +11,14 @@ module Keydesk::ProxyManagement
 
   module ClassMethods
     def start_proxies
-      Keydesk.dataset.update(status: 0)
-
       tasks = []
 
-      Keydesk.all.each do |keydesk|
-        next unless keydesk.exists?
+      keydesks = Keydesk.all.reject { proxy_running?(it.name, it.proxy_port) && handle_proxy_running }
+      Keydesk.dataset.where(id: keydesks.map(&:id)).update(status: 0)
 
+      keydesks.each do |kd|
         tasks << Async do
-          handle_proxy_running and next if proxy_running?(keydesk.name, keydesk.proxy_port)
-
-          keydesk.update(status: 0)
-          keydesk.start_proxy
+          kd.start_proxy
         end
       end
 
