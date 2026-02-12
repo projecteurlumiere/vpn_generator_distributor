@@ -12,3 +12,4 @@ services:
       - TELEGRAM_TOKEN=<your Telegram bot token>
       - ADMIN_CHAT_ID=<your admin chat id; if not specified, bot will report chat id of the group chat>
       - ADMIN_IDS=<admin account IDs separated with comma>
+      - VPN_WORKS_USE_SSL=<when set to false will use the http endoint>

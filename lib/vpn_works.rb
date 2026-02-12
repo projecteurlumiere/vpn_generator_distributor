@@ -17,7 +17,6 @@ class VpnWorks
   class UserAlreadyDestroyedError < ResponseError; end # user id not found on server
   class UnknownError < ResponseError; end
 
-  BASE_URL = "https://vpn.works".freeze
   BASE_HEADERS = {
     "Accept"     => "application/json, text/plain, */*",
     "User-Agent" => "ruby/#{RUBY_VERSION}"
@@ -25,10 +24,14 @@ class VpnWorks
 
   @@tokens = {}
 
-  def initialize(proxy:, id:)
+  def initialize(proxy:, id:, use_ssl:)
     @proxy = proxy
     @id = id
     @headers = BASE_HEADERS.dup
+
+    @use_ssl = use_ssl
+    @base_url = @use_ssl ? "https://vpn.works" : "http://vpn.works"
+    LOGGER.warn "Attention: requests for proxy `#{id}` will run without SSL!"
   end
 
   def users
@@ -88,7 +91,7 @@ class VpnWorks
   def request(endpoint, type: :get, headers: self.headers)
     caller_method = caller_locations(1)&.first&.base_label # for logs
 
-    uri = URI("#{BASE_URL}/#{endpoint}")
+    uri = URI("#{@base_url}/#{endpoint}")
     http = make_http(uri)
 
     request_class = Net::HTTP.const_get(type.to_s.capitalize)
@@ -132,7 +135,7 @@ class VpnWorks
     proxy_uri = URI(@proxy)
     http = Net::HTTP.SOCKSProxy(proxy_uri.host, proxy_uri.port).new(uri.host, uri.port)
 
-    http.use_ssl = true
+    http.use_ssl = @use_ssl
 
     http.open_timeout = 300
     http.read_timeout = 300

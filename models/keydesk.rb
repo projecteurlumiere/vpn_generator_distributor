@@ -25,7 +25,7 @@ class Keydesk < Sequel::Model(:keydesks)
   end
 
   def vw
-    @vw ||= VpnWorks.new(proxy: proxy_url, id: name)
+    @vw ||= VpnWorks.new(proxy: proxy_url, id: name, use_ssl: ENV["VPN_WORKS_USE_SSL"] != "false")
   end
 
   def users_stats

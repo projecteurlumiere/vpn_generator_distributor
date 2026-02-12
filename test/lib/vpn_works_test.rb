@@ -3,7 +3,7 @@ require_relative "../test_helper"
 class VpnWorksTest < Minitest::Test
   def setup
     VpnWorks.class_variable_set(:@@tokens, {})
-    @vpn_works = VpnWorks.new(proxy: "socks5://127.0.0.1:10001", id: 1)
+    @vpn_works = VpnWorks.new(proxy: "socks5://127.0.0.1:10001", id: 1, use_ssl: true)
 
     @token = "security_token"
     stub_request(:post, "https://vpn.works/token")
