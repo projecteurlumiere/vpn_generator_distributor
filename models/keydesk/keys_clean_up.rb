@@ -47,17 +47,26 @@ module Keydesk::KeysCleanUp
   private
 
   def filter_for_usernames_to_destroy(list)
-    list.select do |user|
-      res = if user["Status"] == "black"
-              created = Time.parse(user["CreatedAt"])
-              created_recently = created >= (Time.now - NEW_KEY_TIMEOUT)
-              created_recently
-            else
-              last_visit = Time.parse(user["LastVisitHour"])
-              visited_recently = last_visit >= (Time.now - ABANDONED_KEY_TIMEOUT)
-              visited_recently
-            end
-      !res
+    reserved_keys = find_reserved_keys.to_set
+
+    list.reject do |user|
+      timeouted = if user["Status"] == "black"
+                    # created recently
+                    Time.parse(user["CreatedAt"]) >= (Time.now - NEW_KEY_TIMEOUT)
+                  else
+                    # visited recently
+                    Time.parse(user["LastVisitHour"]) >= (Time.now - ABANDONED_KEY_TIMEOUT)
+                  end
+
+      timeouted || reserved_keys.include?(user["UserName"])
     end
+  end
+
+  def find_reserved_keys
+    keys_dataset.where do
+      (pending_destroy_until =~ nil) &
+      (reserved_until !~ nil) &
+      (reserved_until > Time.now)
+    end.select_map(:keydesk_username)
   end
 end
