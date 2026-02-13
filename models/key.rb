@@ -32,32 +32,36 @@ class Key < Sequel::Model(:keys)
     end
 
     def browse_keydesks_for_keys(user, skip_limit)
-      max_attempts = 5
-      attempt = 0
+      if keydesks_offline?
+        LOGGER.warn "Failed to issue key: keydesks are offline" and return :keydesks_offline
+      end
 
-      return :keydesks_offline if Keydesk.exclude(status: 0).first.nil?
+      keydesks = find_available_keydesks(skip_limit)
+      if keydesks.none?
+        LOGGER.warn "Failed to issue key: keydesks are full" and return :keydesks_full
+      end
 
       user.update(pending_config_until: Time.now + 600)
 
+      max_attempts = keydesks.size
+      attempt = 0
+
       begin
-        current_keydesk = find_available_keydesk(attempt, skip_limit)
-        return :keydesks_full if current_keydesk.nil?
-
+        current_keydesk = keydesks[attempt]
         key = current_keydesk.create_config(user:)
-
         return key
-      rescue VpnWorks::Error => e
+      rescue StandardError => e
         attempt += 1
         retry if attempt < max_attempts
 
-        LOGGER.warn "Could not issue key to a user `#{user.id}`. #{e.class}: #{e.message}\nbacktrace=#{e.backtrace.join("\n")}"
+        LOGGER.error "Could not issue key to a user `#{user.id}`. #{e.class}: #{e.message}\nbacktrace=#{e.backtrace.join("\n")}"
         return :keydesks_error
-      ensure
-        user.update(pending_config_until: nil)
       end
+    ensure
+      user.update(pending_config_until: nil)
     end
 
-    def find_available_keydesk(attempt, skip_limit)
+    def find_available_keydesks(skip_limit)
       # online or unstable with less than 5 errors:
       sql = Keydesk.where { (status =~ 2) | ((status =~ 1) & (error_count < 5)) }
       sql = if skip_limit
@@ -66,7 +70,11 @@ class Key < Sequel::Model(:keys)
             else
               sql.where { n_keys < max_keys }
             end
-      sql.limit(1, attempt).first
+      sql.order(:n_keys).all
+    end
+
+    def keydesks_offline?
+      Keydesk.where { (status =~ 2) | ((status =~ 1) & (error_count < 5)) }.first.nil?
     end
   end
 
