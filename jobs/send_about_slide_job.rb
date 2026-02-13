@@ -15,7 +15,7 @@ class SendAboutSlideJob < Bot::Job
     success = []
 
     chat_ids = User.where(about_received: false)
-                   .where { last_visit_at < Time.now - 2 * 24 * 60 * 60 } # 2 days
+                   .where { last_visit_at < Time.now - 172_800 } # 2 days
                    .select_map(%i[chat_id id])
 
     chat_ids.each do |(chat_id, id)|
@@ -27,8 +27,13 @@ class SendAboutSlideJob < Bot::Job
       controller = ApplicationController.new(bot, message)
       controller.send(:reply_about)
       success << id
+    rescue => e
+      LOGGER.warn "Failed to send the about slide to chat_id `#{chat_id}`: #{e.class}, #{e.message}"
     end
   ensure
-    User.where(id: success).update(about_received: true, state: nil) if success.any?
+    if success.any?
+      User.where(id: success).update(about_received: true, state: nil)
+      LOGGER.info "The about slide has been sent to `#{success.size}` user(s)"
+    end
   end
 end
