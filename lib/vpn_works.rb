@@ -31,7 +31,7 @@ class VpnWorks
 
     @use_ssl = use_ssl
     @base_url = @use_ssl ? "https://vpn.works" : "http://vpn.works"
-    LOGGER.warn "Attention: requests for proxy `#{id}` will run without SSL!"
+    LOGGER.warn "Attention: requests for proxy `#{id}` will run without SSL!" unless @use_ssl
   end
 
   def users
