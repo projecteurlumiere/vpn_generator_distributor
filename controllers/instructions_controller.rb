@@ -211,7 +211,7 @@ class InstructionsController < ApplicationController
         Нам необходимо зарезервировать для вас ключ на нашем сервере.
         Пожалуйста, подождите. Это займёт несколько минут.
 
-        Если вы не получили ответ в течение пары минут, нажмите /start
+        Если вы не получили ответ в течение десяти минут, нажмите /start
       TXT
       reply(msg)
 
@@ -221,15 +221,23 @@ class InstructionsController < ApplicationController
       in :keydesks_full
         msg = <<~TXT
           К сожалению, сейчас свободных ключей нет.
+
           Новые ключи появляются регулярно, поэтому, чтобы получить VPN, попробуйте пройти инструкцию позже.
           Например, завтра
         TXT
         reply_with_instructions(msg)
-      in :keydesks_error | :keydesks_offline
+      in :keydesks_offline
+        msg = <<~TXT
+          Сервера, выдающие ключи, сейчас недоступны. Попробуйте пройти инструкцию через час.
+
+          Если проблема не решается, обратитесь в поддержку - это можно сделать в меню /start
+        TXT
+        reply_with_instructions(msg)
+      in :keydesks_error
         msg = <<~TXT
           На сервере произошла непредвиденная ошибка. Попробуйте ещё раз или зайдите в другой день.
 
-          Если проблема не решается, обратитесь в поддержку - это можно сделать в стартовом меню /start
+          Если проблема не решается, обратитесь в поддержку - это можно сделать в меню /start
         TXT
         reply_with_instructions(msg)
       in Key
@@ -243,7 +251,6 @@ class InstructionsController < ApplicationController
   end
 
   def upload_key(key_type)
-
     if key = find_reserved_key
       dir_path = "./tmp/vpn_configs/per_key/#{key.id}"
       file_path = Dir.glob(File.join(dir_path, "#{key_type}*")).first
