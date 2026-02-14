@@ -11,7 +11,6 @@ class Admin::SupportTopicsController < Admin::BaseController
       reply("Закрытые обращения нельзя переоткрыть.")
     elsif message.forum_topic_closed && request
       request.set_closed!(bot)
-      edit_message("Это обращение было закрыто: действия недоступны.", chat_id:, message_id: request.user_menu_message_id)
 
       msg = <<~TXT
         Ваше обращение в поддержку №#{request.id} от #{request.created_at.strftime("%Y-%m-%d %H:%M")} было помечено как рассмотренное.
@@ -24,6 +23,8 @@ class Admin::SupportTopicsController < Admin::BaseController
         chat_id: request.user.chat_id,
         message_thread_id: nil
       )
+
+      edit_message("Это обращение было закрыто: действия недоступны.", chat_id:, message_id: request.user_menu_message_id)
     elsif request.nil? && !message.text.nil?
       reply("Это обращение уже было закрыто.")
     elsif message.forum_topic_created || message.forum_topic_closed || message.forum_topic_edited
