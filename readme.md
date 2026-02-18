@@ -23,7 +23,7 @@ The bot communicates in Russian only.
 
 ## Development
 
-### Prerequistes
+### Prerequisites
 
 - Ruby 4.0.1
 - SQLite3
@@ -42,7 +42,6 @@ sudo apt install shadowsocks-libev
 - Install dependencies via `bundle i`
 
 ### Executables
-
 
 To start the bot:
 ```sh
