@@ -25,6 +25,11 @@ module Telegram
         end
       rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
         retry if @running
+      rescue Faraday::SSLError => e
+        raise unless e.message.include?('SSL_read: unexpected eof while reading')
+
+        logger.error "Faraday SSL error: #{e.class}, #{e.message}"
+        retry if @running
       end
 
       private
