@@ -57,8 +57,6 @@ class Key < Sequel::Model(:keys)
         LOGGER.error "Could not issue key to a user `#{user.id}`. #{e.class}: #{e.message}\nbacktrace=#{e.backtrace.join("\n")}"
         return :keydesks_error
       end
-    ensure
-      user.update(pending_config_until: nil)
     end
 
     def find_available_keydesks(skip_limit)
