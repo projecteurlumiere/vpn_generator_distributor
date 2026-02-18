@@ -63,7 +63,7 @@ class ApplicationController < Bot::Controller
     message.from&.last_name
   end
 
-  def reply_about
+  def reply_about(**args)
     slide = Slides.instance[:about]
 
     text = <<~TXT
@@ -73,6 +73,6 @@ class ApplicationController < Bot::Controller
       Разработано [projecteurlumiere](https://github.com/projecteurlumiere)
     TXT
 
-    reply_with_buttons(text, [slide[:actions]], photos: slide[:images], parse_mode: "Markdown")
+    reply_with_buttons(text, [slide[:actions]], photos: slide[:images], parse_mode: "Markdown", **args)
   end
 end

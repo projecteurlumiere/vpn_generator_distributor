@@ -71,14 +71,15 @@ module Bot
         end
       end
     rescue => e
-      LOGGER.error "Listener encountered error. #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"      
+      LOGGER.error "Listener encountered error. #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
     ensure
-      LOGGER.warn "Listener exited" 
+      LOGGER.warn "Listener exited"
     end
 
     def start_jobs(bot)
       SendAboutSlideJob.run_async(bot)
       RestartUnstableKeydesksJob.run_async
+      DailyRecapJob.run_async(bot)
     end
 
     def prepare_graceful_shutdown(bot)
@@ -91,6 +92,7 @@ module Bot
         bot,
         SendAboutSlideJob,
         RestartUnstableKeydesksJob,
+        DailyRecapJob,
         Telegram::Bot::Api::GROUP_THROTTLER,
         Telegram::Bot::Api::USER_THROTTLER
       ].each(&:stop)

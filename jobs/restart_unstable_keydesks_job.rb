@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # unstable keydesks are subject to regular restarts until the connection is established
-class RestartUnstableKeydesksJob < Bot::Job
+class RestartUnstableKeydesksJob < ApplicationJob
   PERFORM_EVERY = ENV["ENV"] == "development" ? 30 : 3600 # 1 hour
 
   def perform_now
@@ -13,7 +13,7 @@ class RestartUnstableKeydesksJob < Bot::Job
       LOGGER.info "Restarted proxy `#{kd.name}`"
     rescue StandardError => e
       LOGGER.warn "Error when restarting Keydesk `#{kd.name}`. #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
-      kd.update(status:, error_count:) # to ensure it keeps rebooting
+      kd.update(status:, error_count: error_count += 1) # to ensure it keeps rebooting
     end
   end
 end

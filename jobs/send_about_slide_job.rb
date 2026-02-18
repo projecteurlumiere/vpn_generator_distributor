@@ -1,15 +1,10 @@
 # frozen_string_literal: true
 
 # Sending out :about to users who haven't received it after receiving their key
-class SendAboutSlideJob < Bot::Job
-  PERFORM_AT = 16 # UTC hour
+class SendAboutSlideJob < ApplicationJob
+  include DummyController
 
-  # for accessing application controller methods:
-  DummyMessage = Struct.new(:chat, :from) do
-    def reply_to_message; nil; end
-  end
-  DummyChat = Struct.new(:id)
-  DummyFrom = Struct.new(:id)
+  PERFORM_AT = 16 # UTC hour
 
   def perform_now(bot)
     success = []
@@ -19,13 +14,9 @@ class SendAboutSlideJob < Bot::Job
                    .select_map(%i[chat_id id])
 
     chat_ids.each do |(chat_id, id)|
-      message = DummyMessage.new(
-        DummyChat.new(chat_id),
-        DummyFrom.new(0)
-      )
+      controller = generate_dummy_controller(bot)
 
-      controller = ApplicationController.new(bot, message)
-      controller.send(:reply_about)
+      controller.send(:reply_about, chat_id:)
       success << id
     rescue => e
       LOGGER.warn "Failed to send the about slide to chat_id `#{chat_id}`: #{e.class}, #{e.message}"
