@@ -1,7 +1,7 @@
 require_relative "../test_helper"
 
 class KeyTest < Minitest::Test
-  def test_issuing_reserved_key
+  def test_voiding_reservation
     user_1 = create_user
     user_2 = create_user(tg_id: 2)
 
@@ -13,12 +13,12 @@ class KeyTest < Minitest::Test
     path = File.join(Bot::ROOT_DIR, "/tmp/vpn_configs/per_key/#{key.id}")
     FileUtils.mkdir_p(path)
 
-    assert_equal Key.assign_reserved_key(user_2).id, key.id
+    assert_equal Key.assign_reserved_key(user_1).id, key.id
   ensure
     FileUtils.rm_rf(path) if Dir.exist?(path)
   end
 
-  def test_not_issuing_reserved_key
+  def test_persisting_reservation
     user_1 = create_user
     user_2 = create_user(tg_id: 2)
 
@@ -30,7 +30,8 @@ class KeyTest < Minitest::Test
     path = File.join(Bot::ROOT_DIR, "/tmp/vpn_configs/per_key/#{key.id}")
     FileUtils.mkdir_p(path)
 
-    assert_nil Key.assign_reserved_key(user_2)
+    assert_nil Key.assign_reserved_key(user_1)
+    assert_equal Key.assign_reserved_key(user_2).id, key.id
   ensure
     FileUtils.rm_rf(path) if Dir.exist?(path)
   end
