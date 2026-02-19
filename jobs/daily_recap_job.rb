@@ -7,43 +7,72 @@ class DailyRecapJob < ApplicationJob
   PERFORM_AT = 18 # UTC hour
 
   def perform_now(bot)
+    @now = Time.now
+
     controller = generate_dummy_controller(bot)
     controller.send(:reply, recap_message, chat_id: Bot::ADMIN_CHAT_ID, parse_mode: "Markdown")
   end
 
   private
 
+  # keep tables under two lines to avoid `copy` button in the UI
   def recap_message
     <<~TXT
       🤖 Отчёт за #{Date.today.strftime("%d.%m.%Y")}
 
-      *Ключей за сутки:*
+      *🔑 Ключи*
+
+      _Ключей за сутки:_
       ```
-      #{table_section([["Выдано", n_issued_keys_today], ["Зарезервировано", n_reserved_keys_today]])}
+      #{rows("Выдано", n_issued_keys_today, "Зарезервировано", n_reserved_keys_today)}
+      ```
+      _Ошибок при выдаче ключей за сутки:_
+      ```
+      #{rows("Всего", key_errors[:total], "Запрашивая ключ", key_errors[:else])}
+      ```
+      _Отказов в выдаче ключей за сутки:_
+      ```
+      #{rows("Нет мест", key_errors[:full], "Не в сети", key_errors[:offline])}
+      ```
+      
+      *🖥️ Ключницы*
+
+      _Ключниц c проблемами сейчас:_
+      ```
+      #{rows("Не в сети", offline_keydesks, "Проблемных", unstable_keydesks)}
+      ```
+      _Ключниц в порядке сейчас:_
+      ```
+      #{rows("В сети", online_keydesks, "Выдающих ключи", online_and_available_keydesks)}
+      ```
+      _Мест осталось всего:_
+      ```
+      #{rows("Минимум", free_n_keys, "Максимум", free_max_n_keys)}
       ```
 
-      *Ключниц:*
-      ```
-      #{table_section([["Оффлайн", offline_keydesks], ["Проблемных", unstable_keydesks]])}
-      ```
+      *👥 Пользователи*
 
-      *Мест осталось:*
+      _Уникальных пользователей:_
       ```
-      #{table_section([["Минимум", free_n_keys], ["Максимум", free_max_n_keys]])}
+      #{rows("За сутки", n_users_today)}
       ```
     TXT
   end
 
-  def table_section(pairs)
-    pairs.map { |k, v| "%-15s %6s" % [k, v] }.join("\n")
+  def rows(*pairs)
+    pairs.each_slice(2).map { |k, v| "%-15s %6s" % [k, v] }.join("\n")
   end
 
   def n_issued_keys_today
-    Key.where { (created_at >= Time.now - 86_400) & reserved_until =~ nil}.count
+    Key.where { (created_at >= @now) & reserved_until =~ nil}.count
   end
 
   def n_reserved_keys_today
-    Key.where { (created_at >= Time.now - 86_400) & (reserved_until !~ nil) }.count
+    Key.where { (created_at >= @now) & (reserved_until !~ nil) }.count
+  end
+
+  def n_users_today
+    User.where { last_visit_at >= @now }.count
   end
 
   def offline_keydesks
@@ -51,7 +80,18 @@ class DailyRecapJob < ApplicationJob
   end
 
   def unstable_keydesks
-    Keydesk.where { (status =~ 1) & (error_count >= 5) }.count
+    Keydesk.where { (status =~ 1) & (error_count < 5) }.count
+  end
+
+  def online_keydesks
+    Keydesk.where { (status =~ 2) | ((status =~ 1) & (error_count < 5)) }.count
+  end
+
+  def online_and_available_keydesks
+    Keydesk.where { (status =~ 2) | ((status =~ 1) & (error_count < 5)) }
+           .where { n_keys < Keydesk::MAX_USERS }
+           .where { max_keys > 0} # if set to 0, we ignore it even for admins
+           .count
   end
 
   def free_n_keys
@@ -60,5 +100,42 @@ class DailyRecapJob < ApplicationJob
 
   def free_max_n_keys
     Keydesk.count * Keydesk::MAX_USERS - DB[:keydesks].sum(:n_keys)
+  end
+
+  def key_errors
+    return @errors if @errors
+
+    @errors = {
+      total:   0,
+      full:    0,
+      offline: 0,
+      else:    0
+    }
+
+    log_files = Dir.entries("./tmp").select { it.match? /\A#{ENV["ENV"]}\.log/io }.reverse
+
+    log_files.each do |name|
+      file = File.new("./tmp/#{name}")
+
+      file.readlines.each do |line|
+        time = Time.parse(line) rescue next
+        next if time >= @now
+
+        case line
+        in /keydesks are offline/
+          @errors[:offline] += 1
+        in /keydesks are full/
+          @errors[:full] += 1
+        in /Could not issue key to a user/
+          @errors[:else] += 1
+        else
+          next
+        end
+
+        @errors[:total] += 1
+      end
+    end
+
+    @errors
   end
 end
