@@ -21,7 +21,9 @@ class Key < Sequel::Model(:keys)
 
     def assign_reserved_key(user)
       DB.transaction do
-        key = Key.where { reserved_until <= Time.now }
+        now = Time.now
+        key = Key.where { (reserved_until < now) | ((user_id =~ user.id) & (reserved_until >= now)) }
+                 .order(Sequel.lit("CASE WHEN user_id = ? THEN 0 ELSE 1 END", user.id))
                  .for_update
                  .first
 

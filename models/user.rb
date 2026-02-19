@@ -42,13 +42,15 @@ class User < Sequel::Model(:users)
   end
 
   def config_reserved?
-    keys.any? { |key| key.reserved_until && key.reserved_until > Time.now }
+    keys_dataset.where { reserved_until >= Time.now }.first
   end
 
   def acquire_config_lock?
-    User.where(id:)
-        .where { (pending_config_until < Time.now) | (pending_config_until =~ nil) }
-        .update(pending_config_until: Time.now + 120) == 1
+    res = User.where(id:)
+              .where { (pending_config_until < Time.now) | (pending_config_until =~ nil) }
+              .update(pending_config_until: Time.now + 120) == 1
+    reload
+    res
   end
 
   def release_config_lock!

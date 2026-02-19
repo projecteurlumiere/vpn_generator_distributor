@@ -189,12 +189,7 @@ class InstructionsController < ApplicationController
   end
 
   def issue_key
-    if current_user.config_reserved?
-      @key_reserved = true
-      @step = 0
-      reply("Ключ зарезервирован. Продолжайте следовать инструкции")
-      reply_instruction_step
-    elsif current_user.too_many_keys?
+    if current_user.too_many_keys? && !current_user.config_reserved?
       msg = <<~TXT
         У вас слишком много ключей.
         Мы выдаём не более #{User::MAX_KEYS} ключей в одни руки.
