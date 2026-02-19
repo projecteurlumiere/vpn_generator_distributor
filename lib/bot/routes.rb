@@ -43,14 +43,14 @@ class Bot::Routes
     end
 
     case message
-    in Telegram::Bot::Types::Message if message.chat.id == Bot::ADMIN_CHAT_ID
+    in Telegram::Bot::Types::Message if message.chat.id == Bot::ADMIN_CHAT_ID && message.reply_to_message&.message_thread_id
       Admin::SupportTopicsController.new(bot, message).call
-    in Telegram::Bot::Types::Message
+    in Telegram::Bot::Types::Message if !group_message?(message)
       handle_message(bot, message)
     in Telegram::Bot::Types::CallbackQuery
       handle_callback_query(bot, message)
     else
-      LOGGER.warn "Gracefully skipping message:\n#{message.class}\n#{message}"
+      LOGGER.warn "Gracefully skipping message: `#{message.class}`: #{message}"
     end
   rescue StandardError => e
     handle_dispatching_error(bot, message, e)
