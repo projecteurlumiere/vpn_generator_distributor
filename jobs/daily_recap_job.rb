@@ -7,7 +7,7 @@ class DailyRecapJob < ApplicationJob
   PERFORM_AT = 18 # UTC hour
 
   def perform_now(bot)
-    @now = Time.now
+    @yesterday = Time.now - 86_400
 
     controller = generate_dummy_controller(bot)
     controller.send(:reply, recap_message, chat_id: Bot::ADMIN_CHAT_ID, parse_mode: "Markdown")
@@ -26,15 +26,15 @@ class DailyRecapJob < ApplicationJob
       ```
       #{rows("Выдано", n_issued_keys_today, "Зарезервировано", n_reserved_keys_today)}
       ```
-      _Ошибок при выдаче ключей за сутки:_
+      _Ключей не выдано из-за ошибок:_
       ```
-      #{rows("Всего", key_errors[:total], "Запрашивая ключ", key_errors[:else])}
+      #{rows("За сутки", key_errors[:else])}
       ```
       _Отказов в выдаче ключей за сутки:_
       ```
       #{rows("Нет мест", key_errors[:full], "Не в сети", key_errors[:offline])}
       ```
-      
+
       *🖥️ Ключницы*
 
       _Ключниц c проблемами сейчас:_
@@ -64,15 +64,48 @@ class DailyRecapJob < ApplicationJob
   end
 
   def n_issued_keys_today
-    Key.where { (created_at >= @now) & reserved_until =~ nil}.count
+    Key.where((Sequel[:created_at] >= @yesterday) & (Sequel[:reserved_until] =~ nil)).count
   end
 
   def n_reserved_keys_today
-    Key.where { (created_at >= @now) & (reserved_until !~ nil) }.count
+    Key.where((Sequel[:created_at] >= @yesterday) & (Sequel[:reserved_until] !~ nil)).count
   end
 
-  def n_users_today
-    User.where { last_visit_at >= @now }.count
+  def key_errors
+    return @errors if @errors
+
+    @errors = {
+      total:   0,
+      full:    0,
+      offline: 0,
+      else:    0
+    }
+
+    log_files = Dir.entries("./tmp").select { it.match? /\A#{ENV["ENV"]}\.log/io }.reverse
+
+    log_files.each do |name|
+      file = File.new("./tmp/#{name}")
+
+      file.readlines.each do |line|
+        time = Time.parse(line) rescue next
+        next if time < @yesterday
+
+        case line
+        in /keydesks are offline/
+          @errors[:offline] += 1
+        in /keydesks are full/
+          @errors[:full] += 1
+        in /Could not issue key to a user/
+          @errors[:else] += 1
+        else
+          next
+        end
+
+        @errors[:total] += 1
+      end
+    end
+
+    @errors
   end
 
   def offline_keydesks
@@ -102,40 +135,7 @@ class DailyRecapJob < ApplicationJob
     Keydesk.count * Keydesk::MAX_USERS - DB[:keydesks].sum(:n_keys)
   end
 
-  def key_errors
-    return @errors if @errors
-
-    @errors = {
-      total:   0,
-      full:    0,
-      offline: 0,
-      else:    0
-    }
-
-    log_files = Dir.entries("./tmp").select { it.match? /\A#{ENV["ENV"]}\.log/io }.reverse
-
-    log_files.each do |name|
-      file = File.new("./tmp/#{name}")
-
-      file.readlines.each do |line|
-        time = Time.parse(line) rescue next
-        next if time >= @now
-
-        case line
-        in /keydesks are offline/
-          @errors[:offline] += 1
-        in /keydesks are full/
-          @errors[:full] += 1
-        in /Could not issue key to a user/
-          @errors[:else] += 1
-        else
-          next
-        end
-
-        @errors[:total] += 1
-      end
-    end
-
-    @errors
+  def n_users_today
+    User.where(Sequel[:last_visit_at] >= @yesterday).count
   end
 end

@@ -29,6 +29,7 @@ class ApplicationController < Bot::Controller
   def current_user
     super
     @current_user.update(chat_id:) if @current_user.chat_id.nil? && chat_id.positive?
+    @current_user.update(last_visit_at: Time.now) if @current_user.last_visit_at.day != Time.now.day
 
     @current_user
   end
