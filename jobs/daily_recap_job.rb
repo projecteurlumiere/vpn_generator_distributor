@@ -1,23 +1,45 @@
 # frozen_string_literal: true
 
-# Sending out :about to users who haven't received it after receiving their key
+# Sends statistics to the admin chat once per day
 class DailyRecapJob < ApplicationJob
   include DummyController
 
   PERFORM_AT = 18 # UTC hour
 
   def perform_now(bot)
-    @yesterday = Time.now - 86_400
+    LOGGER.info "The daily recap for today:\n#{log_message}"
 
     controller = generate_dummy_controller(bot)
-    controller.send(:reply, recap_message, chat_id: Bot::ADMIN_CHAT_ID, parse_mode: "Markdown")
+    controller.send(:reply, message, chat_id: Bot::ADMIN_CHAT_ID, parse_mode: "Markdown")
+  end
+
+  # recap message formatted for logging purposes
+  def log_message
+    msg = message.lines.filter_map do |line|
+      case line
+      when /\`|🤖/
+        next
+      when /\_/
+        line.prepend("\n")
+      when /\*/
+        line.delete_suffix!("\n")
+      end
+
+      line.gsub!(/[_\*]/i, "")
+      line.squeeze! unless line.match?(/\d/)
+
+      line
+    end.join
+
+    msg.prepend("-" * 33)
+    msg << "-" * 33
   end
 
   private
 
   # keep tables under two lines to avoid `copy` button in the UI
-  def recap_message
-    <<~TXT
+  def message
+    @message ||= <<~TXT
       🤖 Отчёт за #{Date.today.strftime("%d.%m.%Y")}
 
       *🔑 Ключи*
@@ -64,11 +86,11 @@ class DailyRecapJob < ApplicationJob
   end
 
   def n_issued_keys_today
-    Key.where((Sequel[:created_at] >= @yesterday) & (Sequel[:reserved_until] =~ nil)).count
+    Key.where((Sequel[:created_at] >= yesterday) & (Sequel[:reserved_until] =~ nil)).count
   end
 
   def n_reserved_keys_today
-    Key.where((Sequel[:created_at] >= @yesterday) & (Sequel[:reserved_until] !~ nil)).count
+    Key.where((Sequel[:created_at] >= yesterday) & (Sequel[:reserved_until] !~ nil)).count
   end
 
   def key_errors
@@ -88,7 +110,7 @@ class DailyRecapJob < ApplicationJob
 
       file.readlines.each do |line|
         time = Time.parse(line) rescue next
-        next if time < @yesterday
+        next if time < yesterday
 
         case line
         in /keydesks are offline/
@@ -136,6 +158,10 @@ class DailyRecapJob < ApplicationJob
   end
 
   def n_users_today
-    User.where(Sequel[:last_visit_at] >= @yesterday).count
+    User.where(Sequel[:last_visit_at] >= yesterday).count
+  end
+
+  def yesterday
+    @yesterday ||= Time.now - 86_400
   end
 end
