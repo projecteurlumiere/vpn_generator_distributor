@@ -19,7 +19,7 @@ module Telegram
       def fetch_updates
         api.getUpdates(options).each do |update|
           logger.debug "update_id: #{update.update_id}"
-          next if update_processed?(update.update_id)
+          logger.warn "Skipping update_id `#{update.update_id}`: update has already been processed" and next if update_processed?(update.update_id)
 
           yield handle_update(update)
         end
@@ -33,6 +33,10 @@ module Telegram
       end
 
       private
+
+      #
+      # Removing duplicate updates (is this even a problem?)
+      #
 
       # put those in init later:
       UPDATES     = []
