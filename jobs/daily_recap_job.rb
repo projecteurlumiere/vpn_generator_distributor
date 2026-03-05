@@ -106,9 +106,7 @@ class DailyRecapJob < ApplicationJob
     log_files = Dir.entries("./tmp").select { it.match? /\A#{ENV["ENV"]}\.log/io }.reverse
 
     log_files.each do |name|
-      file = File.new("./tmp/#{name}")
-
-      file.readlines.each do |line|
+      File.foreach("./tmp/#{name}") do |line|
         time = Time.parse(line) rescue next
         next if time < yesterday
 
