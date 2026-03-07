@@ -13,7 +13,7 @@ module Keydesk::KeysCleanUp
   end
 
   def find_usernames_to_destroy!
-    list = filter_for_usernames_to_destroy(users)
+    list = filter_for_usernames_to_destroy(self.users)
 
     list = list.flat_map do
       [
@@ -65,8 +65,8 @@ module Keydesk::KeysCleanUp
   def find_reserved_keys
     keys_dataset.where do
       (pending_destroy_until =~ nil) &
-      (reserved_until !~ nil) &
-      (reserved_until > Time.now)
+             (reserved_until !~ nil) &
+         (reserved_until > Time.now)
     end.select_map(:keydesk_username)
   end
 end

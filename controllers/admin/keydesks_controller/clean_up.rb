@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# if keydesk has max_keys >= 0, clean_up takes place
+# if keydesk has max_keys < 0, clean_up doesn't take place
 module Admin::KeydesksController::CleanUp
   CLEANING_UP = Async::Semaphore.new(1)
 
@@ -10,7 +12,7 @@ module Admin::KeydesksController::CleanUp
     end
 
     CLEANING_UP.acquire do
-      tasks = Keydesk.all.map do |kd|
+      tasks = Keydesk.where { max_keys >= 0 }.all.map do |kd|
         Async do
           kd.find_usernames_to_destroy!
 
@@ -52,7 +54,7 @@ module Admin::KeydesksController::CleanUp
     CLEANING_UP.acquire do
       reply("Удаляем \"мёртвые души\". Это займёт время")
 
-      tasks = Keydesk.all.map do |kd|
+      tasks = Keydesk.where { max_keys >= 0 }.all.map do |kd|
         Async do
           "%-13s %5d %5d" % [
             kd.name[0...13],
@@ -66,7 +68,8 @@ module Admin::KeydesksController::CleanUp
       msg = clean_up_finished_msg(results)
       reply_with_inline_buttons(msg, [admin_menu_inline_button], parse_mode: "Markdown")
     end
-  rescue StandardError
+  rescue StandardError => e
+    LOGGER.error("Error when cleaning up keydesks: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}")
     reply("Что-то пошло не так при удалении мёртвых душ.")
   end
 
@@ -100,7 +103,7 @@ module Admin::KeydesksController::CleanUp
     header = "%-13s %3s %3s" % ["Имя", "ДУШ", "ВЫД"]
     table = [header, *rows].join("\n")
 
-    <<~TXT
+    msg = <<~TXT
       Пользователи на удаление:
 
       - Имя: Имя ключницы
@@ -111,13 +114,15 @@ module Admin::KeydesksController::CleanUp
       #{table}
       ```
     TXT
+
+    [msg, skipped_keydesks_msg].reject(&:empty?).join("\n\n")
   end
 
-  def clean_up_finished_table(rows)
+  def clean_up_finished_msg(rows)
     header = "%-13s %5s %5s" % ["Имя", "ДУШ", "УДЛ"]
     table = [header, *rows].join("\n")
 
-    <<~TXT
+    msg = <<~TXT
       Очистка завершена.
 
       - Имя: Ключница
@@ -128,5 +133,12 @@ module Admin::KeydesksController::CleanUp
       #{table}
       ```
     TXT
+
+    [msg, skipped_keydesks_msg].reject(&:empty?).join("\n\n")
+  end
+
+  def skipped_keydesks_msg
+    names = Keydesk.where { max_keys < 0 }.select_map(&:name)
+    names.any? ? "Пропущенные ключницы: #{names.join(", ")}" : ""
   end
 end

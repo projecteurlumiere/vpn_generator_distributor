@@ -20,8 +20,15 @@ module Admin::KeydesksController::CreateKeydesk
       new_state = state << msg
       new_state[2] = "max_keys"
       current_user.update(state: new_state.join("|"))
-      reply("Введите максимальное число пользователей для ключницы (целое число)")
-    in ["max_keys", *] unless msg.match?(/\A\d/)
+      msg = <<~TXT
+        Введите максимальное число пользователей для ключницы (целое число)
+
+        Не может превышать #{Keydesk::MAX_USERS}
+        Значение 0 - ключи не будут выдаваться, но её можно очистить
+        Отрицательное значение - ключи не будут выдаваться, и ключница не будет очищаться от мёртвых душ
+      TXT
+      reply(msg)
+    in ["max_keys", *] unless msg.match?(/\A-?\d/)
       reply("Укажите целое число")
     in ["max_keys", *] if msg.to_i > Keydesk::MAX_USERS
       reply("Число не должно превышать #{Keydesk::MAX_USERS}")

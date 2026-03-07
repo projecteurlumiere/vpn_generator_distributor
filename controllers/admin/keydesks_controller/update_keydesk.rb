@@ -53,7 +53,14 @@ module Admin::KeydesksController::UpdateKeydesk
       new_state[2] = "edit_max_keys"
       current_user.update(state: new_state.join("|"))
 
-      reply_with_buttons("Введите новое максимальное число пользователей для ключницы (целое число)", [["Оставить прежнее"]])
+      msg = <<~TXT
+        Введите максимальное число пользователей для ключницы (целое число)
+
+        Не может превышать #{Keydesk::MAX_USERS}
+        Значение 0 - ключи не будут выдаваться, но её можно очистить
+        Отрицательное значение - ключи не будут выдаваться, и ключница не будет очищаться от мёртвых душ
+      TXT
+      reply_with_buttons(msg, [["Оставить прежнее"]])
     in ["edit_name", *] if msg.size > 13
       reply("Новое имя не может быть длиннее 13 символов.", reply_markup: nil)
     in ["edit_name", *] if (kd = Keydesk.first(name: msg))
@@ -66,12 +73,20 @@ module Admin::KeydesksController::UpdateKeydesk
       new_state[2] = "edit_max_keys"
 
       current_user.update(state: new_state.join("|"))
-      reply_with_buttons("Введите новое максимальное число пользователей для ключницы (целое число)", [["Оставить прежнее"]])
+
+      msg = <<~TXT
+        Введите максимальное число пользователей для ключницы (целое число)
+
+        Не может превышать #{Keydesk::MAX_USERS}
+        Значение 0 - ключи не будут выдаваться, но её можно очистить
+        Отрицательное значение - ключи не будут выдаваться, и ключница не будет очищаться от мёртвых душ
+      TXT
+      reply_with_buttons(msg, [["Оставить прежнее"]])
     in ["edit_max_keys", *] if msg == "Оставить прежнее"
       reply("Редактирование окончено")
       current_user.update(state: nil)
       index
-    in ["edit_max_keys", *] unless msg.match?(/\A\d/)
+    in ["edit_max_keys", *] unless msg.match?(/\A-?\d/)
       reply("Введите целое число", reply_markup: nil)
     in ["edit_max_keys", *] if msg.to_i > Keydesk::MAX_USERS
       reply("Число не должно превышать #{Keydesk::MAX_USERS}", reply_markup: nil)
