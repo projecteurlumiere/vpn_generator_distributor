@@ -27,6 +27,7 @@ module Admin::KeydesksController::CleanUp
       results = tasks.map(&:wait)
 
       msg = usernames_to_destroy_msg(results)
+      log msg
 
       reply_with_inline_buttons(msg, [
         admin_menu_inline_button,
@@ -66,6 +67,8 @@ module Admin::KeydesksController::CleanUp
 
       results = tasks.map(&:wait)
       msg = clean_up_finished_msg(results)
+      log msg
+
       reply_with_inline_buttons(msg, [admin_menu_inline_button], parse_mode: "Markdown")
     end
   rescue StandardError => e
@@ -135,6 +138,16 @@ module Admin::KeydesksController::CleanUp
     TXT
 
     [msg, skipped_keydesks_msg].reject(&:empty?).join("\n\n")
+  end
+
+  # for logging finished and usernames_to_destroy msgs
+  def log(msg)
+    LOGGER.info([
+      "Clean up related message:",
+      "-" * 33,
+      msg,
+      "-" * 33
+    ].join("\n"))
   end
 
   def skipped_keydesks_msg

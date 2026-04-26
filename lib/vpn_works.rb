@@ -80,6 +80,7 @@ class VpnWorks
     @@tokens.dig(@id, Time.now.hour) || refresh_token
   end
 
+  # we might want to synchornize these to avoid multiple requests
   def refresh_token
     resp = request("token", type: :post, headers: BASE_HEADERS)
     resp = JSON.parse(resp.body)
