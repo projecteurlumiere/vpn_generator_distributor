@@ -23,6 +23,18 @@ module Keydesk::ProxyManagement
       end
 
       tasks.each(&:wait)
+
+      statuses = Keydesk.sort_by { (it.status == :offline && 0) || (it.status == :unstable) && 1 || 2 }
+                        .map { "%-13s %7s" % [it.name[0,13], it.status] }
+
+      LOGGER.info <<~TXT
+        Keydesk proxies launched.
+
+        Proxy status:
+
+        #{"%-13s %7s" % ["Name", "Status"]}
+        #{statuses.join("\n")}
+      TXT
     end
 
     def stop_proxies
