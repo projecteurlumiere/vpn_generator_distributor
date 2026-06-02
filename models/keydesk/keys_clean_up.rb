@@ -23,6 +23,9 @@ module Keydesk::KeysCleanUp
     end
 
     update(usernames_to_destroy: JSON.dump(list))
+    [:success, list]
+  rescue VpnWorks::Error
+    [:error, []]
   end
 
   def clean_up_keys

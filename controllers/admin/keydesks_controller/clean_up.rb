@@ -14,11 +14,11 @@ module Admin::KeydesksController::CleanUp
     CLEANING_UP.acquire do
       tasks = Keydesk.where { max_keys >= 0 }.all.map do |kd|
         Async do
-          kd.find_usernames_to_destroy!
+          kd.find_usernames_to_destroy! => [res, usernames] 
 
           "%-13s %3s %3s" % [
             kd.name[0...13],
-            kd.usernames_to_destroy.size / 2,
+            res == :success ? usernames.size / 2 : "ERR",
             kd.n_keys
           ]
         end
