@@ -22,7 +22,6 @@ class KeydeskTest < Minitest::Test
     result = kd.send(:filter_for_usernames_to_destroy, list)
 
     expected = list.values_at(1, 4, 6)
-    binding.irb
     assert_equal(result, expected)
   end
 end
