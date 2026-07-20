@@ -105,7 +105,7 @@ module Admin::UserManagement
         "Key ID: #{key.id}, Keydesk: #{key.keydesk.name}, Keydesk Username: #{key.keydesk_username}",
         "Exception: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
       ].join("\n"))
-      status = "❌"
+      status = "❓"
     end
 
     lines[key.id] = [
