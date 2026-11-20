@@ -12,6 +12,7 @@ DB = Sequel.sqlite("db/storage/db_#{ENV["ENV"]}.sqlite3",
                    timeout: 20000)
 
 DB.run("PRAGMA journal_mode = wal;")
+DB.transaction_mode = :immediate
 
 DB.create_table? :users do
   primary_key :id
