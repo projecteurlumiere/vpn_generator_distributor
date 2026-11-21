@@ -35,6 +35,7 @@ class Bot::Controller
   # just a textual reply that removes keyboard/buttons altogether
   # usage:
   # reply("hello world!")
+  # if reply_markup: isn't specified, it'll remove the buttons; specify it `reply_markup: nil` to not remove keyboard!
   def reply(text = nil, **opts)
     opts[:reply_markup] = Telegram::Bot::Types::ReplyKeyboardRemove.new(remove_keyboard: true) unless opts.key?(:reply_markup)
 

@@ -192,6 +192,10 @@ class InstructionsController < ApplicationController
     if current_user.too_many_keys? && !current_user.config_reserved?
       msg = <<~TXT
         У вас слишком много ключей.
+
+        *⚠️ Вы можете удалить свои существующие ключи, чтобы получить новый.*
+        Это может помочь, если ваши нынешние ключи не работают из-за блокировок.
+
         Мы выдаём не более #{User::MAX_KEYS} ключей в одни руки.
         Это необходимо, чтобы как можно большее количество людей получило доступ к свободному интернету.
 
@@ -200,7 +204,14 @@ class InstructionsController < ApplicationController
         А еще вы можете пройти инструкцию без получения ключа. Для этого выберите ваше устройство:
       TXT
 
-      reply_with_instructions(msg)
+      reply_with_buttons(msg,
+        [
+          ["Удалить ключи"],
+          ["Вернуться в меню"],
+          ["Написать в поддержку"]
+        ],
+        parse_mode: "Markdown"
+      )
     else
       msg = <<~TXT
         Нам необходимо зарезервировать для вас ключ на нашем сервере.

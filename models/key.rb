@@ -7,6 +7,10 @@ class Key < Sequel::Model(:keys)
   VALID_CONFIGS = %w(amnezia outline vless wireguard).freeze
   attr_accessor :config
 
+  def name
+    "#{keydesk_username} от #{created_at.strftime("%d-%m-%Y")}"
+  end
+
   class << self
     def issue(to:, skip_limit: false)
       user = to
