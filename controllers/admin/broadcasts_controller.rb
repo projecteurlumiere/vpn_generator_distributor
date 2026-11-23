@@ -38,10 +38,11 @@ class Admin::BroadcastsController < Admin::BaseController
   def broadcast
     current_user.update(state: nil)
 
-    reply(<<~TXT
-      Начинаем рассылку. Это займёт время.
+    reply(
+      <<~TXT
+        Начинаем рассылку. Это займёт время.
 
-      /admin, чтобы заняться другими делами.
+        /admin, чтобы заняться другими делами.
       TXT
     )
 
@@ -53,19 +54,24 @@ class Admin::BroadcastsController < Admin::BaseController
                   .distinct
                   .select_map(:chat_id)
 
+    success = 0
     chat_ids.each do |id|
-      reply(text, photos:, chat_id: id)
+      reply(text, photos:, chat_id: id, reply_markup: nil)
+      success += 1
+    rescue => e
+      LOGGER.error("Broadcasting message failed: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}")
     end
 
     msg = <<~TXT
       Рассылка завершена успешно.
-      Пользователей, получивших сообщение: #{chat_ids.size}.
+      Пользователей, получивших сообщение: #{success} из #{chat_ids.size}.
 
       /admin, чтобы вернуться к другим делам.
     TXT
 
+    reply(msg)
   rescue StandardError => e
-    LOGGER.error("Broadcast failed: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}")
-    reply("Сообщение не было разослано всем: #{e.class}.")
+    LOGGER.error("Broadcast ttally failed: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}")
+    reply("Сообщение не было разослано всем: #{e.class}; Не повторяйте рассылку.")
   end
 end
