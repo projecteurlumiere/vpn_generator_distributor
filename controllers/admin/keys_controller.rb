@@ -113,11 +113,15 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
   def upload_key(file_path, key_type, chat_id:, msg:)
     reply(msg, chat_id:, reply_markup: nil, message_thread_id: nil)
 
-    case key_type
-    in "amnezia" | "wireguard"
-      upload_file(file_path, chat_id:, message_thread_id: nil)
-    in "outline" | "vless"
-      reply(File.read(file_path), reply_markup: nil, chat_id:, message_thread_id: nil)
-    end
+    res = case key_type
+          in "amnezia" | "wireguard"
+            upload_file(file_path)
+          in "outline" | "vless"
+            reply(File.read(file_path), reply_markup: nil)
+          end
+
+    Delete.schedule(chat_id:, message_id: res.message_id)
+    res = reply("Для вашей безопасности сообщение с ключом будет удалено через час.", reply_markup: nil)
+    Edit.schedule(payload: { text: "Сообщение с ключом было удалено. Мы это сделали для вашей безопасности." }, chat_id:, message_id: res.message_id)
   end
 end

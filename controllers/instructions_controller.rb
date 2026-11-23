@@ -261,14 +261,16 @@ class InstructionsController < ApplicationController
       dir_path = "./tmp/vpn_configs/per_key/#{key.id}"
       file_path = Dir.glob(File.join(dir_path, "#{key_type}*")).first
 
-      case key_type
-      in "amnezia" | "wireguard"
-        upload_file(file_path)
-      in "outline" | "vless"
-        reply(File.read(file_path), reply_markup: nil)
-      end
+      res = case key_type
+            in "amnezia" | "wireguard"
+              upload_file(file_path)
+            in "outline" | "vless"
+              reply(File.read(file_path), reply_markup: nil)
+            end
 
-      FileUtils.rm_rf(dir_path)
+      Delete.schedule(chat_id:, message_id: res.message_id)
+      res = reply("Для вашей безопасности сообщение с ключом будет удалено через час.", reply_markup: nil)
+      Edit.schedule(payload: { text: "Сообщение с ключом было удалено. Мы это сделали для вашей безопасности." }, chat_id:, message_id: res.message_id)
     else
       msg = <<~TXT
         Похоже, вы резервировали ключ в начале прохождения инструкции.
@@ -278,6 +280,8 @@ class InstructionsController < ApplicationController
 
       reply_with_instructions(msg)
     end
+  ensure
+    FileUtils.rm_rf(dir_path) if dir_path
   end
 
   def find_reserved_key
