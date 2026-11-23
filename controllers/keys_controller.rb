@@ -65,6 +65,7 @@ class KeysController < ApplicationController
     end
 
     res = reply_with_inline_buttons(msg_lines.join("\n\n"), actions, parse_mode: "Markdown")
+    Edit.schedule(payload: { text: "Это сообщение было удалено: оно более не актуально." }, chat_id:, message_id: res.message_id)
 
     reply_with_buttons("Выберите ключ для удаления выше (можно выбрать несколько)",
       [
