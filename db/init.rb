@@ -66,3 +66,18 @@ DB.create_table? :support_requests do
   Integer :message_thread_id
   Integer :user_menu_message_id
 end
+
+DB.create_table? :edits do
+  primary_key :id
+  Integer     :chat_id,    null: false
+  Integer     :message_id, null: false
+  DateTime    :perform_at, null: false
+  Text        :payload,    null: false # json
+end
+
+DB.create_table? :deletes do
+  primary_key :id
+  Integer     :chat_id,      null: false
+  Integer     :message_id,   null: false
+  DateTime    :perform_at,   null: false
+end

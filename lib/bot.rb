@@ -80,6 +80,8 @@ module Bot
       SendAboutSlideJob.run_async(bot)
       RestartUnstableKeydesksJob.run_async
       DailyRecapJob.run_async(bot)
+      EditMessagesJob.run_async(bot)
+      DeleteMessagesJob.run_async(bot)
     end
 
     def prepare_graceful_shutdown(bot)
@@ -93,6 +95,8 @@ module Bot
         SendAboutSlideJob,
         RestartUnstableKeydesksJob,
         DailyRecapJob,
+        EditMessagesJob,
+        DeleteMessagesJob,
         Telegram::Bot::Api::GROUP_THROTTLER,
         Telegram::Bot::Api::USER_THROTTLER
       ].each(&:stop)

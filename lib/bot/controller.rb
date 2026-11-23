@@ -126,11 +126,15 @@ class Bot::Controller
     reply(text, reply_markup:, **reply_opts)
   end
 
-  def edit_message(text,
+  def edit_message(text = nil,
                    buttons = [],
                    chat_id: message.message.chat.id,
                    message_id: message.message.message_id,
                    **opts)
+    raise ArgumentError "Text can't be nil" if text.nil? && opts[:text].nil?
+
+    text ||= opts[:text]
+
     if buttons.to_a.any?
       opts[:reply_markup] = Telegram::Bot::Types::InlineKeyboardMarkup.new(
         inline_keyboard: buttons.map do |btn|
@@ -142,6 +146,10 @@ class Bot::Controller
     end
 
     bot.api.edit_message_text(text:, chat_id:, message_id:, **opts)
+  end
+
+  def delete_message(chat_id:, message_id:)
+    bot.api.delete_message(chat_id:, message_id:)
   end
 
   # name - Symbol
