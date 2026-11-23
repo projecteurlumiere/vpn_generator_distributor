@@ -18,9 +18,9 @@ class KeysController < ApplicationController
     end
   end
 
-  def destroy(id)
+  def destroy(id, emoji)
     if key = current_user.keys_dataset.where(id: id).first # make sure you check user's keys only
-      reply("🫡 Принимаемся удалять ключ #{key.name}", reply_markup: nil)
+      reply("🫡 Принимаемся удалять ключ #{emoji} #{key.name}", reply_markup: nil)
     else
       reply("🤔 Ошибка удаления ключа: не получилось найти ключ. Возможно, он уже удалён?", reply_markup: nil)
       return
@@ -29,11 +29,11 @@ class KeysController < ApplicationController
     if key && (res = key.destroy)
       msg = case res
             in :pending_destroy
-              msg = "⏳ Ключ #{key.name} в процессе удаления"
+              msg = "⏳ Ключ #{emoji} #{key.name} в процессе удаления"
             in Key
-              msg = "✅ Ключ #{key.name} удалён успешно"
+              msg = "✅ Ключ #{emoji} #{key.name} удалён успешно"
             in false
-              msg = "❌ Не получилось удалить ключ #{key.name}"
+              msg = "❌ Не получилось удалить ключ #{emoji} #{key.name}"
             end
 
       reply(msg, reply_markup: nil)
@@ -61,7 +61,7 @@ class KeysController < ApplicationController
         "#{key.keydesk_username}",
         "от #{key.created_at.strftime("%d-%m-%Y")}"
       ].join("\n")
-      actions << { "Удалить #{action_msg}" => callback_name(KeysController, "destroy", key.id) }
+      actions << { "Удалить #{action_msg}" => callback_name(KeysController, "destroy", key.id, action_msg) }
     end
 
     res = reply_with_inline_buttons(msg_lines.join("\n\n"), actions, parse_mode: "Markdown")
