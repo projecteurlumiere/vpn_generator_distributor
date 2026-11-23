@@ -151,6 +151,7 @@ class InstructionsController < ApplicationController
 
     if current_step[:issue_key] && @key_reserved
       upload_key(current_step[:issue_key])
+      return
     end
 
     @step += 1
@@ -267,6 +268,9 @@ class InstructionsController < ApplicationController
             in "outline" | "vless"
               reply(File.read(file_path), reply_markup: nil)
             end
+
+      @step += 1
+      current_user.update(state: [@controller, @instruction_name, @step.to_i, @key_reserved].join("|"))
 
       Delete.schedule(chat_id:, message_id: res.message_id)
       res = reply("Для вашей безопасности сообщение с ключом будет удалено через час.", reply_markup: nil)
