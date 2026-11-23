@@ -49,18 +49,23 @@ class KeysController < ApplicationController
 
     reply("У вас сейчас нет ключей", reply_markup: nil) and return if keys.none?
 
-    msg = "Ваши ключи"
+    msg_lines = ["*Ваши ключи:*"]
+    actions = []
 
-    actions = keys.map do |key|
-      action_msg = [
+    breakpoints = %w[🦊 🐘 🌵 🚀 🎩 🐢 📚 🦉 🍇 🛹].shuffle
+    keys.each do |key|
+      action_msg = breakpoints.pop
+
+      msg_lines << [        
+        action_msg,
         "#{key.keydesk_username}",
         "от #{key.created_at.strftime("%d-%m-%Y")}"
-      ].join(" ")
-
-      { action_msg => callback_name(KeysController, "destroy", key.id) }
+      ].join("\n")
+      actions << { "Удалить #{action_msg}" => callback_name(KeysController, "destroy", key.id) }
     end
 
-    res = reply_with_inline_buttons(msg, actions)
+    res = reply_with_inline_buttons(msg_lines.join("\n\n"), actions, parse_mode: "Markdown")
+
     reply_with_buttons("Выберите ключ для удаления выше (можно выбрать несколько)",
       [
         ["Вернуться в меню"]
