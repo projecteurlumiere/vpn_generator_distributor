@@ -20,23 +20,23 @@ class KeysController < ApplicationController
 
   def destroy(id, emoji)
     if key = current_user.keys_dataset.where(id: id).first # make sure you check user's keys only
-      reply("🫡 Принимаемся удалять ключ #{emoji} #{key.name}", reply_markup: nil)
+      edit_message("Удаляем ключ #{emoji} #{key.name}")
     else
-      reply("🤔 Ошибка удаления ключа: не получилось найти ключ. Возможно, он уже удалён?", reply_markup: nil)
+      edit_message("🤔 Ошибка удаления ключа: не получилось найти ключ. Возможно, он уже удалён?")
       return
     end
 
     if key && (res = key.destroy)
       msg = case res
             in :pending_destroy
-              msg = "⏳ Ключ #{emoji} #{key.name} в процессе удаления"
+              "⏳ Ключ #{emoji} #{key.name} уже в процессе удаления. Если что-то сломалось, попробуйте позже или свяжитесь с поддержкой через меню /start"
             in Key
-              msg = "✅ Ключ #{emoji} #{key.name} удалён успешно"
+              "✅ Ключ #{emoji} #{key.name} удалён успешно"
             in false
-              msg = "❌ Не получилось удалить ключ #{emoji} #{key.name}"
+              "❌ Не получилось удалить ключ #{emoji} #{key.name}"
             end
 
-      reply(msg, reply_markup: nil)
+      edit_message(msg)
     end
   end
 
@@ -49,23 +49,22 @@ class KeysController < ApplicationController
 
     reply("У вас сейчас нет ключей", reply_markup: nil) and return if keys.none?
 
-    msg_lines = ["*Ваши ключи:*"]
-    actions = []
+    reply("*Ваши ключи:*", reply_markup: nil)
 
     breakpoints = %w[🦊 🐘 🌵 🚀 🎩 🐢 📚 🦉 🍇 🛹].shuffle
     keys.each do |key|
       action_msg = breakpoints.pop
 
-      msg_lines << [        
+      msg = [
         action_msg,
         "#{key.keydesk_username}",
         "от #{key.created_at.strftime("%d-%m-%Y")}"
       ].join("\n")
-      actions << { "Удалить #{action_msg}" => callback_name(KeysController, "destroy", key.id, action_msg) }
-    end
+      action = { "Удалить #{action_msg}" => callback_name(KeysController, "destroy", key.id, action_msg) }
 
-    res = reply_with_inline_buttons(msg_lines.join("\n\n"), actions, parse_mode: "Markdown")
-    Edit.schedule(payload: { text: "Это сообщение было удалено: оно более не актуально." }, chat_id:, message_id: res.message_id)
+      res = reply_with_inline_buttons(msg, action, parse_mode: "Markdown")
+      Edit.schedule(payload: { text: "Это сообщение было удалено: оно более не актуально." }, chat_id:, message_id: res.message_id)
+    end
 
     reply_with_buttons("Выберите ключ для удаления выше (можно выбрать несколько)",
       [
