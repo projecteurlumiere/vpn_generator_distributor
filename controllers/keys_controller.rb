@@ -49,7 +49,7 @@ class KeysController < ApplicationController
 
     reply("У вас сейчас нет ключей", reply_markup: nil) and return if keys.none?
 
-    reply("*Ваши ключи:*", reply_markup: nil)
+    reply("*Ваши ключи:*", parse_mode: "Markdown", reply_markup: nil)
 
     breakpoints = %w[🦊 🐘 🌵 🚀 🎩 🐢 📚 🦉 🍇 🛹].shuffle
     keys.each do |key|
@@ -62,7 +62,7 @@ class KeysController < ApplicationController
       ].join("\n")
       action = { "Удалить #{action_msg}" => callback_name(KeysController, "destroy", key.id, action_msg) }
 
-      res = reply_with_inline_buttons(msg, action, parse_mode: "Markdown")
+      res = reply_with_inline_buttons(msg, action)
       Edit.schedule(payload: { text: "Это сообщение было удалено: оно более не актуально." }, chat_id:, message_id: res.message_id)
     end
 
