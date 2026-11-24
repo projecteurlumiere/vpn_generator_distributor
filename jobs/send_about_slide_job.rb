@@ -19,7 +19,12 @@ class SendAboutSlideJob < ApplicationJob
       controller.send(:reply_about, chat_id:)
       success << id
     rescue => e
-      LOGGER.warn "Failed to send the about slide to chat_id `#{chat_id}`: #{e.class}, #{e.message}"
+      case e.message
+      in /bot was blocked/i
+        success << id
+      else
+        LOGGER.warn "Failed to send the about slide to chat_id `#{chat_id}`: #{e.class}, #{e.message}"
+      end
     end
   ensure
     if success.any?
