@@ -57,6 +57,7 @@ class StartController < ApplicationController
       "Что вы хотите сделать?\nВыберите действие внизу",
       [
         ["Подключить VPN"],
+        (["Удалить ключи"] if current_user.keys_dataset.first),
         ["Прочитать правила"],
         ["Узнать о проекте"],
         ["Написать в поддержку"]
