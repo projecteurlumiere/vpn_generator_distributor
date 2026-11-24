@@ -115,13 +115,14 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
 
     res = case key_type
           in "amnezia" | "wireguard"
-            upload_file(file_path)
+            upload_file(file_path, chat_id:, message_thread_id: nil)
           in "outline" | "vless"
-            reply(File.read(file_path), reply_markup: nil)
+            reply(File.read(file_path), reply_markup: nil, chat_id:, message_thread_id: nil)
           end
-
     Delete.schedule(chat_id:, message_id: res.message_id)
-    res = reply("Для вашей безопасности сообщение с ключом будет удалено через час.", reply_markup: nil)
+
+    msg = "*Для вашей безопасности сообщение с ключом будет удалено через час.*"
+    res = reply(msg, parse_mode: "Markdown", reply_markup: nil, chat_id:, message_thread_id: nil)
     Edit.schedule(payload: { text: "Сообщение с ключом было удалено. Мы это сделали для вашей безопасности." }, chat_id:, message_id: res.message_id)
   end
 end
