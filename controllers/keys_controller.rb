@@ -33,7 +33,11 @@ class KeysController < ApplicationController
             in Key
               "✅ Ключ #{emoji} #{key.name} удалён успешно"
             in false
-              "❌ Не получилось удалить ключ #{emoji} #{key.name}"
+              <<~TXT
+                ❌ Не получилось удалить ключ #{emoji} #{key.name}.
+
+                Попробуйте позже. Если проблема не исчезает, а вам нужен новый ключ взамен старого, обратитесь в поддержку через меню /start
+              TXT
             end
 
       edit_message(msg)
