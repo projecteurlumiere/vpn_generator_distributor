@@ -17,12 +17,8 @@ class EditMessagesJob < ApplicationJob
       controller.send(:edit_message, **edit.payload, chat_id: edit.chat_id, message_id: edit.message_id)
       success << edit.id
     rescue => e
-      case e.message
-      in /exactly the same/
-        success << edit.id
-      else
-        LOGGER.warn "Failed to edit the message for chat_id `#{edit.chat_id}`: #{e.class}, #{e.message}"
-      end
+      success << edit.id if e.message.match?(/bot was blocked|exactly the same|message to edit not found/)
+      LOGGER.warn "Failed to edit the message for chat_id `#{edit.chat_id}`: #{e.class}, #{e.message}"
     end
   ensure
     if success.any?

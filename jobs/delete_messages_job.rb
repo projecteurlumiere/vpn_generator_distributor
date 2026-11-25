@@ -17,6 +17,7 @@ class DeleteMessagesJob < ApplicationJob
       controller.send(:delete_message, chat_id:, message_id:)
       success << id
     rescue => e
+      success << id if e.message.match?(/bot was blocked|message to delete not found/)
       LOGGER.warn "Failed to delete the message to chat_id `#{chat_id}`: #{e.class}, #{e.message}"
     end
   ensure
