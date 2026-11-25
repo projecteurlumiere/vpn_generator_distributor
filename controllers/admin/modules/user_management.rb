@@ -114,7 +114,7 @@ module Admin::UserManagement
       "Ключница: #{key.keydesk.name}",
       "Имя в ключнице: #{key.keydesk_username}",
       "Описание: #{key.desc}",
-      "Создан: #{key.created_at.strftime('%Y-%m-%d %H:%M')}"
+      "Создан: #{key.created_at.strftime('%Y.%m.%d %H:%M')}"
     ].join("\n")
   end
 

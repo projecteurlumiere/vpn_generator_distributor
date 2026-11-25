@@ -13,7 +13,7 @@ class Admin::SupportTopicsController < Admin::BaseController
       request.set_closed!(bot)
 
       msg = <<~TXT
-        Ваше обращение в поддержку №#{request.id} от #{request.created_at.strftime("%Y-%m-%d %H:%M")} было помечено как рассмотренное.
+        Ваше обращение в поддержку №#{request.id} от #{request.created_at.strftime("%Y.%m.%d %H:%M")} было помечено как рассмотренное.
 
         Вы можете обратиться ещё раз в любое время
       TXT

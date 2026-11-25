@@ -42,7 +42,7 @@ class SupportRequestsController < ApplicationController
 
   def reply_request_is_unread
     msg = <<~TXT
-      Мы уже рассматриваем ваше обращение №#{unread_request.id} от #{unread_request.created_at.strftime("%Y-%m-%d %H:%M")}
+      Мы уже рассматриваем ваше обращение №#{unread_request.id} от #{unread_request.created_at.strftime("%Y.%m.%d %H:%M")}
 
       Если с вами не связались в течение трёх суток, вы сможете отправить новый запрос.
     TXT

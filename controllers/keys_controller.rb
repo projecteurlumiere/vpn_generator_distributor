@@ -62,7 +62,7 @@ class KeysController < ApplicationController
       msg = [
         action_msg,
         "#{key.keydesk_username}",
-        "от #{key.created_at.strftime("%d-%m-%Y")}"
+        "от #{key.created_at.strftime("%d.%m.%Y")}"
       ].join("\n")
       action = { "Удалить #{action_msg}" => callback_name(KeysController, "destroy", key.id, action_msg) }
 
