@@ -121,8 +121,11 @@ class Admin::KeysController < Admin::BaseController  # chat_id is the one the fi
           end
     Delete.schedule(chat_id:, message_id: res.message_id)
 
-    msg = "*Для вашей безопасности сообщение с ключом будет удалено через час.*"
+    msg = "*Для вашей безопасности сообщение с ключом будет удалено через три дня.*"
     res = reply(msg, parse_mode: "Markdown", reply_markup: nil, chat_id:, message_thread_id: nil)
-    Edit.schedule(payload: { text: "Сообщение с ключом было удалено. Мы это сделали для вашей безопасности." }, chat_id:, message_id: res.message_id)
+    Edit.schedule(payload: { text: "Сообщение с ключом было удалено. Мы это сделали для вашей безопасности." },
+                  chat_id:,
+                  message_id: res.message_id,
+                  perform_at: Time.now + 259_200) # 3 days
   end
 end
